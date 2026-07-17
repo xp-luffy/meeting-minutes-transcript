@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getProfile } from "@/lib/auth";
 import { SiteHeader } from "./site-header";
@@ -6,6 +6,13 @@ import { SiteHeader } from "./site-header";
 export const metadata: Metadata = {
   title: "Meeting Minutes — Statutory Minutes from Transcripts",
   description: "Generate statutory board and committee minutes from meeting transcripts.",
+};
+
+// Without this, phones use a 980px layout viewport and every responsive
+// breakpoint (sm:/md:) stays inactive — the mobile design never engages.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default async function RootLayout({

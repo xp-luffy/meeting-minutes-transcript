@@ -63,3 +63,7 @@ begin
   values (v_share.id, v_share.draft_id, v_share.meeting_id, trim(p_name), nullif(trim(coalesce(p_role,'')), ''))
   returning confirmations.confirmed_at;
 end; $$;
+
+-- Trigger functions are not meant to be REST-callable.
+revoke execute on function review_share_draft_matches_meeting() from public, anon, authenticated;
+revoke execute on function confirmation_draft_matches_meeting() from public, anon, authenticated;
