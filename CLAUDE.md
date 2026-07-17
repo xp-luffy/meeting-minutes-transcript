@@ -43,3 +43,4 @@
 - Latest commit is documentation sync only (CLAUDE.md); no active feature development in this commit cycle
 - Latest commit (chore: sync CLAUDE.md) is documentation maintenance only; no code changes or feature development in this commit cycle.
 - Recent commit is documentation-only (agents.md sync); no code changes, features, or progress on roadmap items in this commit cycle
+- Recent commit activity is documentation-only (house-style minutes format synced); no code changes or feature development underway
