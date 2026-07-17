@@ -15,6 +15,7 @@
 - Vercel build skipping implemented for CLAUDE/AGENTS.md-only commits to prevent runaway Launchpad sync loop cycles
 - Vercel builds are skipped for documentation-only commits (claude.md/agents.md changes) to prevent unnecessary build cycles
 - V2-2 through V2-4 sprints focused on UI/UX polish, mobile optimization (375px-desktop), performance scaling for 1k-firm simulation, and audit compliance resolution
+- V3-4 audit findings resolved with both Opus and Codex code review tools approving deployment (BLOCK -> DEPLOY OK)
 
 ## Architecture
 
@@ -23,6 +24,7 @@
 - Vercel build skipping is configured to prevent runaway launchpad sync loop cycles when only claude.md or agents.md files change
 - V2 architecture established on three core pillars: assurance engine, company memory, and confirmation flow
 - V2 deployment complete with all audit findings resolved; project cleared for production across opus and codex implementations
+- V3 graph/obligation engine implemented with entities, obligations, conflicts, and people models as foundation for audit system
 
 ## Gotchas
 
@@ -43,6 +45,7 @@
 - Viewport meta tag fix was critical—mobile breakpoints were inert on real devices despite working in dev, requiring explicit viewport configuration
 - No objective currently set—project lacks clarity on success criteria and prioritization despite having a comprehensive roadmap and completed v2 deployment
 - Recent commits are purely documentation maintenance (agents.md/claude.md syncs) with no code changes or feature development
+- Launchpad bot loop recurring issue - V2 handoff required manual-deploy note to halt runaway syncs despite vercel build skipping being in place
 
 ## Notes
 
@@ -72,8 +75,8 @@
 - Recent commit activity is documentation-only (house-style minutes format synced); no code changes or feature development underway
 - Recent commit activity is purely documentation maintenance (CLAUDE.md sync); no feature development or code changes detected in current commit cycle
 - Recent commit activity consists of documentation maintenance only (claude.md sync); no feature development or code changes detected in current commit cycle
-- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Latest commit is documentation-only (chore: sync CLAUDE.md); no code changes or feature development.
+- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Project has no objective currently set; feature development is continuing across later-phase scope (workspaces, docx upload, tiptap editor, intelligence layer, review shares) but prioritization clarity is lacking
 - Recent commit activity is documentation maintenance only (claude.md sync); no feature development or code changes detected
 - No objective currently set for the project; clarity needed on success criteria and prioritization
@@ -96,3 +99,4 @@
 - Production deploy triggered for V2 with assurance engine, company memory, and confirmation flow ready
 - Project is in maintenance mode with only documentation syncs (CLAUDE.md, agents.md) and no active feature development
 - Latest commit is chore: sync AGENTS.md—documentation maintenance only with no code changes or feature development in current cycle
+- Mobile polish and graph surface scale fixes completed in V3-2 and V3-3
