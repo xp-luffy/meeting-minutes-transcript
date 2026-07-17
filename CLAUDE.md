@@ -30,3 +30,4 @@
 - Sprint 3 scope includes action-items dashboard, attendance editor, regenerate functionality, and activity feed features
 - Sprint 4 focus is authentication, roles, and RLS (row-level security) lock-down implementation
 - CLAUDE.md (Launchpad memory) was synced in latest commit, confirming documentation is actively maintained
+- AGENTS.md was synced in recent commit as part of documentation maintenance workflow
