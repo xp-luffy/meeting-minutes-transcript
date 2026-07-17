@@ -1,22 +1,27 @@
 # Security
 
 ## Secrets
-- `OPENAI_API_KEY` in Vercel environment variables only — never imported in any client component
-- Supabase service-role key used only in server actions/API routes
-- Anon key safe for client (RLS is the gate)
+- `OPENAI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in Vercel environment variables only — never in client bundle or logs
+- All AI calls go through `/api/generate-minutes` server route; client receives only the response
 
-## Permission Model
-- **v1 (demo):** Permissive RLS — all rows readable and writable without login; safe for internal team preview only
-- **Lock-down sprint:** Policies replaced with `auth.uid() = user_id`; sign-up invite-only for Cosec team
-- Roles planned: `cosec` (full access), `reviewer` (read + status change, no delete)
+## Permissions (v1 → lock-down)
+- **v1:** permissive RLS (open read/write) for demo — no PII should be entered during this phase
+- **Lock-down sprint:** RLS policies replaced with `auth.uid() = user_id`; service-role key used only in server routes
+- Agent inherits session user's permissions — no privilege escalation
 
-## Approved Tools Rule
-Agent calls only the four named tools (`openai_chat_completion`, `supabase_db_write`, `docx_renderer`, `pdf_renderer`). No `eval`, no raw shell, no dynamic tool resolution.
+## Approved Tools Only
+- Only `openai_chat_completion`, `supabase_db_write`, `docx_export`, `pdf_export` are callable from the generation route
+- No `eval`, `exec`, or arbitrary HTTP calls from the AI response path
+- AI response is parsed into a typed schema before any DB write — raw model output never executed
 
-## Audit Principle
-Every AI generation, status transition, and export writes a row to `audit_logs` with actor, action, target, and timestamp. Logs are append-only (no delete policy on that table).
+## Prompt Injection Mitigation
+- System prompt instructs model to output only valid JSON; response validated against Zod schema before use
+- Transcript content is user-supplied text — treated as data, not instruction
 
-## Known Gaps (state plainly)
-- Prompt-injection via malicious transcript content — mitigated by system-prompt separation; not fully penetration-tested
-- PDF renderer (puppeteer) runs server-side; sandbox it or use a managed service before production
-- Rate-limiting on Generate endpoint: implement in Sprint 4, not Sprint 1
+## Audit
+- Every `generate_minutes_draft` and status change writes to `audit_logs`
+- Export actions logged with timestamp and user_id
+
+## What Cannot Be Verified Pre-Launch
+- Penetration testing and full npm audit should be run by a qualified person before real client data is entered
+- Rate limiting on `/api/generate-minutes` must be confirmed active in Vercel

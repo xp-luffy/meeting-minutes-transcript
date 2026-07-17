@@ -3,26 +3,23 @@
 ## Stack
 - **Frontend:** Next.js 14 (App Router) on Vercel
 - **Database:** Supabase (Postgres + RLS)
-- **AI:** OpenAI GPT-4o via server-side API route (key never in browser)
-- **Export:** `docx` npm package + `puppeteer`/`html-pdf` for PDF
-- **Storage:** Supabase Storage for uploaded transcript files
+- **AI:** OpenAI GPT-4o via server-side API route (key never in client)
+- **Export:** `docx` npm package for Word; `@react-pdf/renderer` for PDF
 
-## Key User-Action Flow
-1. User fills Meeting form → row saved to `meetings`
+## Key User Action — Transcript → Minutes
+1. User fills in meeting details (company, type, date, attendees) → saved to `meetings`
 2. User pastes/uploads transcript → saved to `transcripts`
-3. User clicks **Generate Minutes** → Next.js server action calls OpenAI with structured prompt + transcript text
-4. Response parsed into: full minutes prose + resolutions array + action items array
-5. All three written to DB (`minutes_drafts`, `resolutions`, `action_items`)
-6. UI renders editable draft; extracted items shown in side panels
-7. User edits → auto-save patches `minutes_drafts.content`
-8. User clicks Export → server renders DOCX/PDF and streams download
+3. Browser calls `/api/generate-minutes` (server route)
+4. Server sends transcript + structured prompt to OpenAI
+5. Response parsed into: `minutes_drafts.body_html`, `resolutions[]`, `action_items[]` — all written to DB
+6. UI renders the draft; confidence flags highlight low-confidence extractions for cosec review
+7. Cosec edits inline → PATCH to `minutes_drafts`
+8. Status button (draft → reviewed → final) → updates `minutes_drafts.status` + audit log entry
+9. Export button streams DOCX/PDF from server
 
-## Layer Plan
-| Layer | v1 | Later |
-|---|---|---|
-| Data | meetings, transcripts, drafts, resolutions, action items | audit_logs, teams, memberships |
-| App Logic | generate, edit, export, status transitions | version history, diff view |
-| Smart | GPT-4o minutes generation | fine-tuned model, confidence scoring UI |
+## Now vs Later
+**Now:** meetings CRUD, transcript input, AI generation, inline editor, status flow, export, demo seed
+**Later:** auth + RLS lockdown, role-gated actions, action item tracker dashboard, team workspaces
 
 ## Core Without AI
-All CRUD (create meeting, save transcript, edit draft, manage action items) works if the AI route is disabled. The Generate button shows an error; everything else functions.
+All meeting, transcript, resolution, and action item data is stored relationally. The editor, status workflow, and export work on any manually typed content — AI is an accelerator, not a dependency.

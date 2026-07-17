@@ -1,42 +1,47 @@
 # Intelligence Layer
 
 ## Messy Input
-Raw meeting transcript: speaker labels inconsistent, agenda items mixed with side discussion, resolutions buried in prose, action owners implied not stated.
+Raw meeting transcript: unstructured dialogue, speaker labels inconsistent, resolutions embedded in conversation, action items stated informally.
 
-## Auto-Structured Output (v1)
+## Structured Output (auto-extracted)
 ```json
 {
-  "attendance": [{"name": "Dato Sri Lim", "role": "Chairman", "present": true}],
+  "attendance": [
+    {"name": "Dato' Ahmad Fauzi", "role": "Chairman", "present": true}
+  ],
   "quorum_met": true,
-  "deliberations": [{"agenda_item": "1. Approval of Previous Minutes", "summary": "..."}],
-  "resolutions": [{
-    "text": "RESOLVED that the audited financial statements for FY2024 be adopted.",
-    "type": "ordinary",
-    "outcome": "passed",
-    "source": "openai-gpt4o",
-    "confidence": 0.91
-  }],
-  "action_items": [{
-    "description": "File annual return by 31 Aug",
-    "owner": "Company Secretary",
-    "due_date": "2024-08-31",
-    "confidence": 0.85
-  }],
-  "minutes_prose": "<full statutory HTML draft>"
+  "resolutions": [
+    {
+      "number": "BD-2025-01",
+      "text": "RESOLVED that...",
+      "outcome": "carried",
+      "confidence": 0.92
+    }
+  ],
+  "action_items": [
+    {
+      "description": "Finalise SPA for Syntek acquisition",
+      "owner": "Legal Counsel",
+      "due_date": "2025-06-30",
+      "confidence": 0.88
+    }
+  ],
+  "minutes_body_html": "<h2>Minutes of Board Meeting...</h2>"
 }
 ```
 
-## Events Tracked
+## v1 Events Tracked
 - Transcript submitted
-- Generation completed / failed
-- Resolution confidence < 0.7 (flag for review)
-- Action item owner confidence < 0.75 (flag)
+- Draft generated (confidence score stored)
+- Resolution confidence < 0.75 → flagged for review
+- Action item with no owner → flagged
+- Draft status changed
 
-## Scoring Rules (rule-based v1)
-- Confidence < 0.70 → `review_status = 'flagged'`, shown in amber in UI
-- Confidence ≥ 0.85 → auto-accepted, shown in green
-- All AI fields editable by user regardless of score
+## Scoring Rules (rule-based first)
+- Confidence < 0.75 → highlight in amber, show `review_status = unreviewed`
+- No resolution extracted → warn cosec before export
+- Missing quorum statement → warn
 
 ## v1 vs Later
-- **v1:** Single GPT-4o prompt, structured JSON output, flag low-confidence items
-- **Later:** Fine-tuned model on Maisca format, per-company template learning, confidence trend dashboard
+**v1:** Single GPT-4o prompt, confidence from logprobs/model self-report, rule-based flags
+**Later:** Fine-tuned prompt per meeting type, multi-pass extraction, precedent matching from past minutes

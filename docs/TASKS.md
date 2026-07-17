@@ -1,73 +1,70 @@
 # Tasks & Sprints
 
-## Sprint 1 — DB + Meeting CRUD + Demo Data
-**Goal:** Schema live, meetings list renders with seed data (no login needed).
-- Run migration SQL on Supabase
-- Build `/meetings` list page (loading / empty / seeded states)
-- Build Meeting create/edit form (company, type, date, attendees, quorum)
-- Confirm seed rows display; create + edit persists to DB
-- Error handling on form submit
+## Sprint 1 — DB, Seed & Core Engine ✦ v1 functional milestone
+**Goal:** A cosec can paste a transcript and get a statutory minutes draft, with no login required.
 
-**Definition of Done:** `/meetings` shows 3 seeded meetings; a new meeting can be created and survives a page refresh.
+- [ ] Apply migration SQL to Supabase (meetings, transcripts, minutes_drafts, resolutions, action_items, audit_logs)
+- [ ] Verify seed data renders on homepage (meeting list, demo drafts)
+- [ ] Build `/meetings` list page — meeting card: company, type, date, status badge
+- [ ] Build `/meetings/new` form — company, type, date, venue, chairperson, attendees
+- [ ] Build `/meetings/[id]/transcript` — paste box + upload (txt/docx), saves to `transcripts`
+- [ ] Build `/api/generate-minutes` server route — calls OpenAI, parses JSON, writes draft + resolutions + action items
+- [ ] Build `/meetings/[id]/draft` — renders `body_html`, resolutions list, action items list
+- [ ] All DB writes confirmed (no dead buttons); loading/error/empty states on every page
+- [ ] Confidence < 0.75 fields highlighted in amber on draft view
 
----
-
-## Sprint 2 — Core Engine: Transcript → Minutes Draft ✦ v1 functional
-**Goal:** The one workflow works end-to-end.
-- Transcript paste/upload form linked to a meeting
-- `/api/generate` server route: sends transcript to GPT-4o, parses JSON response
-- Writes `minutes_drafts`, `resolutions`, `action_items` to DB
-- Draft view page with rich-text editor (Tiptap); auto-save on change
-- Resolutions + Action Items panels beside draft
-- Low-confidence items flagged amber
-- Loading / error / empty states on Generate button
-
-**Definition of Done:** Paste a real 1,000-word transcript → click Generate → draft + resolutions + action items appear in DB and UI within 90 seconds. Editing draft persists.
+**Definition of Done:** Paste the sample Arca Holdings Board Meeting transcript → click Generate → draft appears with ≥1 resolution and ≥1 action item within 30 s → data persists on hard refresh.
 
 ---
 
-## Sprint 3 — Export + Status Workflow
-**Goal:** Draft can be finalised and exported.
-- Status toggle: draft → reviewed → final (confirmed before save)
-- Export to DOCX (server-rendered)
-- Export to PDF (server-rendered)
-- Download triggers; both files open correctly
-- Audit log row written on each export and status change
+## Sprint 2 — Editor, Status & Export
+**Goal:** Cosec can edit, approve, and export a minutes draft.
 
-**Definition of Done:** A final-status draft exports to a valid DOCX and PDF containing the full minutes text.
+- [ ] Inline rich-text editor for `body_html` (Tiptap or Quill) — auto-saves on blur
+- [ ] Editable resolutions: text, number, outcome dropdown
+- [ ] Editable action items: description, owner, due date, status toggle
+- [ ] Status buttons: Mark Reviewed / Mark Final (disabled when already final)
+- [ ] Export to DOCX (server route using `docx` library)
+- [ ] Export to PDF (server route using `@react-pdf/renderer`)
+- [ ] Audit log entry on every status change and export
+- [ ] Manual test: full journey with a 400-word real transcript
 
----
-
-## Sprint 4 — Polish, Reliability & Rate-Limiting
-**Goal:** Production-ready for daily internal use.
-- Rate-limit `/api/generate` (max 10/min per IP)
-- Retry + timeout handling on OpenAI call
-- Action items: mark open/done, edit owner + due date
-- Meeting dashboard: counts of open action items, draft status badge
-- Empty states, error banners, loading skeletons throughout
-- Basic `npm audit`; no high-severity findings
-
-**Definition of Done:** Generate fails gracefully (timeout shown, no DB partial write); action items updatable; audit passes.
+**Definition of Done:** Draft edited, marked Final, exported to DOCX — file opens correctly in Word with correct company name, resolutions, and action items.
 
 ---
 
-## Sprint 5 — Lock It Down (Auth + Per-User RLS)
-**Goal:** Real users, real data isolated.
-- Supabase Auth (email/password, invite-only)
-- Replace permissive RLS policies with `auth.uid() = user_id`
-- Assign `user_id` on all writes
-- Role model: cosec vs reviewer
-- Walk login → create meeting → generate → export as a logged-in stranger on live URL
+## Sprint 3 — Action Item Dashboard & Attendance Editor
+**Goal:** Operational view for tracking open items across meetings.
 
-**Definition of Done:** An unauthenticated request to `/meetings` redirects to `/login`; user A cannot read user B's meetings.
+- [ ] `/action-items` page — table of all open action items across meetings, filterable by owner/due date
+- [ ] Mark action item done inline
+- [ ] Attendance & quorum section editable on draft (add/remove attendees)
+- [ ] Regenerate draft button (with confirm dialog — overwrites body_html, increments version)
+- [ ] Activity feed per meeting (audit_logs rendered)
+
+**Definition of Done:** Action item marked done on dashboard reflects in the meeting draft view without reload.
 
 ---
 
-## Gantt (rough)
-```
-Sprint 1 — Week 1 (days 1-2)
-Sprint 2 — Week 1 (days 3-5)  ← v1 functional milestone
-Sprint 3 — Week 2 (days 1-2)
-Sprint 4 — Week 2 (days 3-4)
-Sprint 5 — Week 2 (day 5) / Week 3
-```
+## Sprint 4 — Lock It Down (Auth + RLS)
+**Goal:** Per-user data isolation before any real client data is entered.
+
+- [ ] Supabase Auth: email/password sign-up and login pages
+- [ ] Replace permissive RLS policies with `auth.uid() = user_id` owner policies
+- [ ] Role field on users: admin / cosec / reviewer
+- [ ] Gate Mark Final to cosec/admin only
+- [ ] Invite team member flow (Supabase invite email)
+- [ ] Confirm homepage returns 200 for logged-out stranger (public meeting list remains or redirects cleanly)
+- [ ] Security checklist: no secrets in client, rate limit on /api/generate-minutes, npm audit run
+
+**Definition of Done:** Two test accounts in different roles — reviewer cannot click Mark Final; admin can. Data from account A not visible to account B.
+
+---
+
+## Gantt (sprint → week)
+| Sprint | Week |
+|---|---|
+| 1 – DB + Core Engine | 1 |
+| 2 – Editor + Export | 2 |
+| 3 – Dashboard + Attendance | 3 |
+| 4 – Lock It Down | 4 |

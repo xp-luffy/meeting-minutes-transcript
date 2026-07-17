@@ -1,30 +1,30 @@
 # Test Plan
 
-## Success Scenario (manual walkthrough)
-1. Open `/meetings` — 3 seeded meetings visible ✓
-2. Click **New Meeting** — fill company "Acme Bhd", type "Board", date today, 5 attendees, quorum Yes → Save
-3. Meeting appears in list; click to open ✓
-4. Click **Add Transcript** — paste 500-word sample board transcript → Save
-5. Click **Generate Minutes** — spinner shows; within 90 s draft appears ✓
-6. Verify: `minutes_drafts` row in DB with content; at least 1 resolution; at least 1 action item ✓
-7. Edit one resolution text in UI → auto-save → refresh page → edit persists ✓
-8. Mark draft status **Reviewed** → confirm modal → status badge updates ✓
-9. Click **Export DOCX** → file downloads; open in Word — content present ✓
-10. Click **Export PDF** → file downloads; opens correctly ✓
+## Success Scenario (manual walk-through)
+1. Open app homepage — meeting list shows 3 demo meetings without login ✓
+2. Click **New Meeting** → fill in company name, type=Board, date, chairperson, 3 attendees → Save
+3. On meeting page, paste a 200-word mock transcript → click **Save Transcript**
+4. Click **Generate Minutes** → spinner shows → within 30 s draft appears
+5. Verify draft contains: meeting heading, attendance list, ≥1 resolution in RESOLVED THAT format, ≥1 action item with owner
+6. Edit one resolution text inline → click outside → reload page → edit persists
+7. Click **Mark Reviewed** → status badge updates → click **Mark Final** → edit fields disable
+8. Click **Export DOCX** → file downloads → open in Word → correct company name and resolutions present
+9. Click **Export PDF** → file downloads → renders correctly
+10. Check `audit_logs` in Supabase: generation event + status-change events present
 
-## Empty / Error Cases
-| Scenario | Expected |
-|---|---|
-| No transcript saved, click Generate | Error banner: "Please add a transcript first" |
-| OpenAI timeout (mock 30 s) | Error banner: "Generation failed — try again"; no partial DB write |
-| Meeting list with no meetings | Empty state: "No meetings yet — create your first one" |
-| Transcript field blank on submit | Inline validation: "Transcript text is required" |
-| Export on draft status (not final) | Warning: "Draft not yet marked as reviewed" + allow override |
+## Empty States
+- New meeting with no transcript → transcript page shows empty state with **Paste Transcript** prompt, no Generate button
+- Generate called but OpenAI returns no resolutions → warning banner: "No resolutions extracted — please review transcript"
+
+## Error Cases
+- OpenAI API key missing/invalid → server returns 500 → UI shows "Minutes generation failed. Try again."
+- Transcript > 15,000 tokens → server truncates and warns user before generating
+- Export with empty `body_html` → Export button disabled with tooltip "Draft is empty"
+- DB write fails → toast error "Save failed — your changes were not stored"
 
 ## Confidence Flag Check
-- Inject a transcript where owner is ambiguous → action item `owner_confidence` < 0.75 → row displays amber badge in UI ✓
+- Seed a resolution with `confidence = 0.60` → verify amber highlight visible on draft page
+- Approve it (click Accept on flag) → `review_status` updates to `approved` in DB
 
-## Security Smoke Test
-- `OPENAI_API_KEY` not present in any browser network response ✓
-- Direct `POST /api/generate` with oversized payload (>50 KB) → 413 response ✓
-- After Sprint 5: unauthenticated `GET /api/meetings` → 401 ✓
+## Regression Check (after each sprint)
+- Re-run steps 1–5 above; confirm prior sprint features still work after each new deploy
