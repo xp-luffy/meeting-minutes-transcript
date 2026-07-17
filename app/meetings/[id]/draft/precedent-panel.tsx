@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { findSimilarResolutions, type PrecedentMatch } from "@/lib/precedents";
 import { formatDate, formatConfidencePercent } from "@/lib/format";
-import { Badge } from "@/components/ui";
+import { Badge, FOCUS_RING } from "@/components/ui";
 
 /**
  * NOTE: this component is intentionally NOT mounted anywhere yet — it is
@@ -95,7 +95,7 @@ function PrecedentMatchRow({ match }: { match: PrecedentMatch }) {
       <p className="mt-1 text-neutral-500">{excerpt(match.resolution_text)}</p>
       <Link
         href={`/meetings/${match.meeting_id}/draft`}
-        className="mt-1 inline-block text-indigo-500 hover:text-indigo-600"
+        className={`mt-1 inline-block rounded-sm text-indigo-500 hover:text-indigo-600 ${FOCUS_RING}`}
       >
         View source meeting →
       </Link>

@@ -166,7 +166,7 @@ export function TranscriptEditor({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
         {!transcriptId ? (
           <p className="mb-3 text-sm text-neutral-600">
             Paste the meeting transcript below to get started.
@@ -181,26 +181,37 @@ export function TranscriptEditor({
           }}
           rows={14}
           placeholder="Paste the raw meeting transcript here…"
-          className="block w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="block min-h-[220px] w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:min-h-[320px] sm:text-sm"
         />
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
           <span>{wordCount} words</span>
           <label
             className={
-              isParsingDocx
+              "rounded " +
+              (isParsingDocx
                 ? "cursor-wait text-neutral-400"
-                : "cursor-pointer text-indigo-600 hover:text-indigo-700"
+                : "cursor-pointer text-indigo-600 hover:text-indigo-700 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2")
             }
           >
-            {isParsingDocx ? "Extracting text from DOCX…" : "Upload .txt or .docx file"}
+            {isParsingDocx ? (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500"
+                />
+                Extracting text from DOCX…
+              </span>
+            ) : (
+              "Upload .txt or .docx file"
+            )}
             <input
               ref={fileInputRef}
               type="file"
               accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleFileChange}
               disabled={isParsingDocx}
-              className="hidden"
+              className="peer sr-only"
             />
           </label>
         </div>
@@ -240,20 +251,30 @@ export function TranscriptEditor({
             type="button"
             onClick={() => handleSave()}
             disabled={isSaving || text.trim().length === 0}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
           >
-            {isSaving ? "Saving…" : "Save Transcript"}
+            {isSaving ? (
+              <>
+                <span
+                  aria-hidden
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                />
+                Saving…
+              </>
+            ) : (
+              "Save Transcript"
+            )}
           </button>
         </div>
       </div>
 
       {transcriptId ? (
-        <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
           <button
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2"
           >
             {isGenerating ? (
               <>

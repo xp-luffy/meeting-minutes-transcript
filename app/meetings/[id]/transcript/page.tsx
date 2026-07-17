@@ -40,11 +40,11 @@ export default async function TranscriptPage({
     <div className="space-y-6">
       <MeetingHeader meeting={typedMeeting} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-medium text-neutral-700">Transcript</h2>
         <Link
           href={`/meetings/${id}/draft`}
-          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+          className="focus-ring rounded text-xs font-medium text-indigo-600 hover:text-indigo-700"
         >
           View draft →
         </Link>

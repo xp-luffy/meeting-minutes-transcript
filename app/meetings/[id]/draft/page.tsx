@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting, MinutesDraft, Resolution } from "@/lib/types";
 import { MeetingHeader } from "@/components/meeting-header";
-import { ConfidenceChip, ConfidenceTag } from "@/components/ui";
+import { ConfidenceChip, ConfidenceTag, EmptyState, FOCUS_RING } from "@/components/ui";
 import { ExportButtons } from "@/components/export-buttons";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
 import { DraftBodyEditor } from "./draft-body-editor";
@@ -57,18 +57,18 @@ export default async function DraftPage({
     return (
       <div className="space-y-6">
         <MeetingHeader meeting={typedMeeting} />
-        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-10 text-center">
-          <h2 className="text-base font-semibold text-neutral-900">No minutes yet</h2>
-          <p className="mt-2 text-sm text-neutral-500">
-            No minutes yet — add a transcript and generate.
-          </p>
-          <Link
-            href={`/meetings/${id}/transcript`}
-            className="mt-5 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            Add transcript
-          </Link>
-        </div>
+        <EmptyState
+          title="No minutes yet"
+          message="Add a transcript and generate to create the first draft."
+          action={
+            <Link
+              href={`/meetings/${id}/transcript`}
+              className={`inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
+            >
+              Add transcript
+            </Link>
+          }
+        />
       </div>
     );
   }
@@ -130,7 +130,7 @@ export default async function DraftPage({
       <MeetingHeader meeting={typedMeeting} />
 
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-lg font-semibold text-neutral-900">
               Minutes Draft v{typedDraft.version}
@@ -138,10 +138,10 @@ export default async function DraftPage({
             <ConfidenceChip confidence={typedDraft.body_html_confidence} />
             <ConfidenceTag confidence={typedDraft.body_html_confidence} label="Needs review" />
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href={`/meetings/${id}/transcript`}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              className={`text-xs font-medium text-indigo-600 hover:text-indigo-700 ${FOCUS_RING} rounded-sm`}
             >
               View transcript →
             </Link>

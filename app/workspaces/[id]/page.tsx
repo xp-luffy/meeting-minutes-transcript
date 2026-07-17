@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getWorkspace, getWorkspaceMembers } from "@/lib/workspace";
-import { StatusBadge } from "@/components/ui";
+import { EmptyState, FOCUS_RING, StatusBadge } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import type { Meeting } from "@/lib/types";
 import { CopyIdButton } from "../copy-id-button";
@@ -46,7 +46,7 @@ export default async function WorkspaceDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <p className="text-sm">
-        <Link href="/workspaces" className="text-neutral-500 hover:text-neutral-700">
+        <Link href="/workspaces" className={`rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
           &larr; Workspaces
         </Link>
       </p>
@@ -77,13 +77,13 @@ export default async function WorkspaceDetailPage({
                   key={invite.id}
                   className="flex items-center justify-between rounded-md bg-neutral-50 px-3 py-2 text-sm text-neutral-700"
                 >
-                  <span className="truncate">{invite.email}</span>
+                  <span className="min-w-0 truncate">{invite.email}</span>
                   <form action={removeInvite}>
                     <input type="hidden" name="workspace_id" value={id} />
                     <input type="hidden" name="invite_id" value={invite.id} />
                     <button
                       type="submit"
-                      className="ml-3 shrink-0 text-xs text-neutral-400 hover:text-red-600"
+                      className={`ml-3 shrink-0 rounded-sm text-xs text-neutral-400 hover:text-red-600 ${FOCUS_RING}`}
                     >
                       Remove
                     </button>
@@ -106,18 +106,18 @@ export default async function WorkspaceDetailPage({
           </div>
         ) : null}
 
-        <form action={inviteToWorkspace} className="mt-4 flex items-center gap-2">
+        <form action={inviteToWorkspace} className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input type="hidden" name="workspace_id" value={id} />
           <input
             name="email"
             type="email"
             required
             placeholder="colleague@company.com"
-            className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
           <button
             type="submit"
-            className="shrink-0 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
           >
             Invite
           </button>
@@ -130,17 +130,17 @@ export default async function WorkspaceDetailPage({
           <p className="mt-1 text-xs text-neutral-500">
             New invites auto-apply the next time that email signs up. For someone who already has
             an account, share this workspace ID instead — they can join it from the{" "}
-            <Link href="/workspaces" className="text-indigo-600 hover:underline">
+            <Link href="/workspaces" className={`rounded-sm text-indigo-600 hover:underline ${FOCUS_RING}`}>
               Workspaces
             </Link>{" "}
             page&apos;s &ldquo;Have an invite?&rdquo; section.
           </p>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="text"
               readOnly
               value={workspace.id}
-              className="block w-full rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 shadow-sm"
+              className="block w-full min-w-0 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs text-neutral-700 shadow-sm"
             />
             <CopyIdButton text={workspace.id} />
           </div>
@@ -148,30 +148,28 @@ export default async function WorkspaceDetailPage({
       </section>
 
       <section className="mt-6">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-sm font-semibold text-neutral-900">Meetings</h2>
           <Link
             href={`/meetings/new?workspace=${workspace.id}`}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+            className={`inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 sm:py-1.5 ${FOCUS_RING}`}
           >
             New meeting in this workspace
           </Link>
         </div>
 
         {meetingList.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-            No meetings in this workspace yet.
-          </div>
+          <EmptyState compact message="No meetings in this workspace yet." />
         ) : (
-          <ul className="space-y-3">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {meetingList.map((meeting) => (
               <li key={meeting.id}>
                 <Link
                   href={`/meetings/${meeting.id}`}
-                  className="block rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                  className={`block h-full rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
                 >
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate text-sm font-medium text-neutral-900">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="min-w-0 truncate text-sm font-medium text-neutral-900">
                       {meeting.company_name}
                     </h3>
                     <StatusBadge status={meeting.status} />

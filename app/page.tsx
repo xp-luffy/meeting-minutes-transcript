@@ -91,11 +91,14 @@ function MeetingCard({
     !!draft && draft.status !== "final" && confirmationCount === 0 && daysSinceMeeting > 7;
 
   return (
-    <li className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <li className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h2 className="truncate text-base font-medium text-neutral-900">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h2
+              title={meeting.company_name}
+              className="min-w-0 max-w-full truncate text-base font-medium text-neutral-900"
+            >
               {meeting.company_name}
             </h2>
             <StatusBadge status={meeting.status} />
@@ -112,14 +115,14 @@ function MeetingCard({
           {draft ? (
             <Link
               href={`/meetings/${meeting.id}/draft`}
-              className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
+              className="focus-ring inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
             >
               Minutes v{draft.version}
             </Link>
           ) : (
             <Link
               href={`/meetings/${meeting.id}/transcript`}
-              className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              className="focus-ring inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
             >
               Add transcript
             </Link>
@@ -145,7 +148,7 @@ function MeetingGroup({
 }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+      <h2 className="mb-3 truncate text-xs font-semibold tracking-wide text-neutral-500 uppercase">
         {title}
       </h2>
       {meetings.length === 0 && emptyHint ? (
@@ -175,7 +178,7 @@ export default async function Home() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700 sm:p-8">
         Couldn&apos;t load meetings right now. Please refresh the page or try again shortly.
       </div>
     );
@@ -183,14 +186,14 @@ export default async function Home() {
 
   if (meetings.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-10 text-center">
+      <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-8 text-center sm:p-10">
         <h1 className="text-lg font-semibold text-neutral-900">No meetings yet</h1>
         <p className="mt-2 text-sm text-neutral-500">
           Create your first meeting to start drafting statutory minutes.
         </p>
         <Link
           href="/meetings/new"
-          className="mt-5 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="focus-ring mt-5 inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto"
         >
           New Meeting
         </Link>
@@ -203,7 +206,10 @@ export default async function Home() {
     return (
       <div>
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-neutral-900">Meetings</h1>
+          <h1 className="text-lg font-semibold text-neutral-900">
+            Meetings{" "}
+            <span className="font-normal text-neutral-400">({meetings.length})</span>
+          </h1>
         </div>
         <ul className="space-y-3">
           {meetings.map((meeting) => (
@@ -237,7 +243,9 @@ export default async function Home() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-neutral-900">Meetings</h1>
+        <h1 className="text-lg font-semibold text-neutral-900">
+          Meetings <span className="font-normal text-neutral-400">({meetings.length})</span>
+        </h1>
       </div>
 
       {workspaces.map((ws) => (
@@ -250,7 +258,10 @@ export default async function Home() {
           emptyHint={
             <>
               No meetings in this workspace yet.{" "}
-              <Link href={`/meetings/new?workspace=${ws.id}`} className="text-indigo-600 hover:underline">
+              <Link
+                href={`/meetings/new?workspace=${ws.id}`}
+                className="focus-ring rounded text-indigo-600 hover:underline"
+              >
                 Add one
               </Link>
               .

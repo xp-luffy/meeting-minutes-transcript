@@ -47,7 +47,7 @@ export default async function NewMeetingPage({
             name="meeting_type"
             required
             defaultValue={getParam("meeting_type")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           >
             <option value="" disabled>
               Select a meeting type
@@ -68,7 +68,7 @@ export default async function NewMeetingPage({
             id="workspace_id"
             name="workspace_id"
             defaultValue={selectedWorkspace}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           >
             <option value="">Personal (no workspace)</option>
             {workspaces.map((ws) => (
@@ -91,7 +91,7 @@ export default async function NewMeetingPage({
             id="minutes_format"
             name="minutes_format"
             defaultValue={getParam("minutes_format") || "standard"}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           >
             <option value="standard">Standard statutory</option>
             <option value="maisca">Maisca committee style</option>
@@ -113,7 +113,7 @@ export default async function NewMeetingPage({
             type="date"
             required
             defaultValue={getParam("meeting_date")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
 
@@ -126,7 +126,7 @@ export default async function NewMeetingPage({
             name="venue"
             type="text"
             defaultValue={getParam("venue")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
             placeholder="e.g. Level 12, Menara Arca, Kuala Lumpur"
           />
           <p className="mt-1 text-xs text-neutral-500">
@@ -143,7 +143,7 @@ export default async function NewMeetingPage({
             name="chairperson"
             type="text"
             defaultValue={getParam("chairperson")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
             placeholder="e.g. Dato' Ahmad Fauzi bin Ismail"
           />
           <p className="mt-1 text-xs text-neutral-500">
@@ -160,7 +160,7 @@ export default async function NewMeetingPage({
             name="attendees"
             rows={5}
             defaultValue={getParam("attendees")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block min-h-[120px] w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
             placeholder={"One per line as Name — Role\ne.g. Ms Sarah Tan — Company Secretary"}
           />
           <p className="mt-1 text-xs text-neutral-500">
@@ -172,7 +172,7 @@ export default async function NewMeetingPage({
         <div className="pt-2">
           <button
             type="submit"
-            className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="focus-ring inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
           >
             Create Meeting
           </button>

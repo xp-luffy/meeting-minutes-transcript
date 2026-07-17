@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { ActionItem } from "@/lib/types";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
-import { Badge, ItemStatusPill } from "@/components/ui";
+import { Badge, FOCUS_RING, ItemStatusPill } from "@/components/ui";
 import {
   acceptActionItemDescription,
   toggleActionItemStatus,
@@ -120,7 +120,9 @@ export function ActionItemRow({
   }
 
   return (
-    <li className={`flex flex-wrap items-start justify-between gap-3 p-4 ${showAmber ? "bg-amber-50/50" : ""}`}>
+    <li
+      className={`flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between ${showAmber ? "bg-amber-50/50" : ""}`}
+    >
       <div className="min-w-0 flex-1">
         <textarea
           ref={textareaRef}
@@ -129,37 +131,41 @@ export function ActionItemRow({
           onBlur={handleDescriptionBlur}
           disabled={isFinal}
           rows={1}
-          className="block w-full resize-none rounded-md border-0 p-0 text-sm text-neutral-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-800"
+          className="block w-full resize-none rounded-md border-0 p-0 text-base leading-relaxed text-neutral-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-800 sm:text-sm"
         />
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-          <input
-            value={ownerName}
-            onChange={(event) => setOwnerName(event.target.value)}
-            onBlur={handleOwnerBlur}
-            disabled={isFinal}
-            placeholder="Owner"
-            className="w-28 rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0"
-          />
-          {!ownerName && !isFinal ? <Badge variant="amber">No owner</Badge> : null}
-          <span>Due</span>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(event) => handleDueDateChange(event.target.value)}
-            disabled={isFinal}
-            className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0"
-          />
-          {showAmber ? <Badge variant="amber">Low confidence</Badge> : null}
+        <div className="mt-2 flex flex-col gap-2 text-xs text-neutral-500 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              value={ownerName}
+              onChange={(event) => setOwnerName(event.target.value)}
+              onBlur={handleOwnerBlur}
+              disabled={isFinal}
+              placeholder="Owner"
+              className="w-full rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-28 sm:py-0.5 sm:text-xs"
+            />
+            {!ownerName && !isFinal ? <Badge variant="amber">No owner</Badge> : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span>Due</span>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(event) => handleDueDateChange(event.target.value)}
+              disabled={isFinal}
+              className="rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:py-0.5 sm:text-xs"
+            />
+            {showAmber ? <Badge variant="amber">Low confidence</Badge> : null}
+          </div>
           {!isFinal ? <SaveIndicator status={isSaving ? "saving" : status} errorMessage={errorMessage} /> : null}
         </div>
       </div>
-      <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center gap-2 self-start sm:flex-col sm:items-end">
         {showAmber && !isFinal ? (
           <button
             type="button"
             onClick={handleAccept}
             disabled={isAccepting}
-            className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`inline-flex min-h-11 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {isAccepting ? "Accepting…" : "Accept"}
           </button>
@@ -171,7 +177,7 @@ export function ActionItemRow({
             type="button"
             onClick={handleToggle}
             disabled={isToggling}
-            className="disabled:cursor-not-allowed disabled:opacity-60"
+            className={`inline-flex min-h-11 items-center rounded-md px-1 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             <ItemStatusPill status={itemStatus} />
           </button>

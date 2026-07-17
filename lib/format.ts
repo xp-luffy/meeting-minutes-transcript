@@ -15,6 +15,23 @@ export function formatDate(value: string | null | undefined): string {
   return dateFormatter.format(date);
 }
 
+const timeFormatter = new Intl.DateTimeFormat("en-MY", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+/**
+ * Formats an ISO datetime string in en-MY style with time, e.g.
+ * "15 May 2025, 14:30". Returns a dash for null/undefined/unparseable input.
+ */
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return `${dateFormatter.format(date)}, ${timeFormatter.format(date)}`;
+}
+
 /** Formats a confidence value (0-1) as a whole-number percentage, e.g. "91%". */
 export function formatConfidencePercent(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "—";

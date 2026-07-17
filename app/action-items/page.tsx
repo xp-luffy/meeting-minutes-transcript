@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting } from "@/lib/types";
-import { Badge, ConfidenceTag } from "@/components/ui";
+import { Badge, ConfidenceTag, EmptyState, FOCUS_RING } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { StatusToggle } from "./status-toggle";
 
@@ -135,9 +135,9 @@ export default async function ActionItemsPage({
 
       <form
         method="get"
-        className="flex flex-wrap items-end gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm"
+        className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 sm:w-auto">
           <label htmlFor="owner" className="text-xs font-medium text-neutral-600">
             Owner
           </label>
@@ -147,10 +147,10 @@ export default async function ActionItemsPage({
             type="text"
             defaultValue={ownerFilter}
             placeholder="Search owner…"
-            className="w-48 rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-48 sm:text-sm"
           />
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 sm:w-auto">
           <label htmlFor="due" className="text-xs font-medium text-neutral-600">
             Due
           </label>
@@ -158,14 +158,14 @@ export default async function ActionItemsPage({
             id="due"
             name="due"
             defaultValue={dueFilter}
-            className="rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
           >
             <option value="all">All</option>
             <option value="overdue">Overdue</option>
             <option value="week">Next 7 days</option>
           </select>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 sm:w-auto">
           <label htmlFor="status" className="text-xs font-medium text-neutral-600">
             Status
           </label>
@@ -173,7 +173,7 @@ export default async function ActionItemsPage({
             id="status"
             name="status"
             defaultValue={statusFilter}
-            className="rounded-md border border-neutral-300 px-2.5 py-1.5 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
           >
             <option value="open">Open</option>
             <option value="done">Done</option>
@@ -183,13 +183,13 @@ export default async function ActionItemsPage({
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className="rounded-md bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            className={`flex-1 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Apply
           </button>
           <Link
             href="/action-items"
-            className="rounded-md border border-neutral-300 bg-white px-3.5 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className={`flex-1 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Clear
           </Link>
@@ -197,15 +197,13 @@ export default async function ActionItemsPage({
       </form>
 
       {rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-10 text-center">
-          <h2 className="text-base font-semibold text-neutral-900">No action items match</h2>
-          <p className="mt-2 text-sm text-neutral-500">
-            Try widening your filters, or clear them to see everything.
-          </p>
-        </div>
+        <EmptyState
+          title="No action items match"
+          message="Try widening your filters, or clear them to see everything."
+        />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-neutral-200 text-sm">
+          <table className="w-full min-w-[720px] divide-y divide-neutral-200 text-sm">
             <thead>
               <tr className="text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
                 <th className="px-4 py-3">Description</th>
@@ -255,7 +253,7 @@ export default async function ActionItemsPage({
                       {meeting ? (
                         <Link
                           href={`/meetings/${meeting.id}/draft`}
-                          className="text-indigo-600 hover:text-indigo-700"
+                          className={`rounded-sm text-indigo-600 hover:text-indigo-700 ${FOCUS_RING}`}
                         >
                           {meeting.company_name}
                           <span className="text-neutral-400"> · {meeting.meeting_type}</span>

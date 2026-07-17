@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AssuranceCheck } from "@/lib/assurance";
+import { FOCUS_RING } from "@/components/ui";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { acknowledgeAssurance, rerunAssurance } from "./actions";
 
 /**
@@ -172,7 +174,7 @@ export function AssurancePanel({
             type="button"
             onClick={handleRerun}
             disabled={isRerunning}
-            className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {isRerunning ? "Running…" : "Re-run checks"}
           </button>
@@ -185,7 +187,7 @@ export function AssurancePanel({
         <p className="mt-4 text-sm text-neutral-500">No assurance report yet.</p>
       ) : (
         <div className="mt-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:gap-4 sm:text-left">
             <div
               className={`flex h-16 w-16 flex-none items-center justify-center rounded-full text-lg font-bold ring-4 ${scoreRingClass(report.score)} ${scoreTextClass(report.score)}`}
             >
@@ -196,14 +198,13 @@ export function AssurancePanel({
                 Score out of 100 &mdash; based on {report.results.length} completeness check
                 {report.results.length === 1 ? "" : "s"}.
               </p>
-              <p className="mt-1">Last run {new Date(report.created_at).toLocaleString()}.</p>
+              <p className="mt-1">Last run {formatDateTime(report.created_at)}.</p>
             </div>
           </div>
 
           {report.acknowledged_at ? (
             <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Risks acknowledged: {report.acknowledged_note} on{" "}
-              {new Date(report.acknowledged_at).toLocaleDateString()}
+              Risks acknowledged: {report.acknowledged_note} on {formatDate(report.acknowledged_at)}
             </div>
           ) : null}
 
@@ -215,7 +216,7 @@ export function AssurancePanel({
                 <button
                   type="button"
                   onClick={() => setShowAckForm(true)}
-                  className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                  className={`min-h-11 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 ${FOCUS_RING}`}
                 >
                   Acknowledge & proceed
                 </button>
@@ -228,10 +229,10 @@ export function AssurancePanel({
                     value={note}
                     onChange={(event) => setNote(event.target.value.slice(0, 500))}
                     rows={3}
-                    className="mt-1.5 block w-full rounded-md border border-amber-300 bg-white p-2 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="mt-1.5 block w-full rounded-md border border-amber-300 bg-white p-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                     placeholder="e.g. Quorum wording will be fixed before circulation, but proceeding to unblock signature."
                   />
-                  <div className="mt-2 flex items-center justify-end gap-2">
+                  <div className="mt-2 flex flex-col-reverse items-stretch justify-end gap-2 sm:flex-row sm:items-center">
                     <button
                       type="button"
                       onClick={() => {
@@ -239,7 +240,7 @@ export function AssurancePanel({
                         setNote("");
                       }}
                       disabled={isAcknowledging}
-                      className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
+                      className={`min-h-11 rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed ${FOCUS_RING}`}
                     >
                       Cancel
                     </button>
@@ -247,7 +248,7 @@ export function AssurancePanel({
                       type="button"
                       onClick={handleAcknowledge}
                       disabled={isAcknowledging || note.trim().length === 0}
-                      className="rounded-md bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`min-h-11 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
                     >
                       {isAcknowledging ? "Saving…" : "Confirm acknowledgement"}
                     </button>

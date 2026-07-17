@@ -36,7 +36,7 @@ function ToolbarButton({ label, onClick, isActive, disabled }: ToolbarButtonProp
       onClick={onClick}
       disabled={disabled}
       aria-pressed={isActive}
-      className={`rounded-sm px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`flex-none rounded-sm px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-40 ${
         isActive
           ? "bg-indigo-100 text-indigo-700"
           : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
@@ -49,7 +49,7 @@ function ToolbarButton({ label, onClick, isActive, disabled }: ToolbarButtonProp
 
 function EditorToolbar({ editor }: { editor: Editor }) {
   return (
-    <div className="mb-2 flex flex-wrap items-center gap-1 rounded-md border border-neutral-200 bg-neutral-50 p-1 sticky top-0 z-10">
+    <div className="sticky top-0 z-10 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto rounded-md border border-neutral-200 bg-neutral-50 p-1">
       <ToolbarButton
         label="Bold"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -60,7 +60,7 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleItalic().run()}
         isActive={editor.isActive("italic")}
       />
-      <span className="mx-1 h-4 w-px bg-neutral-300" aria-hidden="true" />
+      <span className="mx-1 h-4 w-px flex-none bg-neutral-300" aria-hidden="true" />
       <ToolbarButton
         label="H2"
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -71,7 +71,7 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         isActive={editor.isActive("heading", { level: 3 })}
       />
-      <span className="mx-1 h-4 w-px bg-neutral-300" aria-hidden="true" />
+      <span className="mx-1 h-4 w-px flex-none bg-neutral-300" aria-hidden="true" />
       <ToolbarButton
         label="• List"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -82,7 +82,7 @@ function EditorToolbar({ editor }: { editor: Editor }) {
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         isActive={editor.isActive("orderedList")}
       />
-      <span className="mx-1 h-4 w-px bg-neutral-300" aria-hidden="true" />
+      <span className="mx-1 h-4 w-px flex-none bg-neutral-300" aria-hidden="true" />
       <ToolbarButton
         label="Undo"
         onClick={() => editor.chain().focus().undo().run()}

@@ -19,28 +19,28 @@ export default async function InvitePage() {
         yourself rather than an automated email.
       </p>
 
-      <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="mt-6 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
         <label className="block text-sm font-medium text-neutral-700">Signup link</label>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             type="text"
             readOnly
             value={signupUrl}
             onFocus={(e) => e.currentTarget.select()}
-            className="block w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 shadow-sm"
+            className="block w-full min-w-0 rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 text-base text-neutral-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
           <CopyLinkButton text={signupUrl} />
         </div>
 
         <a
           href={mailtoHref}
-          className="mt-4 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="focus-ring mt-4 inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
         >
           Email an invite
         </a>
       </div>
 
-      <div className="mt-6 rounded-lg border border-indigo-200 bg-indigo-50 p-5 text-sm text-indigo-900">
+      <div className="mt-6 rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900 sm:p-5">
         <p className="font-medium">Inviting to a specific team? Workspace invites now live there.</p>
         <p className="mt-1 text-indigo-800/80">
           The signup link above gives someone an account. To share specific meetings with them,
@@ -49,13 +49,13 @@ export default async function InvitePage() {
         </p>
         <Link
           href="/workspaces"
-          className="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="focus-ring mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
         >
           Go to Workspaces
         </Link>
       </div>
 
-      <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">
+      <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 sm:p-5">
         <p className="font-medium text-neutral-700">Roles</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>

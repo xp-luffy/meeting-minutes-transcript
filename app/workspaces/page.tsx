@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getMyWorkspaces, getWorkspaceMeetingCount, getWorkspaceMembers } from "@/lib/workspace";
+import { EmptyState, FOCUS_RING } from "@/components/ui";
 import { createWorkspace, joinWorkspace } from "./actions";
 
 export default async function WorkspacesPage({
@@ -31,25 +32,27 @@ export default async function WorkspacesPage({
   );
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-5xl">
       <h1 className="text-lg font-semibold text-neutral-900">Workspaces</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 max-w-2xl text-sm text-neutral-500">
         Share meetings with a team. Anyone in a workspace can see and edit its meetings.
       </p>
 
       {workspaces.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-          You&apos;re not in any workspace yet — create one below.
-        </div>
+        <EmptyState
+          compact
+          message="You're not in any workspace yet — create one below."
+          className="mt-6 max-w-2xl"
+        />
       ) : (
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {details.map(({ ws, members, meetingCount }) => (
             <li
               key={ws.id}
               className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
             >
-              <Link href={`/workspaces/${ws.id}`} className="block">
-                <h2 className="text-base font-medium text-neutral-900">{ws.name}</h2>
+              <Link href={`/workspaces/${ws.id}`} className={`block h-full rounded-sm ${FOCUS_RING}`}>
+                <h2 className="truncate text-base font-medium text-neutral-900">{ws.name}</h2>
                 <p className="mt-1 text-sm text-neutral-500">
                   {members.memberCount} {members.memberCount === 1 ? "member" : "members"}
                   {" · "}
@@ -61,32 +64,32 @@ export default async function WorkspacesPage({
         </ul>
       )}
 
-      <div className="mt-8 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="mt-8 max-w-2xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-neutral-900">New workspace</h2>
         {wsError ? (
           <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {wsError}
           </div>
         ) : null}
-        <form action={createWorkspace} className="mt-3 flex items-center gap-2">
+        <form action={createWorkspace} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             name="name"
             type="text"
             required
             defaultValue={wsName}
             placeholder="e.g. Arca Holdings — Company Secretaries"
-            className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
           <button
             type="submit"
-            className="shrink-0 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
           >
             Create
           </button>
         </form>
       </div>
 
-      <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
+      <div className="mt-6 max-w-2xl rounded-lg border border-neutral-200 bg-neutral-50 p-5">
         <h2 className="text-sm font-semibold text-neutral-700">Have an invite?</h2>
         <p className="mt-1 text-xs text-neutral-500">
           If someone invited your email address, you&apos;ll join that workspace automatically the
@@ -99,18 +102,18 @@ export default async function WorkspacesPage({
             {joinError}
           </div>
         ) : null}
-        <form action={joinWorkspace} className="mt-3 flex items-center gap-2">
+        <form action={joinWorkspace} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
             name="workspace_id"
             type="text"
             required
             defaultValue={joinId}
             placeholder="Workspace ID"
-            className="block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
           <button
             type="submit"
-            className="shrink-0 inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className={`inline-flex shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 ${FOCUS_RING}`}
           >
             Join
           </button>

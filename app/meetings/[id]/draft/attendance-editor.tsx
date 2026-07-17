@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Attendee } from "@/lib/types";
+import { FOCUS_RING } from "@/components/ui";
 import { saveAttendance } from "./actions";
 import { SaveIndicator, type SaveStatus } from "./save-indicator";
 
@@ -71,7 +72,7 @@ export function AttendanceEditor({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between px-6 py-4 text-left"
+        className={`flex w-full items-center justify-between rounded-t-lg px-6 py-4 text-left ${FOCUS_RING}`}
       >
         <h2 className="text-sm font-medium text-neutral-700">Attendance &amp; Quorum</h2>
         <span className="text-xs text-neutral-400">{open ? "Hide" : "Show"}</span>
@@ -79,29 +80,31 @@ export function AttendanceEditor({
 
       {open ? (
         <div className="border-t border-neutral-200 px-6 py-4">
-          <ul className="space-y-2">
+          <ul className="space-y-3 sm:space-y-2">
             {attendees.map((attendee, index) => (
               <li key={index} className="flex items-center gap-2">
-                <input
-                  value={attendee.name}
-                  onChange={(event) => updateAttendee(index, "name", event.target.value)}
-                  disabled={isFinal}
-                  placeholder="Name"
-                  className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
-                />
-                <input
-                  value={attendee.role}
-                  onChange={(event) => updateAttendee(index, "role", event.target.value)}
-                  disabled={isFinal}
-                  placeholder="Role"
-                  className="w-40 rounded-md border border-neutral-300 px-2 py-1.5 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
-                />
+                <div className="flex flex-1 flex-col gap-2 sm:flex-row">
+                  <input
+                    value={attendee.name}
+                    onChange={(event) => updateAttendee(index, "name", event.target.value)}
+                    disabled={isFinal}
+                    placeholder="Name"
+                    className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50 sm:text-sm"
+                  />
+                  <input
+                    value={attendee.role}
+                    onChange={(event) => updateAttendee(index, "role", event.target.value)}
+                    disabled={isFinal}
+                    placeholder="Role"
+                    className="rounded-md border border-neutral-300 px-2 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50 sm:w-40 sm:text-sm"
+                  />
+                </div>
                 {!isFinal ? (
                   <button
                     type="button"
                     onClick={() => removeAttendee(index)}
                     aria-label="Remove attendee"
-                    className="rounded-md px-2 py-1 text-sm font-medium text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                    className={`inline-flex min-h-11 min-w-11 flex-none items-center justify-center rounded-md text-sm font-medium text-neutral-400 hover:bg-red-50 hover:text-red-600 ${FOCUS_RING}`}
                   >
                     ×
                   </button>
@@ -114,7 +117,7 @@ export function AttendanceEditor({
             <button
               type="button"
               onClick={addAttendee}
-              className="mt-3 inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              className={`mt-3 inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 ${FOCUS_RING}`}
             >
               + Add attendee
             </button>
@@ -139,13 +142,13 @@ export function AttendanceEditor({
           </div>
 
           {!isFinal ? (
-            <div className="mt-4 flex items-center justify-end gap-3">
+            <div className="mt-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
               <SaveIndicator status={isSaving ? "saving" : status} errorMessage={errorMessage} />
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
               >
                 {isSaving ? "Saving…" : "Save attendance"}
               </button>
