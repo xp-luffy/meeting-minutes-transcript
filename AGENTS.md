@@ -32,6 +32,7 @@
 - Vercel builds are being skipped for claude/agents.md-only commits to prevent launchpad sync loop cycles
 - Without an objective set, project prioritization and success criteria remain unclear despite comprehensive roadmap and completed sprints
 - Recent commit (chore: sync CLAUDE.md) is documentation-only with no code changes; Vercel builds are configured to skip on claude/agents.md-only commits to prevent sync loops
+- Recent commit is documentation-only (claude.md sync) with no code changes or feature work; vercel build skipping is implemented for launchpad sync commits to prevent CI/CD loop cycles
 
 ## Notes
 
