@@ -53,6 +53,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
   const venue = String(formData.get("venue") ?? "").trim();
   const chairperson = String(formData.get("chairperson") ?? "").trim();
   const attendeesRaw = String(formData.get("attendees") ?? "");
+  const workspaceId = String(formData.get("workspace_id") ?? "").trim();
 
   const errors: string[] = [];
   if (!companyName) errors.push("Company name is required.");
@@ -70,6 +71,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
       venue,
       chairperson,
       attendees: attendeesRaw,
+      workspace_id: workspaceId,
     });
     redirect(`/meetings/new${query}`);
   }
@@ -87,6 +89,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
       chairperson: chairperson || null,
       attendees: attendees.length > 0 ? attendees : null,
       status: "draft",
+      workspace_id: workspaceId || null,
     })
     .select("id")
     .single();
@@ -100,6 +103,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
       venue,
       chairperson,
       attendees: attendeesRaw,
+      workspace_id: workspaceId,
     });
     redirect(`/meetings/new${query}`);
   }

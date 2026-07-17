@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
-import { generateMinutesRuleBased } from "@/lib/minutes-engine";
+import { generateMinutesRuleBased, meetingTypeGuidance } from "@/lib/minutes-engine";
 import type { GeneratedMinutes, Meeting, Transcript } from "@/lib/types";
 
 /**
@@ -72,16 +72,29 @@ const GeneratedMinutesSchema = z.object({
   ),
 });
 
-const SYSTEM_PROMPT = `You are a statutory minutes drafting assistant for Malaysian company secretaries. Given a raw board-meeting transcript and meeting metadata, extract structured minutes.
+/**
+ * Meeting-type-aware system prompt: the JSON contract is identical across
+ * all meeting types (so the zod schema below always validates), but the
+ * guidance paragraph is generated per meeting_type from the same profile
+ * config the rule-based engine uses (lib/minutes-engine.ts), so both
+ * generation paths describe the same statutory numbering convention,
+ * section naming, and phrasing for a given type.
+ */
+function buildSystemPrompt(meeting: Meeting): string {
+  const typeGuidance = meetingTypeGuidance(meeting.meeting_type);
+
+  return `You are a statutory minutes drafting assistant for Malaysian company secretaries. Given a raw meeting transcript and meeting metadata, extract structured minutes.
+
+This meeting's type is "${meeting.meeting_type}". Statutory conventions for this type: ${typeGuidance}
 
 Respond with ONLY a single JSON object (no markdown, no commentary) matching EXACTLY this shape:
 {
   "quorum_met": boolean,
-  "minutes_body_html": string, // well-formed statutory HTML: <h2>Minutes of {meeting_type}</h2>, a company/date/venue block, <h3>1. Attendance &amp; Quorum</h3> section listing attendees and a quorum statement, <h3>2. Deliberations</h3> narrative paragraphs, a numbered <h3> section per resolution containing its RESOLVED-form text and outcome, and a final <h3>Action Items</h3> section. Escape any HTML special characters from transcript text.
+  "minutes_body_html": string, // well-formed statutory HTML: an <h2> heading (per the statutory conventions above), a company/date/venue block, <h3>1. Attendance &amp; Quorum</h3> section listing attendees and a quorum statement, a <h3>2. ...</h3> narrative section (named per the conventions above), a numbered <h3> section per resolution/matter containing its RESOLVED-form text and outcome (labelled per the conventions above), and a final <h3>Action Items</h3> section. Escape any HTML special characters from transcript text.
   "body_confidence": number, // 0-1, your overall confidence in the extraction
   "resolutions": [
     {
-      "number": string, // e.g. BD-2025-01 — sequential, prefixed by meeting type (Board=BD, Audit=AC, AGM=AGM, EGM/Extraordinary=EGM, else RES), suffixed by meeting year
+      "number": string, // e.g. BD-2025-01 — sequential, prefixed per the numbering convention above, suffixed by meeting year
       "text": string, // statutory form, must start with "RESOLVED that "
       "outcome": "carried" | "deferred" | "lapsed",
       "confidence": number // 0-1
@@ -97,7 +110,8 @@ Respond with ONLY a single JSON object (no markdown, no commentary) matching EXA
   ]
 }
 
-Write in formal Malaysian statutory board-minute drafting style. Score confidence honestly per item (lower confidence for ambiguous or inferred owners/dates).`;
+Write in formal Malaysian statutory minute drafting style appropriate to this meeting type. Score confidence honestly per item (lower confidence for ambiguous or inferred owners/dates).`;
+}
 
 interface OpenAiChatResponse {
   choices?: { message?: { content?: string } }[];
@@ -112,14 +126,18 @@ async function callOpenAiGenerator(
     throw new Error("OPENAI_API_KEY not set");
   }
 
-  const userPrompt = `Meeting metadata:
-- Company: ${meeting.company_name}
-- Meeting type: ${meeting.meeting_type}
-- Date: ${meeting.meeting_date}
-- Venue: ${meeting.venue ?? "Not specified"}
-- Chairperson: ${meeting.chairperson ?? "Not specified"}
-- Attendees: ${JSON.stringify(meeting.attendees ?? [])}
-- Quorum recorded (fallback if not stated in transcript): ${meeting.quorum_met ?? "unknown"}
+  const structuredContext = {
+    company_name: meeting.company_name,
+    meeting_type: meeting.meeting_type,
+    meeting_date: meeting.meeting_date,
+    venue: meeting.venue ?? null,
+    chairperson: meeting.chairperson ?? null,
+    attendees: meeting.attendees ?? [],
+    quorum_met_recorded: meeting.quorum_met ?? null,
+  };
+
+  const userPrompt = `Meeting metadata (structured context — use this for the company/date/venue block and attendee list; fall back to it only when the transcript doesn't state something explicitly):
+${JSON.stringify(structuredContext, null, 2)}
 
 Transcript:
 """
@@ -137,7 +155,7 @@ ${transcriptText}
       response_format: { type: "json_object" },
       temperature: 0.2,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt(meeting) },
         { role: "user", content: userPrompt },
       ],
     }),

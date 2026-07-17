@@ -1,5 +1,6 @@
 import { createMeeting } from "./actions";
 import { MEETING_TYPES } from "@/lib/constants";
+import { getMyWorkspaces } from "@/lib/workspace";
 
 export default async function NewMeetingPage({
   searchParams,
@@ -11,6 +12,8 @@ export default async function NewMeetingPage({
     typeof params[key] === "string" ? (params[key] as string) : "";
 
   const error = getParam("error");
+  const workspaces = await getMyWorkspaces();
+  const selectedWorkspace = getParam("workspace_id") || getParam("workspace");
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -61,6 +64,29 @@ export default async function NewMeetingPage({
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="workspace_id" className="block text-sm font-medium text-neutral-700">
+            Workspace
+          </label>
+          <select
+            id="workspace_id"
+            name="workspace_id"
+            defaultValue={selectedWorkspace}
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">Personal (no workspace)</option>
+            {workspaces.map((ws) => (
+              <option key={ws.id} value={ws.id}>
+                {ws.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-neutral-500">
+            Workspace meetings are visible and editable by every member. Personal meetings stay
+            visible to only you.
+          </p>
         </div>
 
         <div>

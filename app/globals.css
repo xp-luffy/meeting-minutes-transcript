@@ -24,4 +24,14 @@
   .minutes-body strong {
     @apply font-semibold text-neutral-900;
   }
+
+  /* Tiptap/ProseMirror content root: kill the native contenteditable outline
+     (a focus ring is applied separately via the wrapper) and keep empty
+     paragraphs from collapsing to zero height. */
+  .minutes-body.ProseMirror {
+    outline: none;
+  }
+  .minutes-body p:empty::before {
+    content: "\00a0";
+  }
 }

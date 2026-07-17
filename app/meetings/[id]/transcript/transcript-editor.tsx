@@ -23,10 +23,15 @@ export function TranscriptEditor({
 
   const [text, setText] = useState(initialText);
   const [transcriptId, setTranscriptId] = useState<string | null>(initialTranscriptId);
+  const [sourceType, setSourceType] = useState<"paste" | "upload">("paste");
   const [sourceNote, setSourceNote] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, startSaveTransition] = useTransition();
+
+  const [isParsingDocx, setIsParsingDocx] = useState(false);
+  const [docxError, setDocxError] = useState<string | null>(null);
+  const [docxWarnings, setDocxWarnings] = useState<string[]>([]);
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -34,17 +39,68 @@ export function TranscriptEditor({
 
   const wordCount = useMemo(() => countWords(text), [text]);
 
+  async function handleDocxUpload(file: File) {
+    setIsParsingDocx(true);
+    setDocxError(null);
+    setDocxWarnings([]);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/parse-docx", {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const message =
+          payload && typeof payload.error === "string"
+            ? payload.error
+            : "Could not read that DOCX — is it a valid Word file?";
+        setDocxError(message);
+        return;
+      }
+
+      const extractedText = typeof payload?.text === "string" ? payload.text : "";
+      setText(extractedText);
+      setSourceType("upload");
+
+      if (payload?.warnings && Array.isArray(payload.warnings) && payload.warnings.length > 0) {
+        setDocxWarnings(payload.warnings);
+      }
+    } catch {
+      setDocxError("Could not read that DOCX — is it a valid Word file?");
+    } finally {
+      setIsParsingDocx(false);
+    }
+  }
+
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith(".txt")) {
-      setSourceNote("DOCX upload coming soon — paste the text for now.");
+    const lowerName = file.name.toLowerCase();
+
+    if (lowerName.endsWith(".docx")) {
+      setSourceNote(null);
+      void handleDocxUpload(file);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    if (!lowerName.endsWith(".txt")) {
+      setSourceNote("Unsupported file type — upload a .txt or .docx file, or paste the text below.");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
     setSourceNote(null);
+    setDocxError(null);
+    setDocxWarnings([]);
+    setSourceType("upload");
     const reader = new FileReader();
     reader.onload = () => {
       const content = typeof reader.result === "string" ? reader.result : "";
@@ -54,7 +110,7 @@ export function TranscriptEditor({
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleSave(sourceType: "paste" | "upload") {
+  function handleSave() {
     setSaveError(null);
     setSaveSuccess(false);
     startSaveTransition(async () => {
@@ -119,7 +175,10 @@ export function TranscriptEditor({
 
         <textarea
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            setText(event.target.value);
+            setSourceType("paste");
+          }}
           rows={14}
           placeholder="Paste the raw meeting transcript here…"
           className="block w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -127,13 +186,20 @@ export function TranscriptEditor({
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
           <span>{wordCount} words</span>
-          <label className="cursor-pointer text-indigo-600 hover:text-indigo-700">
-            Upload .txt file
+          <label
+            className={
+              isParsingDocx
+                ? "cursor-wait text-neutral-400"
+                : "cursor-pointer text-indigo-600 hover:text-indigo-700"
+            }
+          >
+            {isParsingDocx ? "Extracting text from DOCX…" : "Upload .txt or .docx file"}
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt,text/plain"
+              accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleFileChange}
+              disabled={isParsingDocx}
               className="hidden"
             />
           </label>
@@ -141,6 +207,20 @@ export function TranscriptEditor({
 
         {sourceNote ? (
           <p className="mt-2 text-xs text-amber-700">{sourceNote}</p>
+        ) : null}
+
+        {docxError ? (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {docxError}
+          </div>
+        ) : null}
+
+        {docxWarnings.length > 0 ? (
+          <ul className="mt-3 space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {docxWarnings.map((warning, index) => (
+              <li key={index}>{warning}</li>
+            ))}
+          </ul>
         ) : null}
 
         {saveError ? (
@@ -158,7 +238,7 @@ export function TranscriptEditor({
         <div className="mt-4">
           <button
             type="button"
-            onClick={() => handleSave("paste")}
+            onClick={() => handleSave()}
             disabled={isSaving || text.trim().length === 0}
             className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
           >

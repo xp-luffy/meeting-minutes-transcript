@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { CopyLinkButton } from "./copy-link-button";
 
@@ -37,6 +38,21 @@ export default async function InvitePage() {
         >
           Email an invite
         </a>
+      </div>
+
+      <div className="mt-6 rounded-lg border border-indigo-200 bg-indigo-50 p-5 text-sm text-indigo-900">
+        <p className="font-medium">Inviting to a specific team? Workspace invites now live there.</p>
+        <p className="mt-1 text-indigo-800/80">
+          The signup link above gives someone an account. To share specific meetings with them,
+          invite their email to a workspace instead — meetings tagged to that workspace become
+          visible and editable for every member.
+        </p>
+        <Link
+          href="/workspaces"
+          className="mt-3 inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Go to Workspaces
+        </Link>
       </div>
 
       <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-5 text-sm text-neutral-600">

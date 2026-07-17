@@ -13,6 +13,8 @@ import { StatusWorkflow } from "./status-workflow";
 import { AttendanceEditor } from "./attendance-editor";
 import { RegenerateButton } from "./regenerate-button";
 import { ActivityFeed, type AuditLogEntry } from "./activity-feed";
+import { PrecedentPanel } from "./precedent-panel";
+import { SendForReview } from "./send-for-review";
 
 export default async function DraftPage({
   params,
@@ -127,6 +129,11 @@ export default async function DraftPage({
               draftId={typedDraft.id}
               disabled={!typedDraft.body_html || typedDraft.body_html.length === 0}
             />
+            <SendForReview
+              meetingId={typedMeeting.id}
+              draftId={typedDraft.id}
+              disabled={!typedDraft.body_html || typedDraft.body_html.length === 0}
+            />
             {!isFinal ? <RegenerateButton meetingId={id} /> : null}
             <StatusWorkflow
               draftId={typedDraft.id}
@@ -203,6 +210,8 @@ export default async function DraftPage({
           </ul>
         )}
       </div>
+
+      <PrecedentPanel meetingId={id} />
 
       <ActivityFeed entries={typedAuditLogs} />
     </div>
