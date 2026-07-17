@@ -72,7 +72,7 @@ function ConflictRow({ finding }: { finding: ConflictFinding }) {
         </div>
         <p className="mt-1 text-xs leading-relaxed text-neutral-600">{finding.detail}</p>
         {finding.relatedEntity || finding.relatedCompany ? (
-          <p className="mt-1.5 text-[11px] font-medium tracking-wide text-neutral-400 uppercase">
+          <p className="mt-1.5 break-words text-[11px] font-medium tracking-wide text-neutral-400 uppercase">
             {finding.relatedEntity}
             {finding.relatedEntity && finding.relatedCompany ? " ↔ " : ""}
             {finding.relatedCompany}

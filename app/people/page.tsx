@@ -60,10 +60,10 @@ export default async function PeoplePage({
       ) : (
         <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {people.map((person) => (
-            <li key={person.id}>
+            <li key={person.id} className="min-w-0">
               <Link
                 href={`/people/${person.id}`}
-                className={`block h-full rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                className={`block h-full min-w-0 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
               >
                 <h2 className="truncate text-base font-medium text-neutral-900">
                   {person.canonical_name}

@@ -109,7 +109,7 @@ export default async function EntityDetailPage({
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <Link
                   href={`/companies/${c.id}`}
-                  className={`truncate text-sm font-medium text-neutral-900 hover:text-indigo-600 ${FOCUS_RING}`}
+                  className={`min-w-0 truncate text-sm font-medium text-neutral-900 hover:text-indigo-600 ${FOCUS_RING}`}
                 >
                   {c.name}
                 </Link>

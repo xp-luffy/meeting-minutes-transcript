@@ -73,9 +73,9 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
                 key={obligation.id}
                 className="rounded-md border border-neutral-200 px-3 py-2 text-xs text-neutral-600"
               >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium text-neutral-700">{obligation.title}</span>
-                  <span className="flex items-center gap-1.5">
+                <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <span className="min-w-0 font-medium break-words text-neutral-700">{obligation.title}</span>
+                  <span className="flex flex-wrap items-center gap-1.5">
                     <Badge variant={KIND_VARIANT[obligation.kind]}>{KIND_LABEL[obligation.kind]}</Badge>
                     <Badge variant={STATUS_VARIANT[obligation.status]} className="capitalize">
                       {obligation.status}

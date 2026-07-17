@@ -127,7 +127,7 @@ export default async function CompanyDetailPage({
                     href={`/people/${person.id}`}
                     className={`flex items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
                   >
-                    <span className="truncate text-sm font-medium text-neutral-900">{person.name}</span>
+                    <span className="min-w-0 truncate text-sm font-medium text-neutral-900">{person.name}</span>
                     <Badge variant="indigo">{relationLabel(person.relation)}</Badge>
                   </Link>
                 </li>

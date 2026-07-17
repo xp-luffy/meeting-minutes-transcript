@@ -57,21 +57,34 @@ export interface PersonListItem {
  * attended, # companies linked) come from one bulk entity_links query keyed
  * on all matching entity ids — never one query per person.
  */
+const PEOPLE_PAGE_LIMIT = 200;
+
 export async function getPeopleList(query: string): Promise<PersonListItem[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const needle = query.trim().toLowerCase();
+
+  // Push the name search into the query (trigram-indexed ILIKE) and bound the
+  // page — at portfolio scale loading every entity + all its edges to count
+  // connections in JS doesn't scale (docs/SIM_REPORT_V3.md). Alias-only matches
+  // beyond the name match are a documented v1 gap.
+  let listQuery = supabase
     .from("entities")
     .select("id, canonical_name, aliases")
     .eq("kind", "person")
-    .order("canonical_name", { ascending: true });
+    .order("canonical_name", { ascending: true })
+    .limit(PEOPLE_PAGE_LIMIT);
+  if (needle) {
+    listQuery = listQuery.ilike("canonical_name", `%${needle.replace(/[%_]/g, (m) => `\\${m}`)}%`);
+  }
+  const { data, error } = await listQuery;
 
   if (error || !data) return [];
 
   type Row = { id: string; canonical_name: string; aliases: unknown };
   let rows = data as Row[];
 
-  const needle = query.trim().toLowerCase();
   if (needle) {
+    // Keep alias-substring matches that also landed in the page.
     rows = rows.filter((r) => {
       if (r.canonical_name.toLowerCase().includes(needle)) return true;
       return toAliasArray(r.aliases).some((a) => a.toLowerCase().includes(needle));

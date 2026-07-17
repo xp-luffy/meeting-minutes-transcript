@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FOCUS_RING } from "@/components/ui";
 
 /**
  * Dependency-free local ego-graph: the center entity in the middle, its
@@ -143,7 +144,7 @@ function NodeMark({ node }: { node: Positioned }) {
         fontWeight={node.radius === CENTER_NODE_RADIUS ? 600 : 400}
         fill="#404040"
       >
-        {truncateLabel(node.label, node.radius === CENTER_NODE_RADIUS ? 22 : 16)}
+        {truncateLabel(node.label, node.radius === CENTER_NODE_RADIUS ? 18 : 12)}
       </text>
     </g>
   );
@@ -190,6 +191,29 @@ const LEGEND_ITEMS: { kind: string; label: string }[] = [
   { kind: "org", label: "Organisation" },
   { kind: "meeting", label: "Meeting" },
 ];
+
+/** Shared node list (link + relation) used by both the mobile-open and desktop-collapsed list views below. */
+function NodeListItems({ nodes, className = "" }: { nodes: EgoGraphNode[]; className?: string }) {
+  return (
+    <ul className={`space-y-1 ${className}`}>
+      {nodes.map((node) => {
+        const href = routeFor(node.kind, node.id);
+        return (
+          <li key={node.id}>
+            {href ? (
+              <Link href={href} className={`rounded-sm text-indigo-600 hover:underline ${FOCUS_RING}`}>
+                {node.label}
+              </Link>
+            ) : (
+              <span>{node.label}</span>
+            )}
+            {node.relation ? <span className="text-neutral-400"> — {node.relation}</span> : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function EgoGraph({
   center,
@@ -241,27 +265,23 @@ export function EgoGraph({
         <p className="mt-2 text-center text-xs text-neutral-400">and {overflow} more not shown</p>
       ) : null}
 
-      <details className="mt-3 text-xs text-neutral-500">
-        <summary className="cursor-pointer select-none text-neutral-500 hover:text-neutral-700">
+      {/*
+        Below `sm`, up to 24 radially-packed labels get crowded fast on a
+        375px screen — the list is the reliable, legible fallback there, so
+        it's shown open (not tucked behind a tap) by default. At `sm` and up
+        the graph has enough room, so the list goes back to a collapsed
+        <details> to avoid duplicating content.
+      */}
+      <div className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500 sm:hidden">
+        <p className="font-medium text-neutral-600">List view</p>
+        <NodeListItems nodes={cappedNodes} className="mt-2" />
+      </div>
+
+      <details className="mt-3 hidden text-xs text-neutral-500 sm:block">
+        <summary className={`cursor-pointer select-none rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
           View as list
         </summary>
-        <ul className="mt-2 space-y-1">
-          {cappedNodes.map((node) => {
-            const href = routeFor(node.kind, node.id);
-            return (
-              <li key={node.id}>
-                {href ? (
-                  <Link href={href} className="text-indigo-600 hover:underline">
-                    {node.label}
-                  </Link>
-                ) : (
-                  <span>{node.label}</span>
-                )}
-                {node.relation ? <span className="text-neutral-400"> — {node.relation}</span> : null}
-              </li>
-            );
-          })}
-        </ul>
+        <NodeListItems nodes={cappedNodes} className="mt-2" />
       </details>
     </div>
   );

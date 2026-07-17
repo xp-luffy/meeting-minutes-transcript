@@ -152,15 +152,18 @@ export async function detectConflicts(
     const interestCompanyIds = new Set(dirLinks.map((l) => l.target_id));
 
     // --- candidate counterparty companies in scope -------------------------
-    const { data: companies } = await supabase
-      .from("companies")
-      .select("id, name")
-      .limit(MAX_COMPANIES);
-    // Only companies an attendee actually directs can produce a conflict, and
-    // never the meeting's own company.
+    // Scope the fetch to the companies an attendee actually directs (already
+    // known). A bare limit(N) here was a CORRECTNESS bug: past N companies for
+    // a firm, the implicated counterparty could fall outside the slice and the
+    // conflict would silently go undetected (docs/SIM_REPORT_V3.md).
+    const interestCompanyIdList = Array.from(interestCompanyIds).slice(0, MAX_COMPANIES);
+    const { data: companies } =
+      interestCompanyIdList.length > 0
+        ? await supabase.from("companies").select("id, name").in("id", interestCompanyIdList)
+        : { data: [] as { id: string; name: string }[] };
+    // Never flag the meeting's own company.
     const counterpartyCompanies = (companies ?? []).filter(
       (c) =>
-        interestCompanyIds.has(c.id as string) &&
         c.id !== ownCompanyId &&
         normalize((c.name as string) ?? "") !== ownCompanyNorm,
     );

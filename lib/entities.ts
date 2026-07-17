@@ -398,7 +398,16 @@ export async function resolveEntitiesForMeeting(
 
     const scope = { user_id: meetingRow.user_id, workspace_id: meetingRow.workspace_id };
 
-    let candidateQuery = supabase.from("entities").select("id, canonical_name, normalized_name, aliases").eq("kind", "person");
+    // Bounded candidate load: a meeting resolves a handful of attendees, so the
+    // most-recent slice is more than enough to match returning people. Caps the
+    // fetch on a mega-firm with tens of thousands of entities (SIM_REPORT_V3.md);
+    // a per-attendee trigram prefilter is the future refinement for that tail.
+    let candidateQuery = supabase
+      .from("entities")
+      .select("id, canonical_name, normalized_name, aliases")
+      .eq("kind", "person")
+      .order("created_at", { ascending: false })
+      .limit(2000);
     candidateQuery = scope.workspace_id
       ? candidateQuery.eq("workspace_id", scope.workspace_id)
       : candidateQuery.is("workspace_id", null);
