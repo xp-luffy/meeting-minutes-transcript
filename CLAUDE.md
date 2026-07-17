@@ -26,6 +26,7 @@
 - Vercel builds are configured to skip for documentation-only commits (claude.md, agents.md) to prevent wasteful deployment cycles from launchpad sync operations
 - Recent commits are documentation-only syncs (claude.md, agents.md); no feature development or code changes are happening in current commit cycle
 - Recent commits are documentation-only (claude.md sync); no feature development or code changes detected in current cycle
+- Recent commits are documentation-only (AGENTS.md sync); no feature development or code changes detected in current commit cycle
 
 ## Notes
 
