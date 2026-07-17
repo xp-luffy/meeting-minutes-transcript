@@ -95,3 +95,4 @@
 - All audit findings resolved across both Opus and Codex implementations; project cleared for deployment
 - Production deploy triggered for V2 with assurance engine, company memory, and confirmation flow ready
 - Project is in maintenance mode with only documentation syncs (CLAUDE.md, agents.md) and no active feature development
+- Latest commit is chore: sync AGENTS.md—documentation maintenance only with no code changes or feature development in current cycle
