@@ -1,0 +1,108 @@
+"use client";
+
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import type { MeetingStatus } from "@/lib/types";
+import { formatDate } from "@/lib/format";
+import { markDraftFinal, markDraftReviewed } from "./actions";
+
+const CONFIRM_WINDOW_MS = 4000;
+
+/**
+ * Header controls for the draft status workflow: draft → reviewed → final.
+ * "Mark Final" requires a second click within a short window to confirm,
+ * since it locks all editing once applied.
+ */
+export function StatusWorkflow({
+  draftId,
+  meetingId,
+  status,
+  finalisedAt,
+}: {
+  draftId: string;
+  meetingId: string;
+  status: MeetingStatus;
+  finalisedAt: string | null;
+}) {
+  const router = useRouter();
+  const [confirmingFinal, setConfirmingFinal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current);
+    };
+  }, []);
+
+  function handleMarkReviewed() {
+    setError(null);
+    startTransition(async () => {
+      const result = await markDraftReviewed(draftId, meetingId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  function handleMarkFinalClick() {
+    setError(null);
+    if (!confirmingFinal) {
+      setConfirmingFinal(true);
+      confirmTimer.current = setTimeout(() => setConfirmingFinal(false), CONFIRM_WINDOW_MS);
+      return;
+    }
+
+    if (confirmTimer.current) clearTimeout(confirmTimer.current);
+    setConfirmingFinal(false);
+    startTransition(async () => {
+      const result = await markDraftFinal(draftId, meetingId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  if (status === "final") {
+    return (
+      <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-600">
+        Finalised on {formatDate(finalisedAt)} — editing locked
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
+      {status === "draft" ? (
+        <button
+          type="button"
+          onClick={handleMarkReviewed}
+          disabled={isPending}
+          className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isPending ? "Saving…" : "Mark Reviewed"}
+        </button>
+      ) : null}
+      {status === "reviewed" ? (
+        <button
+          type="button"
+          onClick={handleMarkFinalClick}
+          disabled={isPending}
+          className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${
+            confirmingFinal
+              ? "bg-red-600 text-white hover:bg-red-700"
+              : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+          }`}
+        >
+          {isPending ? "Saving…" : confirmingFinal ? "Confirm Mark Final?" : "Mark Final"}
+        </button>
+      ) : null}
+    </div>
+  );
+}

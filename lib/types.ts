@@ -37,6 +37,8 @@ export interface MinutesDraft {
   body_html_review_status: "unreviewed" | "approved" | "amended";
   status: MeetingStatus;
   version: number;
+  reviewed_at: string | null;
+  finalised_at: string | null;
   created_at: string;
 }
 

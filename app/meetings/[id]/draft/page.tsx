@@ -3,16 +3,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting, MinutesDraft, Resolution } from "@/lib/types";
 import { MeetingHeader } from "@/components/meeting-header";
-import {
-  Badge,
-  ConfidenceChip,
-  ConfidenceTag,
-  ItemStatusPill,
-  OutcomePill,
-  StatusBadge,
-} from "@/components/ui";
-import { formatDate } from "@/lib/format";
+import { ConfidenceChip, ConfidenceTag } from "@/components/ui";
+import { ExportButtons } from "@/components/export-buttons";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
+import { DraftBodyEditor } from "./draft-body-editor";
+import { ResolutionCard } from "./resolution-card";
+import { ActionItemRow } from "./action-item-row";
+import { StatusWorkflow } from "./status-workflow";
 
 export default async function DraftPage({
   params,
@@ -39,7 +36,7 @@ export default async function DraftPage({
   const { data: draft } = await supabase
     .from("minutes_drafts")
     .select(
-      "id, meeting_id, transcript_id, body_html, body_html_source, body_html_confidence, body_html_review_status, status, version, created_at",
+      "id, meeting_id, transcript_id, body_html, body_html_source, body_html_confidence, body_html_review_status, status, version, reviewed_at, finalised_at, created_at",
     )
     .eq("meeting_id", id)
     .order("version", { ascending: false })
@@ -93,6 +90,8 @@ export default async function DraftPage({
     typedDraft.body_html_confidence !== undefined &&
     typedDraft.body_html_confidence < CONFIDENCE_REVIEW_THRESHOLD;
 
+  const isFinal = typedDraft.status === "final";
+
   return (
     <div className="space-y-8">
       <MeetingHeader meeting={typedMeeting} />
@@ -103,16 +102,28 @@ export default async function DraftPage({
             <h1 className="text-lg font-semibold text-neutral-900">
               Minutes Draft v{typedDraft.version}
             </h1>
-            <StatusBadge status={typedDraft.status} />
             <ConfidenceChip confidence={typedDraft.body_html_confidence} />
             <ConfidenceTag confidence={typedDraft.body_html_confidence} label="Needs review" />
           </div>
-          <Link
-            href={`/meetings/${id}/transcript`}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
-          >
-            View transcript →
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={`/meetings/${id}/transcript`}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              View transcript →
+            </Link>
+            <ExportButtons
+              meetingId={typedMeeting.id}
+              draftId={typedDraft.id}
+              disabled={!typedDraft.body_html || typedDraft.body_html.length === 0}
+            />
+            <StatusWorkflow
+              draftId={typedDraft.id}
+              meetingId={id}
+              status={typedDraft.status}
+              finalisedAt={typedDraft.finalised_at}
+            />
+          </div>
         </div>
 
         <div
@@ -123,13 +134,20 @@ export default async function DraftPage({
           {!typedDraft.body_html ? (
             <p className="text-sm text-neutral-500">This draft has no content yet.</p>
           ) : typedDraft.body_html_source === "legacy_md" ? (
-            <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700">
-              {typedDraft.body_html}
-            </pre>
+            <>
+              <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700">
+                {typedDraft.body_html}
+              </pre>
+              <p className="mt-4 text-xs font-medium text-neutral-500">
+                Legacy draft — regenerate to edit.
+              </p>
+            </>
           ) : (
-            <div
-              className="minutes-body"
-              dangerouslySetInnerHTML={{ __html: typedDraft.body_html }}
+            <DraftBodyEditor
+              draftId={typedDraft.id}
+              meetingId={id}
+              initialHtml={typedDraft.body_html}
+              isFinal={isFinal}
             />
           )}
         </div>
@@ -143,35 +161,14 @@ export default async function DraftPage({
           </div>
         ) : (
           <ul className="mt-3 space-y-3">
-            {typedResolutions.map((resolution) => {
-              const lowConfidence =
-                resolution.resolution_text_confidence !== null &&
-                resolution.resolution_text_confidence !== undefined &&
-                resolution.resolution_text_confidence < CONFIDENCE_REVIEW_THRESHOLD;
-              return (
-                <li
-                  key={resolution.id}
-                  className={`rounded-lg border bg-white p-4 shadow-sm ${
-                    lowConfidence
-                      ? "border-neutral-200 border-l-4 border-l-amber-400"
-                      : "border-neutral-200"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-neutral-900">
-                        {resolution.resolution_number ?? "—"}
-                      </span>
-                      <OutcomePill outcome={resolution.outcome} />
-                      {lowConfidence ? (
-                        <Badge variant="amber">Low confidence — review</Badge>
-                      ) : null}
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm text-neutral-700">{resolution.resolution_text}</p>
-                </li>
-              );
-            })}
+            {typedResolutions.map((resolution) => (
+              <ResolutionCard
+                key={resolution.id}
+                resolution={resolution}
+                meetingId={id}
+                isFinal={isFinal}
+              />
+            ))}
           </ul>
         )}
       </div>
@@ -182,34 +179,9 @@ export default async function DraftPage({
           <p className="mt-3 text-sm text-neutral-500">No action items extracted.</p>
         ) : (
           <ul className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
-            {typedActionItems.map((item) => {
-              const lowConfidence =
-                item.description_confidence !== null &&
-                item.description_confidence !== undefined &&
-                item.description_confidence < CONFIDENCE_REVIEW_THRESHOLD;
-              return (
-                <li
-                  key={item.id}
-                  className={`flex flex-wrap items-center justify-between gap-3 p-4 ${
-                    lowConfidence ? "bg-amber-50/50" : ""
-                  }`}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-neutral-800">{item.description}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500">
-                      {item.owner_name ? (
-                        <span>{item.owner_name}</span>
-                      ) : (
-                        <Badge variant="amber">No owner</Badge>
-                      )}
-                      <span>&middot; Due {formatDate(item.due_date)}</span>
-                      {lowConfidence ? <Badge variant="amber">Low confidence</Badge> : null}
-                    </div>
-                  </div>
-                  <ItemStatusPill status={item.item_status} />
-                </li>
-              );
-            })}
+            {typedActionItems.map((item) => (
+              <ActionItemRow key={item.id} item={item} meetingId={id} isFinal={isFinal} />
+            ))}
           </ul>
         )}
       </div>

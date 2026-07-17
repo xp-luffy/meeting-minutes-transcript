@@ -1,0 +1,226 @@
+import {
+  AlignmentType,
+  Document,
+  HeadingLevel,
+  Packer,
+  Paragraph,
+  TextRun,
+} from "docx";
+import { parseHtmlToBlocks, type Block } from "./html-parse";
+import type { ExportData } from "./types";
+import { formatDate } from "@/lib/format";
+
+const OUTCOME_LABEL: Record<string, string> = {
+  carried: "Carried",
+  deferred: "Deferred",
+  lapsed: "Lapsed",
+};
+
+/** Splits a run's text on literal "\n" (our <br> marker) into separate docx TextRuns joined by line breaks. */
+function runToTextRuns(text: string, bold: boolean, italic: boolean): TextRun[] {
+  const parts = text.split("\n");
+  return parts.map(
+    (part, index) =>
+      new TextRun({
+        text: part,
+        bold,
+        italics: italic,
+        break: index > 0 ? 1 : undefined,
+      }),
+  );
+}
+
+function blockToParagraph(block: Block): Paragraph {
+  const children = block.runs.flatMap((run) => runToTextRuns(run.text, run.bold, run.italic));
+
+  switch (block.type) {
+    case "heading1":
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 240, after: 120 },
+        children,
+      });
+    case "heading2":
+      return new Paragraph({
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 200, after: 100 },
+        children,
+      });
+    case "listItem":
+      return new Paragraph({
+        bullet: { level: 0 },
+        spacing: { after: 80 },
+        children,
+      });
+    case "para":
+    default:
+      return new Paragraph({
+        spacing: { after: 120 },
+        children,
+      });
+  }
+}
+
+/**
+ * Builds a statutory minutes Word document (.docx) as a Buffer from
+ * already-fetched meeting/draft/resolutions/action-items data. Pure
+ * function — no Supabase, no framework imports — so it's directly
+ * unit-testable.
+ */
+export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
+  const { meeting, draft, resolutions, actionItems } = data;
+
+  const bodyBlocks = parseHtmlToBlocks(draft.body_html ?? "");
+
+  const attendeeLines = (meeting.attendees ?? [])
+    .map((a) => `${a.name}${a.role ? ` (${a.role})` : ""}`)
+    .join("; ");
+
+  const children: Paragraph[] = [];
+
+  // Title
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+      children: [
+        new TextRun({
+          text: `MINUTES OF ${meeting.meeting_type.toUpperCase()}`,
+          bold: true,
+          size: 32,
+        }),
+      ],
+    }),
+  );
+
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 },
+      children: [new TextRun({ text: meeting.company_name, bold: true, size: 26 })],
+    }),
+  );
+
+  // Date / venue / chairperson block
+  children.push(
+    new Paragraph({
+      spacing: { after: 80 },
+      children: [
+        new TextRun({ text: "Date: ", bold: true }),
+        new TextRun({ text: formatDate(meeting.meeting_date) }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 80 },
+      children: [
+        new TextRun({ text: "Venue: ", bold: true }),
+        new TextRun({ text: meeting.venue ?? "Not specified" }),
+      ],
+    }),
+    new Paragraph({
+      spacing: { after: 80 },
+      children: [
+        new TextRun({ text: "Chairperson: ", bold: true }),
+        new TextRun({ text: meeting.chairperson ?? "Not specified" }),
+      ],
+    }),
+  );
+
+  if (attendeeLines) {
+    children.push(
+      new Paragraph({
+        spacing: { after: 200 },
+        children: [
+          new TextRun({ text: "Attendees: ", bold: true }),
+          new TextRun({ text: attendeeLines }),
+        ],
+      }),
+    );
+  }
+
+  // Body blocks
+  for (const block of bodyBlocks) {
+    children.push(blockToParagraph(block));
+  }
+
+  // Resolutions section
+  children.push(
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      spacing: { before: 300, after: 120 },
+      children: [new TextRun({ text: "RESOLUTIONS", bold: true })],
+    }),
+  );
+
+  if (resolutions.length === 0) {
+    children.push(
+      new Paragraph({
+        spacing: { after: 120 },
+        children: [new TextRun({ text: "No resolutions recorded.", italics: true })],
+      }),
+    );
+  } else {
+    for (const resolution of resolutions) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [
+            new TextRun({ text: `${resolution.resolution_number ?? "—"} `, bold: true }),
+            new TextRun({ text: resolution.resolution_text }),
+          ],
+        }),
+        new Paragraph({
+          spacing: { after: 160 },
+          children: [
+            new TextRun({ text: "Outcome: ", bold: true }),
+            new TextRun({ text: OUTCOME_LABEL[resolution.outcome] ?? resolution.outcome }),
+          ],
+        }),
+      );
+    }
+  }
+
+  // Action items section
+  children.push(
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      spacing: { before: 300, after: 120 },
+      children: [new TextRun({ text: "ACTION ITEMS", bold: true })],
+    }),
+  );
+
+  if (actionItems.length === 0) {
+    children.push(
+      new Paragraph({
+        spacing: { after: 120 },
+        children: [new TextRun({ text: "No action items recorded.", italics: true })],
+      }),
+    );
+  } else {
+    for (const item of actionItems) {
+      children.push(
+        new Paragraph({
+          spacing: { after: 40 },
+          children: [new TextRun({ text: item.description })],
+        }),
+        new Paragraph({
+          spacing: { after: 160 },
+          children: [
+            new TextRun({ text: "Owner: ", bold: true }),
+            new TextRun({ text: item.owner_name ?? "Unassigned" }),
+            new TextRun({ text: "   Due: ", bold: true }),
+            new TextRun({ text: formatDate(item.due_date) }),
+            new TextRun({ text: "   Status: ", bold: true }),
+            new TextRun({ text: item.item_status === "done" ? "Done" : "Open" }),
+          ],
+        }),
+      );
+    }
+  }
+
+  const doc = new Document({
+    sections: [{ children }],
+  });
+
+  return Packer.toBuffer(doc);
+}
