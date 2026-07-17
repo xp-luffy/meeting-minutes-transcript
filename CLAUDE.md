@@ -31,3 +31,5 @@
 - Sprint 4 focus is authentication, roles, and RLS (row-level security) lock-down implementation
 - CLAUDE.md (Launchpad memory) was synced in latest commit, confirming documentation is actively maintained
 - AGENTS.md was synced in recent commit as part of documentation maintenance workflow
+- Later-phase features are now in active development: workspaces, DOCX upload, Tiptap editor, intelligence layer, and review shares
+- HANDOFF.md was added for device takeover protocol, indicating active knowledge transfer and documentation maturity
