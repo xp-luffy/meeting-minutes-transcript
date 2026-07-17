@@ -28,6 +28,7 @@
 - Recent commits are documentation-only (claude.md sync); no feature development or code changes detected in current cycle
 - Recent commits are documentation-only (AGENTS.md sync); no feature development or code changes detected in current commit cycle
 - Recent commit is documentation-only (chore: sync CLAUDE.md); no code changes or feature development in current cycle
+- Vercel builds are being skipped for claude/agents.md-only commits to prevent launchpad sync loop cycles
 
 ## Notes
 
@@ -66,3 +67,4 @@
 - Latest commit is agents.md sync only; no code changes or feature development in this cycle.
 - Vercel build skipping is in place for claude/agents.md-only commits to prevent launchpad sync loop cycles
 - Recent commit is chore: sync AGENTS.md (documentation maintenance only); no code changes or feature development
+- Recent commit is documentation maintenance only (agents.md sync); no active feature development or code changes in current cycle
