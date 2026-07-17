@@ -42,6 +42,7 @@
 - Recent commit is chore: sync AGENTS.md only—purely documentation maintenance with no code changes or feature development
 - Viewport meta tag fix was critical—mobile breakpoints were inert on real devices despite working in dev, requiring explicit viewport configuration
 - No objective currently set—project lacks clarity on success criteria and prioritization despite having a comprehensive roadmap and completed v2 deployment
+- Recent commits are purely documentation maintenance (agents.md/claude.md syncs) with no code changes or feature development
 
 ## Notes
 
