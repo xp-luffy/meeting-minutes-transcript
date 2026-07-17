@@ -13,3 +13,4 @@
 ## Notes
 
 - Project has documentation in place: PRD, architecture docs, and sprint plans available in plan pack
+- AGENTS.md (Launchpad memory) was synced in recent commits, indicating documentation update workflows are in place
