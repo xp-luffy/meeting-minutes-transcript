@@ -10,6 +10,10 @@
 - `lint`: `next lint`
 - `start`: `next start`
 
+## Decisions
+
+- Vercel build skipping implemented for CLAUDE/AGENTS.md-only commits to prevent runaway Launchpad sync loop cycles
+
 ## Architecture
 
 - RLS (row-level security) is being implemented as part of Sprint 4 to enforce data access control at the database level
