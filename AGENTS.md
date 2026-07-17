@@ -21,6 +21,7 @@
 ## Gotchas
 
 - No objective is currently set for this project, requiring clarity on success criteria and prioritization
+- Vercel build skipping is implemented for claude/agents.md-only commits to prevent runaway launchpad sync loop cycles
 
 ## Notes
 
