@@ -51,3 +51,5 @@
 - Recent commit activity is documentation-only (house-style minutes format synced); no code changes or feature development underway
 - Recent commit activity is purely documentation maintenance (CLAUDE.md sync); no feature development or code changes detected in current commit cycle
 - Recent commit activity consists of documentation maintenance only (claude.md sync); no feature development or code changes detected in current commit cycle
+- Latest commit is documentation-only (chore: sync CLAUDE.md); no code changes or feature development.
+- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
