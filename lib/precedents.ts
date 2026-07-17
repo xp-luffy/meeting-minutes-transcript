@@ -124,10 +124,17 @@ async function fetchCandidates(
     .limit(limit);
 
   if (companyFilter) {
-    query =
-      companyFilter.mode === "same"
-        ? query.eq("meetings.company_id", companyFilter.companyId)
-        : query.neq("meetings.company_id", companyFilter.companyId);
+    if (companyFilter.mode === "same") {
+      query = query.eq("meetings.company_id", companyFilter.companyId);
+    } else {
+      // "other" tier: everything NOT this company — INCLUDING meetings with a
+      // null company_id (legacy/demo), which a bare `.neq` would silently drop
+      // (Postgres NULL <> x is UNKNOWN). Explicit or-filter keeps them (audit P2).
+      query = query.or(
+        `company_id.is.null,company_id.neq.${companyFilter.companyId}`,
+        { referencedTable: "meetings" },
+      );
+    }
   }
 
   const { data, error } = await query;

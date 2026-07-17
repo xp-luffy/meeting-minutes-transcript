@@ -9,6 +9,7 @@ import { getMyWorkspaces, type WorkspaceSummary } from "@/lib/workspace";
 type MeetingRow = Meeting & { user_id: string | null; workspace_id: string | null };
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const HOMEPAGE_MEETING_LIMIT = 200;
 
 async function getMeetingsWithLatestDrafts(): Promise<{
   meetings: MeetingRow[];
@@ -24,7 +25,10 @@ async function getMeetingsWithLatestDrafts(): Promise<{
       "id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, created_at, user_id, workspace_id",
     )
     .order("meeting_date", { ascending: false })
-    .limit(50);
+    // Bounded for scale (SIM_REPORT.md) but high enough that a multi-workspace
+    // portfolio's older groups aren't starved by one busy group (audit P2).
+    // Complete per-group views live at /companies and /workspaces.
+    .limit(HOMEPAGE_MEETING_LIMIT);
 
   if (meetingsError) {
     return {

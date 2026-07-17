@@ -40,7 +40,11 @@ function weekFromNowIso(): string {
 
 const PAGE_LIMIT = 200;
 
-async function getActionItemsWithMeetings(statusFilter: StatusFilter): Promise<{
+async function getActionItemsWithMeetings(
+  statusFilter: StatusFilter,
+  dueFilter: DueFilter,
+  ownerFilter: string,
+): Promise<{
   items: ActionItem[];
   meetingsById: Map<string, Meeting>;
   counts: { open: number; done: number; overdue: number };
@@ -49,8 +53,10 @@ async function getActionItemsWithMeetings(statusFilter: StatusFilter): Promise<{
 }> {
   const supabase = await createClient();
 
-  // Status pushed into the query + hard LIMIT: at portfolio scale (40k+ rows)
-  // fetching everything and filtering in JS is 50x slower (docs/SIM_REPORT.md).
+  // ALL filters pushed into the query BEFORE the LIMIT — otherwise a match past
+  // row #200 (by due date) would be invisible after JS filtering (audit P2).
+  // At portfolio scale fetching everything is also ~50x slower (SIM_REPORT.md).
+  const today = todayIso();
   let query = supabase
     .from("action_items")
     .select(
@@ -61,16 +67,38 @@ async function getActionItemsWithMeetings(statusFilter: StatusFilter): Promise<{
   if (statusFilter !== "all") {
     query = query.eq("item_status", statusFilter);
   }
+  if (dueFilter === "overdue") {
+    query = query.not("due_date", "is", null).lt("due_date", today);
+  } else if (dueFilter === "week") {
+    query = query.not("due_date", "is", null).gte("due_date", today).lte("due_date", weekFromNowIso());
+  }
+  if (ownerFilter) {
+    // ilike with escaped wildcards — substring, case-insensitive
+    const needle = ownerFilter.replace(/[%_]/g, (m) => `\\${m}`);
+    query = query.ilike("owner_name", `%${needle}%`);
+  }
+
+  // Count chips are owner-scoped (match the visible owner filter) but span all
+  // statuses/due windows. Build each with its own owner-filtered count query.
+  const ownerNeedle = ownerFilter ? `%${ownerFilter.replace(/[%_]/g, (m) => `\\${m}`)}%` : null;
+  const openCountQuery = supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "open");
+  const doneCountQuery = supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "done");
+  const overdueCountQuery = supabase
+    .from("action_items")
+    .select("id", { count: "exact", head: true })
+    .eq("item_status", "open")
+    .lt("due_date", today);
+  if (ownerNeedle) {
+    openCountQuery.ilike("owner_name", ownerNeedle);
+    doneCountQuery.ilike("owner_name", ownerNeedle);
+    overdueCountQuery.ilike("owner_name", ownerNeedle);
+  }
 
   const [{ data: items, error: itemsError }, openRes, doneRes, overdueRes] = await Promise.all([
     query,
-    supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "open"),
-    supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "done"),
-    supabase
-      .from("action_items")
-      .select("id", { count: "exact", head: true })
-      .eq("item_status", "open")
-      .lt("due_date", todayIso()),
+    openCountQuery,
+    doneCountQuery,
+    overdueCountQuery,
   ]);
 
   const counts = {
@@ -119,7 +147,11 @@ export default async function ActionItemsPage({
   const dueFilter = parseDueFilter(params.due);
   const statusFilter = parseStatusFilter(params.status);
 
-  const { items, meetingsById, counts, atLimit, error } = await getActionItemsWithMeetings(statusFilter);
+  const { items, meetingsById, counts, atLimit, error } = await getActionItemsWithMeetings(
+    statusFilter,
+    dueFilter,
+    ownerFilter,
+  );
 
   if (error) {
     return (
@@ -129,28 +161,11 @@ export default async function ActionItemsPage({
     );
   }
 
-  const today = todayIso();
-  const weekEnd = weekFromNowIso();
-  const ownerNeedle = ownerFilter.toLowerCase();
-
-  const ownerMatched = ownerFilter
-    ? items.filter((item) => (item.owner_name ?? "").toLowerCase().includes(ownerNeedle))
-    : items;
-
+  // All filters (status, due window, owner) are applied in-query before the
+  // LIMIT, so the returned items ARE the rows to render.
   const { open: openCount, done: doneCount, overdue: overdueCount } = counts;
-
-  const rows = ownerMatched.filter((item) => {
-    // status already applied in the query; kept as a defensive no-op check
-    if (statusFilter !== "all" && item.item_status !== statusFilter) return false;
-
-    if (dueFilter === "overdue") {
-      if (!item.due_date || item.due_date >= today) return false;
-    } else if (dueFilter === "week") {
-      if (!item.due_date || item.due_date < today || item.due_date > weekEnd) return false;
-    }
-
-    return true;
-  });
+  const rows = items;
+  const today = todayIso();
 
   return (
     <div className="space-y-6">

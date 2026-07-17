@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
+import { sanitizeMinutesHtml } from "@/lib/sanitize-html";
 import { Badge } from "@/components/ui";
 import { ConfirmDraftCard } from "./confirm-draft-card";
 
@@ -66,7 +67,7 @@ export default async function SharedReviewPage({
         ) : (
           <div
             className="minutes-body"
-            dangerouslySetInnerHTML={{ __html: draft.body_html ?? "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeMinutesHtml(draft.body_html ?? "") }}
           />
         )}
       </div>

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { runAssurance } from "@/lib/assurance";
+import { sanitizeMinutesHtml } from "@/lib/sanitize-html";
 import type { Attendee } from "@/lib/types";
 
 export interface ActionResult {
@@ -19,20 +20,6 @@ export interface ActionResult {
 // breaking that rule).
 // ---------------------------------------------------------------------------
 
-/**
- * Very small v1 sanitiser: strips <script>/<style> blocks and on* attributes
- * before HTML from the editor is persisted. Not a full sanitiser, but blocks
- * the obvious injection vectors for hand-typed / pasted content.
- */
-function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/\son\w+\s*=\s*[^\s"'>]+/gi, "");
-}
-
 /** Looks up the current draft status for a meeting (latest version). */
 async function getDraftStatusByMeeting(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,20 +32,6 @@ async function getDraftStatusByMeeting(
     .eq("meeting_id", meetingId)
     .order("version", { ascending: false })
     .limit(1)
-    .maybeSingle();
-  return data?.status ?? null;
-}
-
-/** Looks up the current draft status by draft id directly. */
-async function getDraftStatusById(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: SupabaseClient<any, any, any>,
-  draftId: string,
-): Promise<string | null> {
-  const { data } = await supabase
-    .from("minutes_drafts")
-    .select("status")
-    .eq("id", draftId)
     .maybeSingle();
   return data?.status ?? null;
 }
@@ -120,7 +93,7 @@ export async function saveDraftBody(
     return { error: "Legacy draft — regenerate to edit." };
   }
 
-  const clean = sanitizeHtml(html);
+  const clean = sanitizeMinutesHtml(html);
 
   const { error } = await supabase
     .from("minutes_drafts")
@@ -172,13 +145,18 @@ export async function updateResolutionField(
     return { error: "Resolution text cannot be empty." };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("resolutions")
     .update({ [field]: value })
-    .eq("id", resolutionId);
+    .eq("id", resolutionId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
@@ -208,13 +186,18 @@ export async function acceptResolutionText(
     return { error: "This draft is finalised and can no longer be edited." };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("resolutions")
     .update({ resolution_text_review_status: "approved" })
-    .eq("id", resolutionId);
+    .eq("id", resolutionId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
@@ -257,13 +240,18 @@ export async function updateActionItemField(
 
   const updateValue = field === "due_date" || field === "owner_name" ? value || null : value;
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("action_items")
     .update({ [field]: updateValue })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
@@ -293,13 +281,18 @@ export async function toggleActionItemStatus(
 
   const nextStatus = currentStatus === "open" ? "done" : "open";
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("action_items")
     .update({ item_status: nextStatus })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
@@ -329,13 +322,18 @@ export async function acceptActionItemDescription(
     return { error: "This draft is finalised and can no longer be edited." };
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("action_items")
     .update({ description_review_status: "approved" })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
@@ -361,14 +359,26 @@ export async function markDraftReviewed(
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
-  const status = await getDraftStatusById(supabase, draftId);
-  if (status === "final") {
+  const { data: draftRow } = await supabase
+    .from("minutes_drafts")
+    .select("id, meeting_id, status")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  if (!draftRow) {
+    return { error: "Draft not found." };
+  }
+  if (draftRow.meeting_id !== meetingId) {
+    return { error: "Draft does not belong to this meeting." };
+  }
+  if (draftRow.status === "final") {
     return { error: "This draft is finalised and can no longer be edited." };
   }
-  if (status !== "draft") {
+  if (draftRow.status !== "draft") {
     return { error: "Only a draft in 'draft' status can be marked reviewed." };
   }
 
+  const verifiedMeetingId = draftRow.meeting_id;
   const nowIso = new Date().toISOString();
 
   const { error: draftError } = await supabase
@@ -383,7 +393,7 @@ export async function markDraftReviewed(
   const { error: meetingError } = await supabase
     .from("meetings")
     .update({ status: "reviewed" })
-    .eq("id", meetingId);
+    .eq("id", verifiedMeetingId);
 
   if (meetingError) {
     return { error: meetingError.message };
@@ -413,6 +423,20 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
 
   const supabase = await createClient();
 
+  const { data: draftRow } = await supabase
+    .from("minutes_drafts")
+    .select("id, meeting_id, status")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  if (!draftRow) {
+    return { error: "Draft not found." };
+  }
+  if (draftRow.meeting_id !== meetingId) {
+    return { error: "Draft does not belong to this meeting." };
+  }
+  const verifiedMeetingId = draftRow.meeting_id;
+
   // Assurance gate: an unresolved fail-level completeness gap blocks
   // finalising unless the risk has been explicitly acknowledged. A meeting
   // with no assurance report at all is allowed through (the assurance engine
@@ -439,11 +463,10 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     }
   }
 
-  const status = await getDraftStatusById(supabase, draftId);
-  if (status === "final") {
+  if (draftRow.status === "final") {
     return { error: "This draft is already finalised." };
   }
-  if (status !== "reviewed") {
+  if (draftRow.status !== "reviewed") {
     return { error: "Only a draft in 'reviewed' status can be marked final." };
   }
 
@@ -461,7 +484,7 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   const { error: meetingError } = await supabase
     .from("meetings")
     .update({ status: "final" })
-    .eq("id", meetingId);
+    .eq("id", verifiedMeetingId);
 
   if (meetingError) {
     return { error: friendlyRlsMessage(meetingError) };
@@ -557,12 +580,15 @@ export async function rerunAssurance(draftId: string, meetingId: string): Promis
 
   const { data: draft, error: draftError } = await supabase
     .from("minutes_drafts")
-    .select("id, body_html")
+    .select("id, meeting_id, body_html")
     .eq("id", draftId)
     .maybeSingle();
 
   if (draftError || !draft) {
     return { error: "Draft not found." };
+  }
+  if (draft.meeting_id !== meetingId) {
+    return { error: "Draft does not belong to this meeting." };
   }
 
   const [{ data: resolutions }, { data: actionItems }, { data: transcript }] = await Promise.all([
@@ -642,9 +668,14 @@ export async function acknowledgeAssurance(
   meetingId: string,
   note: string,
 ): Promise<ActionResult> {
-  const user = await getSessionUser();
-  if (!user) {
+  // Acknowledging a fail-level assurance risk is a cosec/admin act — the same
+  // authority gate as finalising minutes. Reviewers cannot self-clear the gate.
+  const profile = await getProfile();
+  if (!profile) {
     return { error: "Sign in to acknowledge assurance findings." };
+  }
+  if (profile.role === "reviewer") {
+    return { error: "Reviewers cannot acknowledge assurance risk — ask a cosec or admin." };
   }
 
   const trimmedNote = note.trim();
@@ -657,13 +688,18 @@ export async function acknowledgeAssurance(
 
   const supabase = await createClient();
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("assurance_reports")
     .update({ acknowledged_at: new Date().toISOString(), acknowledged_note: trimmedNote })
-    .eq("id", reportId);
+    .eq("id", reportId)
+    .eq("meeting_id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: friendlyRlsMessage(error) };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Not found for this meeting." };
   }
 
   await logAudit(supabase, {
