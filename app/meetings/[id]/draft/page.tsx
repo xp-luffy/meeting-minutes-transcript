@@ -17,6 +17,8 @@ import { PrecedentPanel } from "./precedent-panel";
 import { SendForReview } from "./send-for-review";
 import { AssurancePanel } from "./assurance-panel";
 import { ConfirmationStatus } from "./confirmation-status";
+import { ObligationsPanel } from "./obligations-panel";
+import { GovernanceRiskPanel } from "./governance-risk-panel";
 import type { AssuranceCheck } from "@/lib/assurance";
 
 export default async function DraftPage({
@@ -73,7 +75,13 @@ export default async function DraftPage({
     );
   }
 
-  const [{ data: resolutions }, { data: actionItems }, { data: auditLogs }, { data: assuranceRow }] = await Promise.all([
+  const [
+    { data: resolutions },
+    { data: actionItems },
+    { data: auditLogs },
+    { data: assuranceRow },
+    { data: transcriptRow },
+  ] = await Promise.all([
     supabase
       .from("resolutions")
       .select(
@@ -101,6 +109,13 @@ export default async function DraftPage({
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("transcripts")
+      .select("raw_text")
+      .eq("meeting_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const assuranceReport = assuranceRow
@@ -113,6 +128,8 @@ export default async function DraftPage({
         created_at: assuranceRow.created_at as string,
       }
     : null;
+
+  const transcriptText = ((transcriptRow?.raw_text as string | undefined) ?? "");
 
   const typedResolutions = (resolutions ?? []) as Resolution[];
   const typedActionItems = (actionItems ?? []) as ActionItem[];
@@ -247,6 +264,17 @@ export default async function DraftPage({
         draftId={typedDraft.id}
         isFinal={isFinal}
       />
+
+      <GovernanceRiskPanel
+        meetingId={id}
+        bodyHtml={typedDraft.body_html ?? ""}
+        transcriptText={transcriptText}
+        quorumMet={typedMeeting.quorum_met}
+        attendees={typedMeeting.attendees}
+        resolutions={typedResolutions}
+      />
+
+      <ObligationsPanel meetingId={id} />
 
       <PrecedentPanel meetingId={id} />
 

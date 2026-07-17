@@ -38,8 +38,10 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
   const links: NavLink[] = [
     { href: "/", label: "Meetings" },
     { href: "/action-items", label: "Action Items" },
-    ...(profile ? [{ href: "/workspaces", label: "Workspaces" }] : []),
+    ...(profile ? [{ href: "/obligations", label: "Obligations" }] : []),
     ...(profile ? [{ href: "/companies", label: "Companies" }] : []),
+    ...(profile ? [{ href: "/people", label: "People" }] : []),
+    ...(profile ? [{ href: "/workspaces", label: "Workspaces" }] : []),
   ];
 
   return (
