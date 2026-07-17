@@ -15,3 +15,4 @@
 - Project has documentation in place: PRD, architecture docs, and sprint plans available in plan pack
 - AGENTS.md (Launchpad memory) was synced in recent commits, indicating documentation update workflows are in place
 - Database schema migration was added as part of plan pack documentation commit
+- AGENTS.md (Launchpad memory) is actively maintained and synced through the commit workflow
