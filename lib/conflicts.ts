@@ -1,0 +1,273 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { nameSimilarity } from "./entities";
+
+/**
+ * Graph-powered conflict / related-party detection.
+ *
+ * Reads the directorship graph seeded in `entity_links` (a person entity
+ * linked to a company with relation director/chairman/shareholder) and cross-
+ * references it against the counterparties named in a meeting's resolutions.
+ * The flagship finding: a resolution deals with a company that one of the
+ * attendees privately directs, and no interest declaration is on the record.
+ *
+ * This module talks to Supabase, so it is NOT framework-free — it is verified
+ * by typecheck + live pilot, not the scratchpad unit tests. It never throws:
+ * any failure resolves to an empty finding list so the draft page still
+ * renders.
+ */
+
+export type ConflictSeverity = "warn" | "flag";
+
+export interface ConflictFinding {
+  severity: ConflictSeverity;
+  title: string;
+  detail: string;
+  relatedEntity?: string;
+  relatedCompany?: string;
+}
+
+// Relations that constitute a private interest worth flagging.
+const INTEREST_RELATIONS = ["director", "chairman", "shareholder"] as const;
+
+// "declaration of interest" recorded anywhere in the minutes body/transcript.
+const INTEREST_DECLARATION_RE = /declar\w+\s+(?:of\s+)?interest|interest.{0,20}declar/i;
+
+// A resolution that is itself a related-party transaction / mandate.
+const RRPT_RE = /related.?part(?:y|ies)|\bRRPT\b|recurrent related|shareholders'? mandate/i;
+
+// Org-name suffixes used to pull candidate company phrases out of free text.
+const ORG_SUFFIX_RE =
+  /\b([A-Z][A-Za-z&.'-]+(?:\s+[A-Z][A-Za-z&.'-]+){0,5}\s+(?:Bhd|Berhad|Sdn(?:\s+Bhd)?|Ltd|Limited|Inc|Incorporated|Corp|Corporation|LLP|LLC|PLC|Group|Holdings|Ventures|Capital|Marine|Resources|Trading|Enterprise))\b/g;
+
+const MAX_COMPANIES = 200;
+const MAX_RESOLUTIONS = 100;
+const MIN_SUBSTRING_LEN = 4;
+const SIMILARITY_THRESHOLD = 0.7;
+
+function normalize(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Extract candidate organisation phrases (capitalised runs ending in an org suffix). */
+function extractOrgCandidates(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(ORG_SUFFIX_RE)) out.push(m[1]);
+  return out;
+}
+
+/**
+ * Does `resolutionText` reference `companyName`? True on a normalized substring
+ * hit, or when any org-suffix phrase in the text is ≥0.7 similar to the name.
+ */
+function resolutionMentionsCompany(
+  resolutionText: string,
+  candidates: string[],
+  companyName: string,
+): boolean {
+  const normName = normalize(companyName);
+  if (normName.length < MIN_SUBSTRING_LEN) return false;
+  if (normalize(resolutionText).includes(normName)) return true;
+  for (const candidate of candidates) {
+    if (nameSimilarity(candidate, companyName) >= SIMILARITY_THRESHOLD) return true;
+  }
+  return false;
+}
+
+function relationLabel(relation: string): string {
+  const map: Record<string, string> = {
+    director: "Director",
+    chairman: "Chairman",
+    shareholder: "Shareholder",
+  };
+  return map[relation] ?? relation;
+}
+
+interface DirectorshipEdge {
+  entity_id: string;
+  target_id: string; // companies.id
+  relation: string;
+}
+
+/**
+ * Detect conflicts of interest for a meeting by traversing the directorship
+ * graph. Returns `[]` on any error — never throws.
+ */
+export async function detectConflicts(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
+  meetingId: string,
+): Promise<ConflictFinding[]> {
+  try {
+    // --- meeting (own company is excluded as a counterparty) ---------------
+    const { data: meeting } = await supabase
+      .from("meetings")
+      .select("id, company_id, company_name")
+      .eq("id", meetingId)
+      .maybeSingle();
+    if (!meeting) return [];
+
+    const ownCompanyId: string | null = meeting.company_id ?? null;
+    const ownCompanyNorm = normalize(meeting.company_name ?? "");
+
+    // --- attendee entities (nodes present in this meeting) -----------------
+    const { data: attLinks } = await supabase
+      .from("entity_links")
+      .select("entity_id")
+      .eq("target_type", "meeting")
+      .eq("target_id", meetingId);
+
+    const attendeeEntityIds = [...new Set((attLinks ?? []).map((l) => l.entity_id as string))];
+    if (attendeeEntityIds.length === 0) return [];
+
+    // attendee display names
+    const { data: attEntities } = await supabase
+      .from("entities")
+      .select("id, canonical_name")
+      .in("id", attendeeEntityIds);
+    const nameByEntityId = new Map<string, string>(
+      (attEntities ?? []).map((e) => [e.id as string, (e.canonical_name as string) ?? "An attendee"]),
+    );
+
+    // --- directorship edges for those attendees ----------------------------
+    const { data: dirLinksRaw } = await supabase
+      .from("entity_links")
+      .select("entity_id, target_id, relation")
+      .eq("target_type", "company")
+      .in("entity_id", attendeeEntityIds)
+      .in("relation", INTEREST_RELATIONS as unknown as string[]);
+    const dirLinks = (dirLinksRaw ?? []) as DirectorshipEdge[];
+    if (dirLinks.length === 0) return [];
+
+    // company ids the attendees have an interest in
+    const interestCompanyIds = new Set(dirLinks.map((l) => l.target_id));
+
+    // --- candidate counterparty companies in scope -------------------------
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id, name")
+      .limit(MAX_COMPANIES);
+    // Only companies an attendee actually directs can produce a conflict, and
+    // never the meeting's own company.
+    const counterpartyCompanies = (companies ?? []).filter(
+      (c) =>
+        interestCompanyIds.has(c.id as string) &&
+        c.id !== ownCompanyId &&
+        normalize((c.name as string) ?? "") !== ownCompanyNorm,
+    );
+    if (counterpartyCompanies.length === 0) return [];
+
+    // --- resolutions -------------------------------------------------------
+    const { data: resolutions } = await supabase
+      .from("resolutions")
+      .select("id, resolution_number, resolution_text")
+      .eq("meeting_id", meetingId)
+      .limit(MAX_RESOLUTIONS);
+    if (!resolutions || resolutions.length === 0) return [];
+
+    // --- interest-declaration presence ------------------------------------
+    const { data: draft } = await supabase
+      .from("minutes_drafts")
+      .select("body_html, version")
+      .eq("meeting_id", meetingId)
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const { data: transcript } = await supabase
+      .from("transcripts")
+      .select("raw_text")
+      .eq("meeting_id", meetingId)
+      .limit(1)
+      .maybeSingle();
+    const declarationHaystack = `${stripHtml((draft?.body_html as string) ?? "")} ${
+      (transcript?.raw_text as string) ?? ""
+    }`;
+    const interestDeclared = INTEREST_DECLARATION_RE.test(declarationHaystack);
+
+    // --- traverse: resolution counterparty × attendee directorship ---------
+    // Dedupe per (attendee, counterparty); collect the resolutions involved.
+    const findings = new Map<
+      string,
+      {
+        entityId: string;
+        company: { id: string; name: string };
+        relation: string;
+        resolutionNumbers: string[];
+        rrpt: boolean;
+      }
+    >();
+
+    for (const res of resolutions) {
+      const text = (res.resolution_text as string) ?? "";
+      if (!text.trim()) continue;
+      const candidates = extractOrgCandidates(text);
+      const isRrpt = RRPT_RE.test(text);
+
+      for (const company of counterpartyCompanies) {
+        const companyName = (company.name as string) ?? "";
+        if (!resolutionMentionsCompany(text, candidates, companyName)) continue;
+
+        // which attendees direct this counterparty?
+        for (const edge of dirLinks) {
+          if (edge.target_id !== company.id) continue;
+          const key = `${edge.entity_id}::${company.id}`;
+          const resLabel =
+            (res.resolution_number as string) || `"${text.slice(0, 32).trim()}…"`;
+          const existing = findings.get(key);
+          if (existing) {
+            if (!existing.resolutionNumbers.includes(resLabel)) {
+              existing.resolutionNumbers.push(resLabel);
+            }
+            existing.rrpt = existing.rrpt || isRrpt;
+          } else {
+            findings.set(key, {
+              entityId: edge.entity_id,
+              company: { id: company.id as string, name: companyName },
+              relation: edge.relation,
+              resolutionNumbers: [resLabel],
+              rrpt: isRrpt,
+            });
+          }
+        }
+      }
+    }
+
+    // --- render findings ---------------------------------------------------
+    const out: ConflictFinding[] = [];
+    for (const f of findings.values()) {
+      const person = nameByEntityId.get(f.entityId) ?? "An attendee";
+      const rel = relationLabel(f.relation);
+      const resList = f.resolutionNumbers.join(", ");
+      const rrptClause = f.rrpt
+        ? " This resolution is a related-party transaction, so the interest is directly material."
+        : "";
+      const declClause = interestDeclared
+        ? " An interest declaration was found in the record — confirm it covers this person and counterparty."
+        : " No interest declaration was found in the minutes body or transcript.";
+
+      out.push({
+        severity: interestDeclared ? "warn" : "flag",
+        title: `Possible undeclared interest: ${person} is ${f.relation} of ${f.company.name}`,
+        detail: `${person} (${rel}, ${f.company.name}) is a party to ${resList}, where ${f.company.name} is the counterparty.${rrptClause}${declClause}`,
+        relatedEntity: person,
+        relatedCompany: f.company.name,
+      });
+    }
+
+    // flag-severity first, then warn
+    out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "flag" ? -1 : 1));
+    return out;
+  } catch (error) {
+    console.error("detectConflicts failed:", error);
+    return [];
+  }
+}

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getCompany, getCompanyHistory } from "@/lib/companies";
 import { StatusBadge, OutcomePill, Badge, EmptyState, FOCUS_RING } from "@/components/ui";
 import { formatDate } from "@/lib/format";
+import { getCompanyPeople, relationLabel } from "@/app/people/data";
+import { EgoGraph } from "@/app/people/ego-graph";
 
 function excerpt(text: string, maxLength = 140): string {
   const trimmed = text.trim();
@@ -52,6 +54,9 @@ export default async function CompanyDetailPage({
   }
 
   const { meetings, resolutions, openActions } = await getCompanyHistory(id);
+  const people = await getCompanyPeople(id);
+  const egoNodes = people.map((p) => ({ id: p.id, label: p.name, kind: "person" as const, relation: p.relation }));
+  const egoEdges = people.map((p) => ({ from: id, to: p.id, relation: p.relation }));
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -106,6 +111,36 @@ export default async function CompanyDetailPage({
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="mb-3 text-sm font-semibold text-neutral-900">People &amp; directors</h2>
+        {people.length === 0 ? (
+          <EmptyState compact message="No people linked to this company yet." />
+        ) : (
+          <>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {people.map((person) => (
+                <li key={person.id}>
+                  <Link
+                    href={`/people/${person.id}`}
+                    className={`flex items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                  >
+                    <span className="truncate text-sm font-medium text-neutral-900">{person.name}</span>
+                    <Badge variant="indigo">{relationLabel(person.relation)}</Badge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4">
+              <EgoGraph
+                center={{ id: company.id, label: company.name, kind: "org" }}
+                nodes={egoNodes}
+                edges={egoEdges}
+              />
+            </div>
+          </>
         )}
       </section>
 

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { generateMinutesRuleBased, meetingTypeGuidance } from "@/lib/minutes-engine";
 import { runAssurance } from "@/lib/assurance";
+import { deriveObligations } from "@/lib/obligations";
+import { resolveEntitiesForMeeting } from "@/lib/entities";
 import type { GeneratedMinutes, Meeting, Transcript } from "@/lib/types";
 
 /**
@@ -341,21 +343,31 @@ export async function POST(request: Request) {
       .eq("meeting_id", meetingId)
       .neq("description_source", "manual");
 
+    // Keeps track of each inserted resolution's id, in the same order as
+    // generated.resolutions, so obligation derivation below can map a
+    // resolution_index back to the real resolution id (or null if insertion
+    // was skipped/failed for that batch).
+    let insertedResolutionIds: (string | null)[] = [];
+
     if (generated.resolutions.length > 0) {
-      const { error: resolutionsError } = await supabase.from("resolutions").insert(
-        generated.resolutions.map((r) => ({
-          meeting_id: meetingId,
-          resolution_number: r.number,
-          resolution_text: r.text,
-          resolution_text_source: source,
-          resolution_text_confidence: r.confidence,
-          resolution_text_review_status: "unreviewed",
-          outcome: r.outcome,
-        })),
-      );
+      const { data: insertedResolutions, error: resolutionsError } = await supabase
+        .from("resolutions")
+        .insert(
+          generated.resolutions.map((r) => ({
+            meeting_id: meetingId,
+            resolution_number: r.number,
+            resolution_text: r.text,
+            resolution_text_source: source,
+            resolution_text_confidence: r.confidence,
+            resolution_text_review_status: "unreviewed",
+            outcome: r.outcome,
+          })),
+        )
+        .select("id");
       if (resolutionsError) {
         throw new Error(`Failed to insert resolutions: ${resolutionsError.message}`);
       }
+      insertedResolutionIds = (insertedResolutions ?? []).map((r) => (r.id as string) ?? null);
     }
 
     if (generated.action_items.length > 0) {
@@ -419,6 +431,75 @@ export async function POST(request: Request) {
       console.error("[generate-minutes] Assurance computation failed", assuranceErr);
     }
 
+    // Entity resolution (graph pillar, owned by a parallel workstream) — best
+    // effort, never blocks minutes generation.
+    try {
+      await resolveEntitiesForMeeting(supabase, meetingId);
+    } catch (entityErr) {
+      console.error("[generate-minutes] Entity resolution failed", entityErr);
+    }
+
+    // Obligation derivation (V3 obligation engine): every board decision
+    // creates a downstream statutory duty. Regeneration semantics — clear out
+    // prior rule-derived obligations for this meeting (source LIKE 'rule:%'),
+    // preserving anything manually added, then recompute from the freshly
+    // generated draft and insert. Best effort, never blocks generation.
+    let obligationCount = 0;
+    try {
+      const { error: deleteObligationsError } = await supabase
+        .from("obligations")
+        .delete()
+        .eq("meeting_id", meetingId)
+        .like("source", "rule:%");
+      if (deleteObligationsError) {
+        console.error(
+          "[generate-minutes] Failed to clear prior rule-derived obligations",
+          deleteObligationsError,
+        );
+      }
+
+      const derivedObligations = deriveObligations({
+        meeting: {
+          meeting_type: meetingTyped.meeting_type,
+          meeting_date: meetingTyped.meeting_date,
+          minutes_format: meetingTyped.minutes_format,
+        },
+        resolutions: generated.resolutions.map((r) => ({
+          resolution_number: r.number,
+          resolution_text: r.text,
+          outcome: r.outcome,
+        })),
+        actionItems: generated.action_items.map((a) => ({
+          description: a.description,
+          owner_name: a.owner,
+          due_date: a.due_date,
+        })),
+        transcriptText,
+      });
+
+      if (derivedObligations.length > 0) {
+        const { error: insertObligationsError } = await supabase.from("obligations").insert(
+          derivedObligations.map((o) => ({
+            meeting_id: meetingId,
+            resolution_id:
+              o.resolution_index !== undefined ? insertedResolutionIds[o.resolution_index] ?? null : null,
+            kind: o.kind,
+            title: o.title,
+            detail: o.detail,
+            due_date: o.due_date,
+            source: o.source,
+          })),
+        );
+        if (insertObligationsError) {
+          console.error("[generate-minutes] Failed to insert obligations", insertObligationsError);
+        } else {
+          obligationCount = derivedObligations.length;
+        }
+      }
+    } catch (obligationErr) {
+      console.error("[generate-minutes] Obligation derivation failed", obligationErr);
+    }
+
     await logAudit(supabase, {
       meetingId,
       entityType: "minutes_draft",
@@ -431,6 +512,7 @@ export async function POST(request: Request) {
         action_item_count: generated.action_items.length,
         warnings,
         assurance_score: assuranceScore,
+        obligation_count: obligationCount,
       },
     });
 
