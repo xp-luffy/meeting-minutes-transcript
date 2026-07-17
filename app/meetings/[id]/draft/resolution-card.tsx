@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { Resolution } from "@/lib/types";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
-import { Badge, OutcomePill } from "@/components/ui";
+import { Badge, FOCUS_RING, OutcomePill } from "@/components/ui";
 import { acceptResolutionText, updateResolutionField } from "./actions";
 import { SaveIndicator, type SaveStatus } from "./save-indicator";
 
@@ -108,15 +108,15 @@ export function ResolutionCard({
         showAmber ? "border-neutral-200 border-l-4 border-l-amber-400" : "border-neutral-200"
       }`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <input
             value={resolutionNumber}
             onChange={(event) => setResolutionNumber(event.target.value)}
             onBlur={handleNumberBlur}
             disabled={isFinal}
             placeholder="—"
-            className="w-16 rounded-md border border-neutral-300 px-2 py-1 text-sm font-semibold text-neutral-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0"
+            className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-base font-semibold text-neutral-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-16 sm:py-1 sm:text-sm"
           />
           {isFinal ? (
             <OutcomePill outcome={outcome} />
@@ -125,7 +125,7 @@ export function ResolutionCard({
               value={outcome}
               onChange={(event) => handleOutcomeChange(event.target.value)}
               disabled={isFinal}
-              className="rounded-md border border-neutral-300 px-2 py-1 text-xs font-medium capitalize text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed"
+              className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm font-medium capitalize text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed sm:w-auto sm:py-1 sm:text-xs"
             >
               {OUTCOMES.map((value) => (
                 <option key={value} value={value}>
@@ -141,7 +141,7 @@ export function ResolutionCard({
             type="button"
             onClick={handleAccept}
             disabled={isAccepting}
-            className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`inline-flex min-h-11 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {isAccepting ? "Accepting…" : "Accept"}
           </button>
@@ -155,7 +155,7 @@ export function ResolutionCard({
         onBlur={handleTextBlur}
         disabled={isFinal}
         rows={2}
-        className="mt-2 block w-full resize-none rounded-md border-0 p-0 text-sm text-neutral-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-700"
+        className="mt-2 block w-full resize-none rounded-md border-0 p-0 text-base leading-relaxed text-neutral-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-700 sm:text-sm"
       />
 
       {!isFinal ? (

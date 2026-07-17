@@ -251,12 +251,29 @@ export async function upsertCompanyDefaultsFromMeeting(meetingId: string): Promi
 
   if (!meetingRow.company_id) return;
 
+  // Merge, never clobber: a meeting that omits a field must not erase the
+  // company's remembered default (institutional memory is the product).
+  // 'standard' is the format select's unset sentinel, so it never downgrades
+  // a remembered 'maisca'.
+  const { data: existing } = await supabase
+    .from("companies")
+    .select("defaults")
+    .eq("id", meetingRow.company_id)
+    .maybeSingle();
+  const prev = ((existing?.defaults ?? {}) as CompanyDefaults) ?? {};
+
   const defaults: CompanyDefaults = {
-    venue: meetingRow.venue ?? null,
-    chairperson: meetingRow.chairperson ?? null,
-    attendees: meetingRow.attendees ?? null,
-    minutes_format: meetingRow.minutes_format ?? null,
-    meeting_type: meetingRow.meeting_type ?? null,
+    venue: meetingRow.venue ?? prev.venue ?? null,
+    chairperson: meetingRow.chairperson ?? prev.chairperson ?? null,
+    attendees:
+      meetingRow.attendees && meetingRow.attendees.length > 0
+        ? meetingRow.attendees
+        : (prev.attendees ?? null),
+    minutes_format:
+      meetingRow.minutes_format === "maisca"
+        ? "maisca"
+        : (prev.minutes_format ?? meetingRow.minutes_format ?? null),
+    meeting_type: meetingRow.meeting_type ?? prev.meeting_type ?? null,
   };
 
   await supabase.from("companies").update({ defaults }).eq("id", meetingRow.company_id);

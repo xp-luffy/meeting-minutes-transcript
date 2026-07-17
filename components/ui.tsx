@@ -3,6 +3,14 @@ import type { MeetingStatus } from "@/lib/types";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
 import { formatConfidencePercent } from "@/lib/format";
 
+/**
+ * Shared focus-visible ring classes for buttons and links across the app —
+ * keeps keyboard-focus styling consistent without relying on browser
+ * defaults. Append to a className string.
+ */
+export const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2";
+
 type BadgeVariant = "neutral" | "amber" | "green" | "red" | "indigo";
 
 const BADGE_VARIANT_CLASSES: Record<BadgeVariant, string> = {
@@ -100,5 +108,35 @@ export function ConfidenceChip({ confidence }: { confidence: number | null | und
     <Badge variant={isLow ? "amber" : "neutral"}>
       Confidence {formatConfidencePercent(confidence)}
     </Badge>
+  );
+}
+
+/**
+ * Shared empty-state block: a dashed card with a heading, message, and an
+ * optional action. Used wherever a list/table has no rows to show.
+ */
+export function EmptyState({
+  title,
+  message,
+  action,
+  compact = false,
+  className = "",
+}: {
+  title?: string;
+  message: ReactNode;
+  action?: ReactNode;
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`rounded-lg border border-dashed border-neutral-300 bg-white text-center ${
+        compact ? "p-6" : "p-10"
+      } ${className}`}
+    >
+      {title ? <h2 className="text-base font-semibold text-neutral-900">{title}</h2> : null}
+      <p className={`text-sm text-neutral-500 ${title ? "mt-2" : ""}`}>{message}</p>
+      {action ? <div className="mt-5">{action}</div> : null}
+    </div>
   );
 }

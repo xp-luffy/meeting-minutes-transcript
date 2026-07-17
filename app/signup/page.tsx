@@ -58,8 +58,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center">
-      <div className="rounded-lg border border-neutral-200 bg-white p-8 shadow-sm">
+    <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-1">
+      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
         <h1 className="text-lg font-semibold text-neutral-900">Sign up</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Create an account to save and manage meetings.
@@ -91,7 +91,7 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                 placeholder="you@company.com"
               />
             </div>
@@ -109,7 +109,7 @@ export default function SignupPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
                 placeholder="At least 6 characters"
               />
             </div>
@@ -117,23 +117,33 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="focus-ring inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:py-2"
             >
-              {isSubmitting ? "Creating account…" : "Sign up"}
+              {isSubmitting ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  />
+                  Creating account…
+                </>
+              ) : (
+                "Sign up"
+              )}
             </button>
           </form>
         ) : null}
 
         <p className="mt-6 text-center text-sm text-neutral-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-700">
+          <Link href="/login" className="focus-ring rounded font-medium text-indigo-600 hover:text-indigo-700">
             Log in
           </Link>
         </p>
       </div>
 
       <p className="mt-4 text-center text-sm">
-        <Link href="/" className="text-neutral-500 hover:text-neutral-700">
+        <Link href="/" className="focus-ring rounded text-neutral-500 hover:text-neutral-700">
           Continue browsing the demo without an account →
         </Link>
       </p>

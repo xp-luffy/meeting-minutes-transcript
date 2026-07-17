@@ -52,3 +52,34 @@
     @apply w-20 whitespace-nowrap;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Mobile & interaction polish utilities (Sprint V2-2, group 1)
+ * Keep this block minimal — additions here are shared across every route.
+ * ------------------------------------------------------------------------- */
+@layer utilities {
+  /* Meets the ~44px touch-target guideline for small icon/text buttons on
+     touch devices, without forcing a fixed size on their content. */
+  .tap-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  /* Consistent keyboard-focus ring for buttons/links; only shows for
+     keyboard/assistive-tech focus, not mouse clicks. */
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
+  }
+}
+
+/* Small-screen table handling for AI-generated minutes bodies: wide Maisca
+   tables (many columns) scroll horizontally instead of breaking the layout,
+   at phone/small-tablet widths only. Desktop rendering (>640px) is
+   unaffected — .minutes-body table keeps its normal width/border rules from
+   the @layer components block above. */
+@media (max-width: 640px) {
+  .minutes-body table {
+    display: block;
+    overflow-x: auto;
+  }
+}

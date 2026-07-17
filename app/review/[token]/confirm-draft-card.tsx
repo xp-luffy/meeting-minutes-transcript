@@ -3,6 +3,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import { confirmSharedDraft } from "../actions";
 import { formatDate } from "@/lib/format";
+import { FOCUS_RING } from "@/components/ui";
 
 /**
  * "Confirm these minutes" card shown below the read-only shared draft.
@@ -54,7 +55,7 @@ export function ConfirmDraftCard({
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+    <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
       <h2 className="text-sm font-semibold text-neutral-900">
         {alreadyConfirmedBy.length > 0 ? "Add your confirmation" : "Confirm these minutes"}
       </h2>
@@ -78,7 +79,7 @@ export function ConfirmDraftCard({
             onChange={(event) => setName(event.target.value)}
             disabled={pending}
             placeholder="Jane Tan"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
           />
         </div>
         <div>
@@ -91,14 +92,14 @@ export function ConfirmDraftCard({
             onChange={(event) => setRole(event.target.value)}
             disabled={pending}
             placeholder="Chairman"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
           />
         </div>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2 ${FOCUS_RING}`}
         >
           {pending ? "Confirming…" : "I confirm these minutes are accurate"}
         </button>

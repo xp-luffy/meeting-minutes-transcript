@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ItemStatusPill } from "@/components/ui";
+import { FOCUS_RING, ItemStatusPill } from "@/components/ui";
 import { toggleActionItem } from "./actions";
 
 /**
@@ -38,13 +38,13 @@ export function StatusToggle({
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <ItemStatusPill status={status} />
         <button
           type="button"
           onClick={handleToggle}
           disabled={isPending}
-          className="rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`min-h-11 rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
         >
           {isPending ? "Saving…" : status === "open" ? "Mark done" : "Reopen"}
         </button>

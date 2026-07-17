@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCompany, getCompanyHistory } from "@/lib/companies";
-import { StatusBadge, OutcomePill, Badge } from "@/components/ui";
+import { StatusBadge, OutcomePill, Badge, EmptyState, FOCUS_RING } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 
 function excerpt(text: string, maxLength = 140): string {
@@ -56,14 +56,14 @@ export default async function CompanyDetailPage({
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-sm">
-        <Link href="/companies" className="text-neutral-500 hover:text-neutral-700">
+        <Link href="/companies" className={`rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
           &larr; Companies
         </Link>
       </p>
 
-      <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-neutral-900">{company.name}</h1>
+      <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-neutral-900">{company.name}</h1>
           {company.reg_no ? (
             <p className="mt-0.5 text-sm text-neutral-500">{company.reg_no}</p>
           ) : null}
@@ -71,7 +71,7 @@ export default async function CompanyDetailPage({
         </div>
         <Link
           href={`/meetings/new?company=${company.id}`}
-          className="shrink-0 inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:py-1.5 ${FOCUS_RING}`}
         >
           New meeting for this company
         </Link>
@@ -80,16 +80,14 @@ export default async function CompanyDetailPage({
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold text-neutral-900">Meetings</h2>
         {meetings.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-            No meetings recorded for this company yet.
-          </div>
+          <EmptyState compact message="No meetings recorded for this company yet." />
         ) : (
-          <ul className="space-y-3">
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {meetings.map((meeting) => (
               <li key={meeting.id}>
                 <Link
                   href={`/meetings/${meeting.id}`}
-                  className="block rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                  className={`block h-full rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="truncate text-sm font-medium text-neutral-900">
@@ -118,9 +116,7 @@ export default async function CompanyDetailPage({
           it was resolved.
         </p>
         {resolutions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-            No resolutions recorded yet.
-          </div>
+          <EmptyState compact message="No resolutions recorded yet." />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
             <table className="w-full min-w-[560px] text-left text-sm">
@@ -158,9 +154,7 @@ export default async function CompanyDetailPage({
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold text-neutral-900">Open action items</h2>
         {openActions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-300 bg-white p-6 text-center text-sm text-neutral-500">
-            No open action items for this company.
-          </div>
+          <EmptyState compact message="No open action items for this company." />
         ) : (
           <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
             {openActions.map((item) => (
@@ -176,7 +170,7 @@ export default async function CompanyDetailPage({
                 </div>
                 <Link
                   href={`/meetings/${item.meeting_id}/draft`}
-                  className="shrink-0 text-xs text-indigo-600 hover:underline"
+                  className={`shrink-0 rounded-sm text-xs text-indigo-600 hover:underline ${FOCUS_RING}`}
                 >
                   View in draft →
                 </Link>

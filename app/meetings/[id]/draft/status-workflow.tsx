@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MeetingStatus } from "@/lib/types";
 import { formatDate } from "@/lib/format";
+import { FOCUS_RING } from "@/components/ui";
 import { markDraftFinal, markDraftReviewed } from "./actions";
 
 const CONFIRM_WINDOW_MS = 4000;
@@ -77,14 +78,14 @@ export function StatusWorkflow({
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
       {status === "draft" ? (
         <button
           type="button"
           onClick={handleMarkReviewed}
           disabled={isPending}
-          className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
         >
           {isPending ? "Saving…" : "Mark Reviewed"}
         </button>
@@ -94,7 +95,7 @@ export function StatusWorkflow({
           type="button"
           onClick={handleMarkFinalClick}
           disabled={isPending}
-          className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
             confirmingFinal
               ? "bg-red-600 text-white hover:bg-red-700"
               : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"

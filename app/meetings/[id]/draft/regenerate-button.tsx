@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FOCUS_RING } from "@/components/ui";
 
 /**
  * "Regenerate" secondary button shown in the draft header. Opens an inline
@@ -64,13 +65,13 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
         type="button"
         onClick={handleRegenerateClick}
         disabled={isRegenerating}
-        className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
       >
         {isRegenerating ? "Regenerating…" : "Regenerate"}
       </button>
 
       {confirming ? (
-        <div className="absolute right-0 top-full z-10 mt-2 w-72 rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-lg">
+        <div className="absolute right-0 top-full z-10 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-lg">
           <p className="text-xs text-neutral-600">
             This will overwrite the current draft body with a fresh AI extraction and create
             version N+1. Manual body edits will be lost. Resolutions and action items will be
@@ -82,7 +83,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={() => setConfirming(false)}
               disabled={isRegenerating}
-              className="rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed"
+              className={`rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed ${FOCUS_RING}`}
             >
               Cancel
             </button>
@@ -90,7 +91,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={handleConfirm}
               disabled={isRegenerating}
-              className="rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
             >
               {isRegenerating ? "Regenerating…" : "Confirm regenerate"}
             </button>

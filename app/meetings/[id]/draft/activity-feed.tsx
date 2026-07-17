@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 export interface AuditLogEntry {
   id: string;
@@ -8,18 +8,6 @@ export interface AuditLogEntry {
   action: string;
   payload: Record<string, unknown> | null;
   created_at: string;
-}
-
-const timeFormatter = new Intl.DateTimeFormat("en-MY", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-});
-
-function formatTimestamp(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return `${formatDate(value)}, ${timeFormatter.format(date)}`;
 }
 
 /** Turns a raw audit_logs row into a human-readable one-line description. */
@@ -76,7 +64,7 @@ export function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />
               <div className="min-w-0">
                 <p className="text-xs text-neutral-600">{describeEntry(entry)}</p>
-                <p className="text-xs text-neutral-400">{formatTimestamp(entry.created_at)}</p>
+                <p className="text-xs text-neutral-400">{formatDateTime(entry.created_at)}</p>
               </div>
             </li>
           ))}

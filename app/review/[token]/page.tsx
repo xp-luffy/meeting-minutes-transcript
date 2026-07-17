@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
+import { sanitizeMinutesHtml } from "@/lib/sanitize-html";
+import { Badge } from "@/components/ui";
 import { ConfirmDraftCard } from "./confirm-draft-card";
 
 // get_shared_draft (0006_insights_v2.sql) now also returns
@@ -38,14 +40,14 @@ export default async function SharedReviewPage({
   const alreadyConfirmedBy = draft.already_confirmed_by ?? [];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
+    <main className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
       <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
         Shared for review — read-only. This link expires{" "}
         {formatDate(draft.expires_at)}.
       </div>
-      <div className="mb-6 flex items-baseline justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">
+      <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-neutral-900 sm:text-xl">
             {draft.company_name}
           </h1>
           <p className="mt-1 text-sm text-neutral-500">
@@ -53,11 +55,11 @@ export default async function SharedReviewPage({
             {draft.venue ? ` · ${draft.venue}` : ""}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600">
+        <Badge variant="neutral" className="shrink-0">
           Draft v{draft.version} · {draft.status}
-        </span>
+        </Badge>
       </div>
-      <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
         {draft.body_html_source === "legacy_md" ? (
           <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-800">
             {draft.body_html}
@@ -65,7 +67,7 @@ export default async function SharedReviewPage({
         ) : (
           <div
             className="minutes-body"
-            dangerouslySetInnerHTML={{ __html: draft.body_html ?? "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeMinutesHtml(draft.body_html ?? "") }}
           />
         )}
       </div>
