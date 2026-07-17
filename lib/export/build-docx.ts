@@ -1,14 +1,22 @@
 import {
   AlignmentType,
+  BorderStyle,
   Document,
   HeadingLevel,
   Packer,
   Paragraph,
+  ShadingType,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
+  type ITableCellBorders,
 } from "docx";
-import { parseHtmlToBlocks, type Block } from "./html-parse";
+import { parseHtmlToBlocks, type Block, type TableBlock, type TextBlock } from "./html-parse";
 import type { ExportData } from "./types";
 import { formatDate } from "@/lib/format";
+import { columnWidthPercents } from "./table-layout";
 
 const OUTCOME_LABEL: Record<string, string> = {
   carried: "Carried",
@@ -30,8 +38,10 @@ function runToTextRuns(text: string, bold: boolean, italic: boolean): TextRun[] 
   );
 }
 
-function blockToParagraph(block: Block): Paragraph {
-  const children = block.runs.flatMap((run) => runToTextRuns(run.text, run.bold, run.italic));
+function blockToParagraph(block: TextBlock, forceBold = false): Paragraph {
+  const children = block.runs.flatMap((run) =>
+    runToTextRuns(run.text, run.bold || forceBold, run.italic),
+  );
 
   switch (block.type) {
     case "heading1":
@@ -61,6 +71,49 @@ function blockToParagraph(block: Block): Paragraph {
   }
 }
 
+/** Converts a block to the docx node it renders as (Paragraph, or a nested Table). */
+function blockToNode(block: Block, forceBold = false): Paragraph | Table {
+  return block.type === "table" ? tableBlockToTable(block) : blockToParagraph(block, forceBold);
+}
+
+const CELL_BORDER: ITableCellBorders = {
+  top: { style: BorderStyle.SINGLE, size: 2, color: "999999" },
+  bottom: { style: BorderStyle.SINGLE, size: 2, color: "999999" },
+  left: { style: BorderStyle.SINGLE, size: 2, color: "999999" },
+  right: { style: BorderStyle.SINGLE, size: 2, color: "999999" },
+};
+
+const CELL_MARGINS = { top: 80, bottom: 80, left: 80, right: 80 };
+const HEADER_SHADING = { fill: "D9D9D9", type: ShadingType.CLEAR, color: "auto" };
+
+/** Renders a parsed table block as a real docx Table with sized columns and bordered, margined cells. */
+function tableBlockToTable(block: TableBlock): Table {
+  const colCount = block.rows.reduce((max, row) => Math.max(max, row.cells.length), 0);
+  const widths = columnWidthPercents(colCount);
+
+  const rows = block.rows.map((row) => {
+    const cells = row.cells.map((cellBlocks, colIndex) => {
+      const nodes =
+        cellBlocks.length > 0
+          ? cellBlocks.map((b) => blockToNode(b, row.header))
+          : [new Paragraph({ children: [] })];
+      return new TableCell({
+        width: { size: widths[colIndex] ?? 100 / colCount, type: WidthType.PERCENTAGE },
+        margins: CELL_MARGINS,
+        borders: CELL_BORDER,
+        shading: row.header ? HEADER_SHADING : undefined,
+        children: nodes,
+      });
+    });
+    return new TableRow({ children: cells });
+  });
+
+  return new Table({
+    rows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+  });
+}
+
 /**
  * Builds a statutory minutes Word document (.docx) as a Buffer from
  * already-fetched meeting/draft/resolutions/action-items data. Pure
@@ -76,7 +129,7 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
     .map((a) => `${a.name}${a.role ? ` (${a.role})` : ""}`)
     .join("; ");
 
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
 
   // Title
   children.push(
@@ -140,7 +193,7 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
 
   // Body blocks
   for (const block of bodyBlocks) {
-    children.push(blockToParagraph(block));
+    children.push(blockToNode(block));
   }
 
   // Resolutions section

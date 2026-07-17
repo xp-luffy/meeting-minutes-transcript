@@ -1,8 +1,9 @@
 import { PDFDocument, PageSizes, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
-import { parseHtmlToBlocks, type Block, type TextRun } from "./html-parse";
+import { parseHtmlToBlocks, type Block, type TableBlock, type TextRun } from "./html-parse";
 import type { ExportData } from "./types";
 import { formatDate } from "@/lib/format";
 import { sanitizeForPdf } from "./sanitize";
+import { columnWidthPercents } from "./table-layout";
 
 const PAGE_MARGIN = 56;
 const BODY_SIZE = 11;
@@ -11,6 +12,15 @@ const HEADING2_SIZE = 13;
 const TITLE_SIZE = 17;
 const SUBTITLE_SIZE = 13;
 const LINE_HEIGHT_FACTOR = 1.32;
+
+// Table layout constants (points).
+const CELL_PADDING_X = 6;
+const CELL_PADDING_Y = 5;
+const CELL_PARA_GAP = 3;
+const MIN_ROW_HEIGHT = BODY_SIZE * LINE_HEIGHT_FACTOR + CELL_PADDING_Y * 2;
+const TABLE_GAP_AFTER = 10;
+const TABLE_BORDER_COLOR = rgb(0.55, 0.55, 0.55);
+const TABLE_HEADER_FILL = rgb(0.85, 0.85, 0.85);
 
 const OUTCOME_LABEL: Record<string, string> = {
   carried: "Carried",
@@ -25,6 +35,18 @@ interface Word {
 
 const BREAK = Symbol("line-break");
 type Token = Word | typeof BREAK;
+
+/** One word-wrapped paragraph inside a table cell, ready to draw. */
+interface CellParagraph {
+  lines: Word[][];
+  size: number;
+}
+
+/** A fully laid-out table cell: its wrapped paragraphs and total rendered height. */
+interface CellLayout {
+  paragraphs: CellParagraph[];
+  height: number;
+}
 
 /** Splits styled text runs into word/break tokens, sanitising each word for WinAnsi. */
 function tokenizeRuns(runs: TextRun[]): Token[] {
@@ -159,6 +181,102 @@ class PdfWriter {
     this.drawRuns([{ text, bold, italic: false }], size, indent, gapAfter);
   }
 
+  /** Word-wraps one cell's blocks (paragraphs) within a column width and measures its total height. */
+  private layoutCell(cellBlocks: Block[], colWidth: number, forceBold: boolean): CellLayout {
+    const innerWidth = Math.max(10, colWidth - CELL_PADDING_X * 2);
+    const paragraphs: CellParagraph[] = cellBlocks.map((cellBlock) => {
+      if (cellBlock.type === "table") {
+        // Nested tables inside a cell aren't part of the supported shapes;
+        // render nothing for them rather than crashing.
+        return { lines: [], size: BODY_SIZE };
+      }
+      const size =
+        cellBlock.type === "heading1"
+          ? HEADING1_SIZE
+          : cellBlock.type === "heading2"
+            ? HEADING2_SIZE
+            : BODY_SIZE;
+      const bold = forceBold || cellBlock.type === "heading1" || cellBlock.type === "heading2";
+      const runs: TextRun[] =
+        cellBlock.type === "listItem"
+          ? [{ text: "- ", bold, italic: false }, ...cellBlock.runs]
+          : cellBlock.runs;
+      const styledRuns = bold ? runs.map((r) => ({ ...r, bold: true })) : runs;
+      const tokens = tokenizeRuns(styledRuns);
+      const lines = wrapTokens(tokens, size, innerWidth, this.font, this.boldFont);
+      return { lines, size };
+    });
+
+    const height =
+      CELL_PADDING_Y * 2 +
+      paragraphs.reduce(
+        (sum, p) => sum + p.lines.length * p.size * LINE_HEIGHT_FACTOR + CELL_PARA_GAP,
+        0,
+      );
+
+    return { paragraphs, height: Math.max(height, MIN_ROW_HEIGHT) };
+  }
+
+  /** Draws one cell's already-wrapped paragraphs, top-aligned within the cell. */
+  private drawCellText(x: number, topY: number, cell: CellLayout) {
+    const spaceWidth = this.font.widthOfTextAtSize(" ", BODY_SIZE);
+    let y = topY - CELL_PADDING_Y;
+    for (const para of cell.paragraphs) {
+      const lineHeight = para.size * LINE_HEIGHT_FACTOR;
+      for (const line of para.lines) {
+        let lx = x + CELL_PADDING_X;
+        for (const word of line) {
+          const font = word.bold ? this.boldFont : this.font;
+          this.page.drawText(word.text, { x: lx, y, size: para.size, font, color: rgb(0, 0, 0) });
+          lx += font.widthOfTextAtSize(word.text, para.size) + spaceWidth;
+        }
+        y -= lineHeight;
+      }
+      y -= CELL_PARA_GAP;
+    }
+  }
+
+  /**
+   * Draws a table block as a simple grid: column widths from the shared
+   * ratio rule, word-wrapped cells, row height = tallest cell, thin border
+   * rectangles per cell. A row that doesn't fit on the current page starts
+   * on the next page; a row taller than a whole page is drawn anyway
+   * (clipped by later content) rather than looping forever.
+   */
+  drawTable(block: TableBlock) {
+    const colCount = block.rows.reduce((max, row) => Math.max(max, row.cells.length), 0);
+    if (colCount === 0) return;
+    const widths = columnWidthPercents(colCount).map((pct) => (pct / 100) * this.maxWidth);
+
+    for (const row of block.rows) {
+      const cells = row.cells.map((cellBlocks, i) =>
+        this.layoutCell(cellBlocks, widths[i] ?? this.maxWidth / colCount, row.header),
+      );
+      const rowHeight = Math.max(MIN_ROW_HEIGHT, ...cells.map((c) => c.height));
+      this.ensureSpace(rowHeight);
+
+      const top = this.y;
+      let x = PAGE_MARGIN;
+      for (let i = 0; i < widths.length; i++) {
+        const w = widths[i] ?? this.maxWidth / colCount;
+        this.page.drawRectangle({
+          x,
+          y: top - rowHeight,
+          width: w,
+          height: rowHeight,
+          borderWidth: 0.75,
+          borderColor: TABLE_BORDER_COLOR,
+          color: row.header ? TABLE_HEADER_FILL : undefined,
+        });
+        const cell = cells[i];
+        if (cell) this.drawCellText(x, top, cell);
+        x += w;
+      }
+      this.y = top - rowHeight;
+    }
+    this.y -= TABLE_GAP_AFTER;
+  }
+
   async save(): Promise<Uint8Array> {
     return this.doc.save();
   }
@@ -166,6 +284,9 @@ class PdfWriter {
 
 function drawBlock(writer: PdfWriter, block: Block) {
   switch (block.type) {
+    case "table":
+      writer.drawTable(block);
+      return;
     case "heading1": {
       const text = block.runs.map((r) => r.text).join("");
       writer.drawPlain(text, HEADING1_SIZE, true, 0, 8);

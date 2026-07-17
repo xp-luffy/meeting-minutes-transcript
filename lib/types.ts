@@ -15,6 +15,7 @@ export interface Meeting {
   attendees: Attendee[] | null;
   quorum_met: boolean | null;
   status: MeetingStatus;
+  minutes_format?: "standard" | "maisca";
   created_at: string;
 }
 

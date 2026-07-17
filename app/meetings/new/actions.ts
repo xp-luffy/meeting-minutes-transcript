@@ -53,6 +53,8 @@ export async function createMeeting(formData: FormData): Promise<void> {
   const venue = String(formData.get("venue") ?? "").trim();
   const chairperson = String(formData.get("chairperson") ?? "").trim();
   const attendeesRaw = String(formData.get("attendees") ?? "");
+  const minutesFormatRaw = String(formData.get("minutes_format") ?? "standard");
+  const minutesFormat = minutesFormatRaw === "maisca" ? "maisca" : "standard";
   const workspaceId = String(formData.get("workspace_id") ?? "").trim();
 
   const errors: string[] = [];
@@ -90,6 +92,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
       attendees: attendees.length > 0 ? attendees : null,
       status: "draft",
       workspace_id: workspaceId || null,
+      minutes_format: minutesFormat,
     })
     .select("id")
     .single();

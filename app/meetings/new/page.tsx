@@ -90,6 +90,25 @@ export default async function NewMeetingPage({
         </div>
 
         <div>
+          <label htmlFor="minutes_format" className="block text-sm font-medium text-neutral-700">
+            Minutes format
+          </label>
+          <select
+            id="minutes_format"
+            name="minutes_format"
+            defaultValue={getParam("minutes_format") || "standard"}
+            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="standard">Standard statutory</option>
+            <option value="maisca">Maisca committee style</option>
+          </select>
+          <p className="mt-1 text-xs text-neutral-500">
+            Maisca style: header &amp; attendance tables, quorum per Terms of Reference,
+            Chairman&rsquo;s confidentiality address, numbered agenda-item table.
+          </p>
+        </div>
+
+        <div>
           <label htmlFor="meeting_date" className="block text-sm font-medium text-neutral-700">
             Meeting date <span className="text-red-600">*</span>
           </label>

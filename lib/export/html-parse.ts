@@ -16,10 +16,24 @@ export interface TextRun {
 
 export type BlockType = "heading1" | "heading2" | "para" | "listItem";
 
-export interface Block {
+export interface TextBlock {
   type: BlockType;
   runs: TextRun[];
 }
+
+/** One row of a table block. `header` marks rows built from <th> cells. */
+export interface TableRowBlock {
+  header: boolean;
+  cells: Block[][];
+}
+
+export interface TableBlock {
+  type: "table";
+  rows: TableRowBlock[];
+}
+
+/** A parsed document node: either a styled-text block or a table. */
+export type Block = TextBlock | TableBlock;
 
 const NAMED_ENTITIES: Record<string, string> = {
   amp: "&",
@@ -56,17 +70,63 @@ const ITALIC_TAGS = new Set(["i", "em"]);
 const IGNORED_CONTAINER_TAGS = new Set(["ul", "ol"]);
 
 /**
- * Converts a fragment of our limited draft HTML into a flat list of blocks,
- * each with a list of styled text runs. Whitespace-only blocks (e.g. stray
- * newlines between tags) are dropped.
+ * Converts a fragment of our limited draft HTML into a flat list of blocks
+ * (text blocks and tables), in document order. Whitespace-only text blocks
+ * (e.g. stray newlines between tags) are dropped.
+ *
+ * Tables are located first (as top-level, non-nested <table>...</table>
+ * spans) and parsed separately; everything else is routed through the
+ * original flow tokenizer unchanged, so non-table inputs parse
+ * byte-for-byte identically to before tables were supported.
  */
 export function parseHtmlToBlocks(html: string): Block[] {
   const blocks: Block[] = [];
-  let currentBlock: Block | null = null;
+  const tableRe = /<table\b[^>]*>[\s\S]*?<\/table\s*>/gi;
+  let lastIndex = 0;
+  let tableMatch: RegExpExecArray | null;
+  while ((tableMatch = tableRe.exec(html)) !== null) {
+    const before = html.slice(lastIndex, tableMatch.index);
+    if (before) blocks.push(...parseFlowToBlocks(before));
+    blocks.push(parseTableBlock(tableMatch[0]));
+    lastIndex = tableRe.lastIndex;
+  }
+  const rest = html.slice(lastIndex);
+  if (rest) blocks.push(...parseFlowToBlocks(rest));
+  return blocks;
+}
+
+/** Parses a <table>...</table> fragment into rows of cells, each cell a nested Block[]. */
+function parseTableBlock(tableHtml: string): TableBlock {
+  const rows: TableRowBlock[] = [];
+  const rowRe = /<tr\b[^>]*>([\s\S]*?)<\/tr\s*>/gi;
+  let rowMatch: RegExpExecArray | null;
+  while ((rowMatch = rowRe.exec(tableHtml)) !== null) {
+    const rowInner = rowMatch[1];
+    const cells: Block[][] = [];
+    let header = false;
+    const cellRe = /<(th|td)\b[^>]*>([\s\S]*?)<\/(?:th|td)\s*>/gi;
+    let cellMatch: RegExpExecArray | null;
+    while ((cellMatch = cellRe.exec(rowInner)) !== null) {
+      if (cellMatch[1].toLowerCase() === "th") header = true;
+      cells.push(parseFlowToBlocks(cellMatch[2]));
+    }
+    rows.push({ header, cells });
+  }
+  return { type: "table", rows };
+}
+
+/**
+ * The original block/run tokenizer, operating on a fragment of HTML that is
+ * known not to contain a top-level <table>. Used both for the top-level
+ * document flow and recursively for the contents of each table cell.
+ */
+function parseFlowToBlocks(html: string): TextBlock[] {
+  const blocks: TextBlock[] = [];
+  let currentBlock: TextBlock | null = null;
   let boldDepth = 0;
   let italicDepth = 0;
 
-  const ensureBlock = (): Block => {
+  const ensureBlock = (): TextBlock => {
     if (!currentBlock) {
       currentBlock = { type: "para", runs: [] };
     }

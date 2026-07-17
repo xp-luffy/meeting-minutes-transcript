@@ -196,7 +196,7 @@ function isDiscussionOnly(sentence: string): boolean {
 // resolutions, and must never be used as the antecedent for a fragment
 // outcome such as "Carried."
 const AGENDA_HEADER_ONLY_RE =
-  /^(?:first|second|third|fourth|fifth|sixth)\s+item\b|^next\s+item\b|^next,|^moving\s+(?:on\s+)?to\s+agenda\s+item\b|^agenda\s+item\s*\d+/i;
+  /^(?:first|second|third|fourth|fifth|sixth)\s+item\b|^next\s+item\b|^next,|^moving\s+(?:on\s+)?to\b|^turning\s+to\b|^agenda\s+item\s*\d+/i;
 
 function isAgendaHeaderFragment(sentence: string): boolean {
   return AGENDA_HEADER_ONLY_RE.test(stripSpeakerLabel(sentence));
@@ -205,7 +205,7 @@ function isAgendaHeaderFragment(sentence: string): boolean {
 // Call-to-order / quorum / adjournment housekeeping belongs to the
 // Attendance & Quorum context, not the Deliberations narrative.
 const PROCEDURAL_FILLER_RE =
-  /\b(?:call(?:ed)?\s+(?:the|this)\s+(?:\w+\s+){0,4}meeting\s+to\s+order|meeting\s+(?:is|was)\s+called\s+to\s+order|good\s+morning|good\s+afternoon|good\s+evening|quorum\s+(?:is|was|has\s+been)?\s*(?:present|confirmed|met)|directors?\s+(?:are|is|were)\s+present|meeting\s+(?:closed|adjourned)|adjourn(?:ed|ment)|meeting\s+commenced|call\s+to\s+order)\b/i;
+  /\b(?:call(?:ed)?\s+(?:the|this)\s+(?:\w+\s+){0,4}meeting\s+to\s+order|meeting\s+(?:is|was)\s+called\s+to\s+order|good\s+morning|good\s+afternoon|good\s+evening|quorum\s+(?:is|was|has\s+been)?\s*(?:present|confirmed|met)|directors?\s+(?:are|is|were)\s+present|meeting\s+(?:was\s+|is\s+)?(?:closed|adjourned)|adjourn(?:ed|ment)|meeting\s+commenced|call\s+to\s+order)\b/i;
 
 function isProceduralFiller(sentence: string): boolean {
   return PROCEDURAL_FILLER_RE.test(sentence);
@@ -300,10 +300,24 @@ function lowerFirstLetter(text: string): string {
 function toResolutionClause(remainder: string): string {
   let clause = remainder.trim().replace(/\.$/, "");
 
-  const toVerbMatch = clause.match(/^to\s+([A-Za-z]+)\b(.*)$/i);
+  const toVerbMatch = clause.match(/^to\s+([A-Za-z]+)\b\s*(.*)$/i);
   if (toVerbMatch) {
     const participle = toPastParticiple(toVerbMatch[1]);
-    clause = `the same be ${participle}${toVerbMatch[2]}`;
+    const rest = toVerbMatch[2].trim();
+    if (!rest || /^(?:subject\s+to|pending|in\s+principle|accordingly|unanimously)\b/i.test(rest)) {
+      // No object of its own ("to approve subject to ...") — statutory
+      // shorthand keeps "the same" as the subject.
+      clause = `the same be ${participle}${rest ? ` ${rest}` : ""}`;
+    } else {
+      // Object-bearing form: "to approve the gala budget subject to X"
+      // -> "the gala budget be approved subject to X".
+      const condMatch = rest.match(/^(.*?)(\s+(?:subject\s+to|pending)\b.*)$/i);
+      if (condMatch) {
+        clause = `${condMatch[1].trim()} be ${participle}${condMatch[2]}`;
+      } else {
+        clause = `${rest} be ${participle}`;
+      }
+    }
   }
 
   return lowerFirstLetter(clause);
@@ -319,8 +333,14 @@ function selfContainedResolutionClause(sentence: string): string {
   // producing a double "RESOLVED that ... resolved that ..." clause.
   const cleaned = stripLeadingDiscourseMarkers(stripSpeakerLabel(sentence));
 
-  const resolvedThatRe = /^(it was resolved that|resolved that)\s+/i;
-  const resolvedToRe = /^(it was resolved to|resolved to)\s+/i;
+  // Subject-prefixed forms ("The Committee resolved to ...", "The Board
+  // unanimously resolved that ...") must shed their subject before the
+  // lead-in check, or the whole sentence gets re-wrapped into
+  // "RESOLVED that the Committee resolved to ...".
+  const resolvedThatRe =
+    /^(?:the\s+(?:committee|board|meeting|members)\s+(?:unanimously\s+)?)?(?:it\s+was\s+resolved\s+that|resolved\s+that)\s+/i;
+  const resolvedToRe =
+    /^(?:the\s+(?:committee|board|meeting|members)\s+(?:unanimously\s+)?)?(?:it\s+was\s+resolved\s+to|resolved\s+to|agreed\s+to)\s+/i;
 
   let remainder: string;
   if (resolvedThatRe.test(cleaned)) {
@@ -751,8 +771,22 @@ function extractResolutions(
   // funding structure").
   let lastCandidate: { sentence: string; index: number } | null = null;
 
+  // When a bare outcome fragment ("Carried.") immediately follows a
+  // decision-candidate that already produced a resolution, it is that
+  // resolution's outcome — update it in place instead of attaching the
+  // fragment to an older narrative sentence and fabricating a duplicate.
+  let lastPushedWasDecision = false;
+
   for (const { index, sentence, cls, isCandidateEligible } of classified) {
     if (cls === "decision-candidate" || cls === "outcome-fragment") {
+      if (cls === "outcome-fragment" && lastPushedWasDecision && resolutions.length > 0) {
+        const last = resolutions[resolutions.length - 1];
+        last.outcome = detectOutcome(sentence);
+        last.confidence = Math.max(last.confidence, resolutionConfidence(sentence));
+        consumedIndices.add(index);
+        continue;
+      }
+
       let text: string | null = null;
       if (cls === "decision-candidate") {
         text = selfContainedResolutionClause(sentence);
@@ -776,10 +810,12 @@ function extractResolutions(
         sourceSentenceIndex: index,
         kind: detectResolutionKind(sentence),
       });
+      lastPushedWasDecision = cls === "decision-candidate";
       consumedIndices.add(index);
       continue;
     }
 
+    lastPushedWasDecision = false;
     if (cls === "narrative" && isCandidateEligible) {
       lastCandidate = { sentence, index };
     }
@@ -832,6 +868,10 @@ export function generateMinutesRuleBased(
   meeting: Meeting,
   transcriptText: string,
 ): GeneratedMinutes {
+  if (meeting.minutes_format === "maisca") {
+    return generateMinutesMaisca(meeting, transcriptText);
+  }
+
   const sentences = splitSentences(transcriptText);
   const profile = resolveMeetingTypeProfile(meeting.meeting_type);
 
@@ -893,6 +933,356 @@ ${narrativeParagraphs}
 ${resolutionSections}
 <h3>${actionItemsSectionIndex}. Action Items</h3>
 ${actionItemsListHtml}`;
+
+  let bodyConfidence = 0.8;
+  if (resolutions.length >= 1 && actionItems.length >= 1) {
+    bodyConfidence = Math.min(0.9, Math.round((bodyConfidence + 0.05) * 100) / 100);
+  }
+
+  return {
+    quorum_met: quorumMet,
+    minutes_body_html: minutesBodyHtml,
+    body_confidence: bodyConfidence,
+    resolutions: resolutions.map((r, i) => ({
+      number: numbers[i],
+      text: r.text,
+      outcome: r.outcome,
+      confidence: r.confidence,
+    })),
+    action_items: actionItems.map((a) => ({
+      description: a.description,
+      owner: a.owner,
+      due_date: a.dueDate,
+      confidence: a.confidence,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Maisca committee house-format
+// ---------------------------------------------------------------------------
+//
+// A distinct rendering path for committee-style minutes (Meeting/Date/Time/
+// Venue header table, Attendees table with 1/1 attendance, Terms-of-Reference
+// quorum sentence, a fixed Chairman confidentiality address, and a numbered
+// 1.0/2.0/3.0 Item/Agenda & Discussions/Dept. agenda table). It reuses the
+// exact same four extraction passes (classifySentences / extractResolutions /
+// extractActionItems) as the standard engine, so `resolutions` and
+// `action_items` are identical in shape/content to what the standard format
+// would produce for the same transcript — only `minutes_body_html` differs.
+
+const MAISCA_MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const MAISCA_WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/** "2026-06-16" -> "Tuesday, 16 June 2026". Falls back to the raw input if unparseable. */
+function formatMaiscaDate(isoDate: string): string {
+  const parsed = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  const weekday = MAISCA_WEEKDAY_NAMES[parsed.getUTCDay()];
+  const day = parsed.getUTCDate();
+  const month = MAISCA_MONTH_NAMES[parsed.getUTCMonth()];
+  const year = parsed.getUTCFullYear();
+  return `${weekday}, ${day} ${month} ${year}`;
+}
+
+const CALLED_TO_ORDER_TIME_RE =
+  /\b(?:call(?:ed)?\s+(?:the|this)\s+(?:\w+\s+){0,4}meeting\s+to\s+order\s+at|meeting\s+(?:was\s+|is\s+)?(?:called\s+to\s+order|opened)\s+at|opened\s+at)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:[ap]\.?m\.?)?)/i;
+
+const CLOSE_MEETING_TIME_RE =
+  /\b(?:meeting\s+(?:was\s+)?closed|closed\s+the\s+meeting|meeting\s+(?:was\s+)?adjourned)\s+at\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:[ap]\.?m\.?)?)/i;
+
+const PREVIOUS_MINUTES_RE =
+  /\b(?:minutes\s+of\s+the\s+(?:last|previous)\s+meeting|previous\s+minutes)\b/i;
+
+function detectTranscriptTime(transcriptText: string, re: RegExp): string | null {
+  const match = transcriptText.match(re);
+  return match ? match[1] : null;
+}
+
+/** "2.30pm" / "2:30 PM" / "2 pm" -> "02:30 p.m." style. Passes through anything it can't parse. */
+function normalizeMaiscaTime(raw: string): string {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^(\d{1,2})(?:[:.](\d{2}))?\s*([ap])\.?m\.?$/i);
+  if (match) {
+    const hour = match[1].padStart(2, "0");
+    const minute = match[2] ?? "00";
+    const suffix = match[3].toLowerCase() === "a" ? "a.m." : "p.m.";
+    return `${hour}:${minute} ${suffix}`;
+  }
+  return trimmed;
+}
+
+// Strips a trailing "by <date>" clause an action description already carries
+// (extractActionItem doesn't remove it from the description), so the Maisca
+// "Action: X to Y by <date>." line doesn't repeat the date twice.
+const TRAILING_DUE_DATE_RE =
+  /\s*\bby\s+(?:\d{1,2}\s+[A-Za-z]+\s+\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})\.?\s*$/i;
+
+function stripTrailingDueDateClause(text: string): string {
+  return text.replace(TRAILING_DUE_DATE_RE, "").trim();
+}
+
+function upperFirstLetter(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** "First item, the joint venture with Selat Marine Bhd." -> "THE JOINT VENTURE WITH SELAT MARINE BHD" */
+function deriveMaiscaHeading(sentence: string): string {
+  const cleaned = stripLeadingDiscourseMarkers(stripSpeakerLabel(sentence))
+    .replace(/\.$/, "")
+    .trim();
+  return cleaned.toUpperCase();
+}
+
+/** Decisions render bold as "The Committee RESOLVED that ..."; deferrals render as plain "... was deferred pending ...". */
+function renderMaiscaResolutionLine(r: ExtractedResolution): string {
+  let clause = r.text.replace(/^RESOLVED that\s+/i, "").replace(/\.$/, "");
+  if (r.outcome === "deferred") {
+    clause = clause.replace(
+      /\bbe\s+(deferred|postponed|tabled)\b/i,
+      (_match, verb: string) => `was ${verb.toLowerCase()}`,
+    );
+    return `<p>${escapeHtml(upperFirstLetter(clause))}.</p>`;
+  }
+  return `<p><strong>The Committee RESOLVED that ${escapeHtml(clause)}.</strong></p>`;
+}
+
+function renderMaiscaActionLine(a: ExtractedActionItem): string {
+  const owner = a.owner ? a.owner : "the Secretariat";
+  const task = lowerFirstLetter(stripTrailingDueDateClause(a.description));
+  const dueSuffix = a.dueDate ? ` by ${formatMaiscaDate(a.dueDate)}` : "";
+  return `<p>Action: ${escapeHtml(owner)} to ${escapeHtml(task)}${dueSuffix}.</p>`;
+}
+
+interface MaiscaSegment {
+  /** Uppercase section heading derived from an explicit agenda-header sentence, or null (renders as "MATTERS ARISING"). */
+  heading: string | null;
+  paragraphSentences: string[];
+  resolutions: ExtractedResolution[];
+  actions: ExtractedActionItem[];
+}
+
+/**
+ * Groups the transcript's remaining (non-fixed-item) content into agenda
+ * topics, using the same agenda-header fragments ("First item, ...", "Next,
+ * ...") the standard engine already detects as narrative-navigation markers.
+ * Narrative text, resolutions, and action items are each attached to
+ * whichever segment was "current" at their original sentence position, so an
+ * item's decision/action lines stay inline with its own discussion — mirroring
+ * the sample's per-item structure. Falls back to a single "MATTERS ARISING"
+ * segment when the transcript has no explicit topic markers.
+ */
+function buildMaiscaSegments(
+  classified: ClassifiedSentence[],
+  consumedIndices: Set<number>,
+  resolutions: ExtractedResolution[],
+  actionItems: ExtractedActionItem[],
+): MaiscaSegment[] {
+  const segments: MaiscaSegment[] = [];
+  let current: MaiscaSegment = {
+    heading: null,
+    paragraphSentences: [],
+    resolutions: [],
+    actions: [],
+  };
+  const indexToSegment = new Map<number, MaiscaSegment>();
+
+  for (const c of classified) {
+    if (c.cls === "procedural") continue;
+    if (c.cls === "narrative" && c.isAgendaHeader) {
+      current = { heading: deriveMaiscaHeading(c.sentence), paragraphSentences: [], resolutions: [], actions: [] };
+      segments.push(current);
+      continue;
+    }
+    if (segments.length === 0) segments.push(current);
+    indexToSegment.set(c.index, current);
+  }
+  if (segments.length === 0) segments.push(current);
+
+  for (const c of classified) {
+    if (c.cls === "procedural") continue;
+    if (c.cls === "narrative" && c.isAgendaHeader) continue;
+    if (consumedIndices.has(c.index)) continue;
+    const seg = indexToSegment.get(c.index);
+    if (seg) seg.paragraphSentences.push(stripSpeakerLabel(c.sentence));
+  }
+
+  for (const r of resolutions) {
+    const seg = indexToSegment.get(r.sourceSentenceIndex) ?? segments[segments.length - 1];
+    seg.resolutions.push(r);
+  }
+
+  const actionCandidateIndices = classified
+    .filter((c) => c.cls === "action-candidate")
+    .map((c) => c.index);
+  actionItems.forEach((a, i) => {
+    const idx = actionCandidateIndices[i];
+    const seg = (idx !== undefined ? indexToSegment.get(idx) : undefined) ?? segments[segments.length - 1];
+    seg.actions.push(a);
+  });
+
+  return segments.filter(
+    (s) => s.heading || s.paragraphSentences.length > 0 || s.resolutions.length > 0 || s.actions.length > 0,
+  );
+}
+
+export function generateMinutesMaisca(meeting: Meeting, transcriptText: string): GeneratedMinutes {
+  const sentences = splitSentences(transcriptText);
+  const classified = classifySentences(sentences);
+  const consumedIndices = new Set<number>();
+
+  // Same extraction passes as the standard engine — resolutions/action_items
+  // must come out identical regardless of which body template renders them.
+  const resolutions = extractResolutions(classified, consumedIndices);
+  const actionItems = extractActionItems(classified, consumedIndices);
+  const numbers = autoNumberResolutions(meeting.meeting_type, meeting.meeting_date, resolutions.length);
+  const quorumMet = detectQuorumMet(transcriptText, meeting.quorum_met ?? true);
+
+  const attendees = meeting.attendees ?? [];
+  const isApology = (role: string) => /apolog/i.test(role);
+  const isInAttendance = (role: string) => /in\s*attendance|\(observer\)|observer/i.test(role);
+
+  const mainAttendees = attendees.filter((a) => !isApology(a.role) && !isInAttendance(a.role));
+  const apologyAttendees = attendees.filter((a) => isApology(a.role));
+  const inAttendanceAttendees = attendees.filter((a) => isInAttendance(a.role) && !isApology(a.role));
+  const nonApologyAttendees = attendees.filter((a) => !isApology(a.role));
+  const quorumN = Math.max(1, Math.floor(nonApologyAttendees.length / 2) + 1);
+
+  // --- Header table -----------------------------------------------------
+  const year = meeting.meeting_date
+    ? new Date(`${meeting.meeting_date}T00:00:00Z`).getUTCFullYear()
+    : new Date().getUTCFullYear();
+  const yy = String(Number.isNaN(year) ? new Date().getUTCFullYear() : year).slice(-2);
+  const meetingNoLabel = `${meeting.meeting_type} No.01/${yy}`;
+  const dateLabel = meeting.meeting_date ? formatMaiscaDate(meeting.meeting_date) : null;
+  const calledToOrderRaw = detectTranscriptTime(transcriptText, CALLED_TO_ORDER_TIME_RE);
+  const closeTimeRaw = detectTranscriptTime(transcriptText, CLOSE_MEETING_TIME_RE);
+
+  const headerRows: string[] = [`<tr><th>Meeting</th><td>${escapeHtml(meetingNoLabel)}</td></tr>`];
+  if (dateLabel) {
+    headerRows.push(`<tr><th>Date</th><td>${escapeHtml(dateLabel)}</td></tr>`);
+  }
+  if (calledToOrderRaw) {
+    headerRows.push(`<tr><th>Time</th><td>${escapeHtml(normalizeMaiscaTime(calledToOrderRaw))}</td></tr>`);
+  }
+  headerRows.push(`<tr><th>Venue</th><td>${escapeHtml(meeting.venue ?? "Not specified")}</td></tr>`);
+  const headerTableHtml = `<table><tbody>${headerRows.join("")}</tbody></table>`;
+
+  // --- Attendees ----------------------------------------------------------
+  const attendeeRows = mainAttendees
+    .map((a) => `<tr><td>${escapeHtml(a.name)}</td><td>${escapeHtml(a.role)}</td><td>1/1</td></tr>`)
+    .join("");
+  const attendeesTableHtml =
+    mainAttendees.length > 0
+      ? `<table><thead><tr><th>Name</th><th>Designation</th><th>Attendance</th></tr></thead><tbody>${attendeeRows}</tbody></table>`
+      : "<p>No attendee list was captured for this meeting.</p>";
+
+  const apologiesHtml =
+    apologyAttendees.length > 0
+      ? `<h3>Absent with Apologies</h3><ul>${apologyAttendees
+          .map((a) => `<li>${escapeHtml(a.name)} &mdash; ${escapeHtml(a.role)}</li>`)
+          .join("")}</ul>`
+      : "";
+
+  const inAttendanceHtml =
+    inAttendanceAttendees.length > 0
+      ? `<p><strong>In Attendance:</strong></p><ul>${inAttendanceAttendees
+          .map((a) => `<li>${escapeHtml(a.name)} &mdash; ${escapeHtml(a.role)}</li>`)
+          .join("")}</ul>`
+      : "";
+
+  // --- Quorum ---------------------------------------------------------------
+  const quorumSentenceParts = [
+    `In accordance with the Terms of Reference, ${quorumN} members of the Committee including the Chairman or Deputy Chairman present shall form a quorum.`,
+  ];
+  if (quorumMet) quorumSentenceParts.push("A quorum was present.");
+  const quorumHtml = `<h3>Quorum</h3><p>${escapeHtml(quorumSentenceParts.join(" "))}</p>`;
+
+  // --- Address by Chairman ----------------------------------------------------
+  const chairman = meeting.chairperson ?? "The Chairman";
+  const addressHtml = `<h3>Address by Chairman</h3><p>${escapeHtml(
+    chairman,
+  )} reminded members of their Confidentiality Undertaking and requested that any interests in the matters to be discussed be declared. Members were reminded that no information relating to the deliberations of the Committee is to be disclosed, whether verbally, in writing, or through any digital medium (including but not limited to SMS, WhatsApp, or social media), without the prior authorisation of the Chairman.</p>`;
+
+  // --- Agenda -----------------------------------------------------------------
+  let itemCounter = 1;
+  const agendaRows: string[] = [];
+
+  agendaRows.push(
+    `<tr><td>${itemCounter}.0</td><td><p><strong>WELCOME REMARKS</strong></p><p>${escapeHtml(
+      chairman,
+    )} welcomed all members to the meeting and thanked them for their attendance.</p></td><td></td></tr>`,
+  );
+  itemCounter += 1;
+
+  if (PREVIOUS_MINUTES_RE.test(transcriptText)) {
+    agendaRows.push(
+      `<tr><td>${itemCounter}.0</td><td><p><strong>MINUTES OF THE PREVIOUS MEETING</strong></p><p>The minutes of the previous meeting were confirmed as a correct record.</p></td><td></td></tr>`,
+    );
+    itemCounter += 1;
+  }
+
+  const segments = buildMaiscaSegments(classified, consumedIndices, resolutions, actionItems);
+  for (const segment of segments) {
+    const cellParts: string[] = [`<p><strong>${escapeHtml(segment.heading ?? "MATTERS ARISING")}</strong></p>`];
+    const narrativeText = segment.paragraphSentences.join(" ").trim();
+    if (narrativeText) {
+      cellParts.push(`<p>${escapeHtml(narrativeText)}</p>`);
+    }
+    for (const r of segment.resolutions) {
+      cellParts.push(renderMaiscaResolutionLine(r));
+    }
+    for (const a of segment.actions) {
+      cellParts.push(renderMaiscaActionLine(a));
+    }
+    agendaRows.push(`<tr><td>${itemCounter}.0</td><td>${cellParts.join("")}</td><td></td></tr>`);
+    itemCounter += 1;
+  }
+
+  const closeSuffix = closeTimeRaw ? ` at ${normalizeMaiscaTime(closeTimeRaw)}` : "";
+  agendaRows.push(
+    `<tr><td>${itemCounter}.0</td><td><p><strong>CLOSE OF MEETING</strong></p><p>There being no other business, the meeting was closed${escapeHtml(
+      closeSuffix,
+    )}.</p></td><td></td></tr>`,
+  );
+
+  const agendaTableHtml = `<table><thead><tr><th>Item</th><th>Agenda &amp; Discussions</th><th>Dept.</th></tr></thead><tbody>${agendaRows.join(
+    "",
+  )}</tbody></table>`;
+
+  const minutesBodyHtml = `<h2>Minutes of ${escapeHtml(meeting.meeting_type)}</h2>
+${headerTableHtml}
+<h3>Attendees</h3>
+${attendeesTableHtml}
+${apologiesHtml}
+${inAttendanceHtml}
+${quorumHtml}
+${addressHtml}
+<h3>Agenda</h3>
+${agendaTableHtml}`;
 
   let bodyConfidence = 0.8;
   if (resolutions.length >= 1 && actionItems.length >= 1) {

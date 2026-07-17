@@ -34,4 +34,21 @@
   .minutes-body p:empty::before {
     content: "\00a0";
   }
+
+  /* Maisca (and any other) table-based house-format sections: modest,
+     print-friendly borders — no inline styles needed in the generated HTML. */
+  .minutes-body table {
+    @apply mb-4 w-full border-collapse text-sm;
+  }
+  .minutes-body th,
+  .minutes-body td {
+    @apply border border-neutral-300 px-3 py-2 align-top text-sm text-neutral-700;
+  }
+  .minutes-body th {
+    @apply text-left align-top text-xs font-semibold text-neutral-900;
+  }
+  .minutes-body table th:first-child,
+  .minutes-body table td:first-child {
+    @apply w-20 whitespace-nowrap;
+  }
 }

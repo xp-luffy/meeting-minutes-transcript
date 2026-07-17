@@ -83,14 +83,27 @@ const GeneratedMinutesSchema = z.object({
 function buildSystemPrompt(meeting: Meeting): string {
   const typeGuidance = meetingTypeGuidance(meeting.meeting_type);
 
+  const maiscaGuidance =
+    meeting.minutes_format === "maisca"
+      ? `
+
+HOUSE FORMAT OVERRIDE — "Maisca committee style". The minutes_body_html must follow this committee-minutes layout instead of the generic section layout described below (the JSON contract is unchanged; only the HTML body layout differs):
+1. A header block as a 2-column <table> (th label / td value) with rows: "Meeting" (value "${meeting.meeting_type} No.01/<2-digit year of the meeting date>", e.g. "Event Committee No.02/26" style), "Date" (formatted "Tuesday, 16 June 2026" — weekday, day Month year), "Time" (ONLY if the transcript states when the meeting was called to order/opened — otherwise omit the row entirely; format "02:30 p.m."), and "Venue".
+2. An <h3>Attendees</h3> section: a <table> with <thead> columns Name / Designation / Attendance, one row per attendee with "1/1" in the Attendance cell. Exclude attendees whose role mentions apologies — list those after the table under an "Absent with Apologies" heading. Attendees whose role indicates "in attendance" or observer status go in a separate "In Attendance:" list (omit if none).
+3. An <h3>Quorum</h3> section: "In accordance with the Terms of Reference, N members of the Committee including the Chairman or Deputy Chairman present shall form a quorum." where N is the majority (floor(members/2)+1) of non-apology attendees; append "A quorum was present." if the transcript confirms quorum.
+4. An <h3>Address by Chairman</h3> section: a fixed confidentiality paragraph — the chairman reminded members of their Confidentiality Undertaking, requested declaration of interests in matters to be discussed, and reminded members that no Committee deliberations may be disclosed verbally, in writing, or through any digital medium (including SMS, WhatsApp, or social media) without the Chairman's prior authorisation.
+5. An <h3>Agenda</h3> section: a 3-column <table> with <thead> columns "Item" / "Agenda &amp; Discussions" / "Dept.". Items are numbered 1.0, 2.0, 3.0... Each Agenda &amp; Discussions cell starts with an UPPERCASE <strong> heading. The first item is "WELCOME REMARKS" (brief chairman-welcomed-members sentence). If the transcript mentions confirming previous minutes, include an item "MINUTES OF THE PREVIOUS MEETING" whose text ends "...were confirmed as a correct record." Then one item per discussion topic: the narrative, then each decision inline in bold as "The Committee RESOLVED that ..." (deferrals as "... was deferred pending ..."), then any action items for that topic inline as "Action: <owner> to <task> by <date>." Leave every Dept. cell empty in this version. The final item is "CLOSE OF MEETING" ("There being no other business, the meeting was closed at <time>." — include the time only if the transcript states it).
+Use plain semantic <table>/<thead>/<tbody>/<tr>/<th>/<td> markup with NO inline styles.`
+      : "";
+
   return `You are a statutory minutes drafting assistant for Malaysian company secretaries. Given a raw meeting transcript and meeting metadata, extract structured minutes.
 
-This meeting's type is "${meeting.meeting_type}". Statutory conventions for this type: ${typeGuidance}
+This meeting's type is "${meeting.meeting_type}". Statutory conventions for this type: ${typeGuidance}${maiscaGuidance}
 
 Respond with ONLY a single JSON object (no markdown, no commentary) matching EXACTLY this shape:
 {
   "quorum_met": boolean,
-  "minutes_body_html": string, // well-formed statutory HTML: an <h2> heading (per the statutory conventions above), a company/date/venue block, <h3>1. Attendance &amp; Quorum</h3> section listing attendees and a quorum statement, a <h3>2. ...</h3> narrative section (named per the conventions above), a numbered <h3> section per resolution/matter containing its RESOLVED-form text and outcome (labelled per the conventions above), and a final <h3>Action Items</h3> section. Escape any HTML special characters from transcript text.
+  "minutes_body_html": string, // well-formed statutory HTML: an <h2> heading (per the statutory conventions above), a company/date/venue block, <h3>1. Attendance &amp; Quorum</h3> section listing attendees and a quorum statement, a <h3>2. ...</h3> narrative section (named per the conventions above), a numbered <h3> section per resolution/matter containing its RESOLVED-form text and outcome (labelled per the conventions above), and a final <h3>Action Items</h3> section — unless a HOUSE FORMAT OVERRIDE is specified above, in which case follow that layout for the body instead. Escape any HTML special characters from transcript text.
   "body_confidence": number, // 0-1, your overall confidence in the extraction
   "resolutions": [
     {
@@ -205,7 +218,7 @@ export async function POST(request: Request) {
     const { data: meeting, error: meetingError } = await supabase
       .from("meetings")
       .select(
-        "id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, created_at",
+        "id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, minutes_format, created_at",
       )
       .eq("id", meetingId)
       .single();

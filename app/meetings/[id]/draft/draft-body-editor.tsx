@@ -3,10 +3,24 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Table, TableRow, TableHeader, TableCell } from "@tiptap/extension-table";
 import { saveDraftBody } from "./actions";
 import { SaveIndicator, type SaveStatus } from "./save-indicator";
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
+
+const TABLES_DISABLED_MESSAGE =
+  "This draft's layout isn't editable here yet — edits are disabled to protect the tables.";
+
+/**
+ * Cheap structural check for table markup. Used as a safety net: if the
+ * source HTML has a table but the editor's parsed/serialized HTML doesn't,
+ * something (missing node extensions, a lossy transform, etc.) dropped it,
+ * and we must not let that loss get persisted.
+ */
+function hasTableMarkup(html: string): boolean {
+  return html.toLowerCase().includes("<table");
+}
 
 type ToolbarButtonProps = {
   label: string;
@@ -101,9 +115,15 @@ export function DraftBodyEditor({
 }) {
   const lastSavedHtml = useRef(initialHtml);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Whether the HTML this draft was loaded with contained a table. Captured
+  // once per draft and used as the baseline for the table-loss safety net
+  // below — it must never be derived from anything the editor produces,
+  // since the whole point is to detect the editor silently dropping it.
+  const initialHadTable = useRef(hasTableMarkup(initialHtml));
 
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [tablesUnsupported, setTablesUnsupported] = useState(false);
   const [, startTransition] = useTransition();
 
   function clearDebounce() {
@@ -113,10 +133,31 @@ export function DraftBodyEditor({
     }
   }
 
+  /**
+   * Locks the editor into read-only, table-protecting mode. Idempotent:
+   * safe to call from multiple detection points (initial load, autosave).
+   */
+  function lockForTableLoss(editor: Editor) {
+    setTablesUnsupported(true);
+    if (editor.isEditable) {
+      editor.setEditable(false);
+    }
+  }
+
   function save(editor: Editor) {
     clearDebounce();
     const current = editor.getHTML();
     if (current === lastSavedHtml.current) return;
+
+    // Independent safety net: even if extensions/config drift in the future,
+    // never persist a save that would destroy a table that was present when
+    // this draft was loaded.
+    if (initialHadTable.current && !hasTableMarkup(current)) {
+      setStatus("error");
+      setErrorMessage(TABLES_DISABLED_MESSAGE);
+      lockForTableLoss(editor);
+      return;
+    }
 
     setStatus("saving");
     setErrorMessage(null);
@@ -133,7 +174,7 @@ export function DraftBodyEditor({
   }
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, Table.configure({ resizable: false }), TableRow, TableHeader, TableCell],
     content: initialHtml,
     editable: !isFinal,
     immediatelyRender: false,
@@ -155,16 +196,34 @@ export function DraftBodyEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId]);
 
-  // Keep the editable state in sync if isFinal changes without remounting.
+  // Safety net: as soon as the editor has parsed the incoming HTML, verify
+  // it didn't drop a table that was present in the source. This guards
+  // against StarterKit-only configs (no table nodes) as well as any future
+  // node type the editor doesn't understand yet — if content is lost on
+  // load, force read-only immediately so the next autosave can't persist
+  // the destruction.
   useEffect(() => {
-    if (editor && editor.isEditable !== !isFinal) {
-      editor.setEditable(!isFinal);
+    if (!editor) return;
+    if (initialHadTable.current && !hasTableMarkup(editor.getHTML())) {
+      lockForTableLoss(editor);
     }
-  }, [editor, isFinal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
 
-  // Reset the "last saved" baseline whenever we swap to a different draft.
+  // Keep the editable state in sync if isFinal changes without remounting.
+  // A detected table loss always wins over isFinal turning editing back on.
+  useEffect(() => {
+    const shouldBeEditable = !isFinal && !tablesUnsupported;
+    if (editor && editor.isEditable !== shouldBeEditable) {
+      editor.setEditable(shouldBeEditable);
+    }
+  }, [editor, isFinal, tablesUnsupported]);
+
+  // Reset per-draft baselines whenever we swap to a different draft.
   useEffect(() => {
     lastSavedHtml.current = initialHtml;
+    initialHadTable.current = hasTableMarkup(initialHtml);
+    setTablesUnsupported(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId]);
 
@@ -179,7 +238,15 @@ export function DraftBodyEditor({
 
   return (
     <div>
-      {!isFinal ? <EditorToolbar editor={editor} /> : null}
+      {tablesUnsupported ? (
+        <div
+          role="status"
+          className="mb-2 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        >
+          {TABLES_DISABLED_MESSAGE}
+        </div>
+      ) : null}
+      {!isFinal && !tablesUnsupported ? <EditorToolbar editor={editor} /> : null}
       <EditorContent editor={editor} />
       {!isFinal ? (
         <div className="mt-3 flex items-center justify-end">
