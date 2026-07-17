@@ -1,0 +1,87 @@
+import { formatDate } from "@/lib/format";
+
+export interface AuditLogEntry {
+  id: string;
+  meeting_id: string;
+  entity_type: string;
+  entity_id: string | null;
+  action: string;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+}
+
+const timeFormatter = new Intl.DateTimeFormat("en-MY", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
+function formatTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return `${formatDate(value)}, ${timeFormatter.format(date)}`;
+}
+
+/** Turns a raw audit_logs row into a human-readable one-line description. */
+function describeEntry(entry: AuditLogEntry): string {
+  const payload = entry.payload ?? {};
+
+  switch (entry.action) {
+    case "generate_minutes_draft": {
+      const version = typeof payload.version === "number" ? payload.version : "?";
+      const source = typeof payload.source === "string" ? payload.source : "unknown";
+      return `Minutes draft generated (v${version}, ${source})`;
+    }
+    case "status_change": {
+      const from = typeof payload.from === "string" ? payload.from : "?";
+      const to = typeof payload.to === "string" ? payload.to : "?";
+      return `Status changed ${from} → ${to}`;
+    }
+    case "edit_draft_body":
+      return "Draft body edited";
+    case "edit_resolution":
+      return "Resolution edited";
+    case "edit_action_item":
+      return "Action item edited";
+    case "toggle_action_item":
+      return "Action item status toggled";
+    case "approve_field":
+      return "Low-confidence field accepted";
+    case "edit_attendance":
+      return "Attendance updated";
+    case "export_docx":
+      return "Exported DOCX";
+    case "export_pdf":
+      return "Exported PDF";
+    default:
+      return entry.action;
+  }
+}
+
+/**
+ * Read-only "Activity" timeline showing the last 20 audit_logs rows for the
+ * meeting, newest first, with a humanised description per action.
+ */
+export function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
+      <h2 className="text-sm font-medium text-neutral-700">Activity</h2>
+
+      {entries.length === 0 ? (
+        <p className="mt-3 text-sm text-neutral-500">No activity recorded yet.</p>
+      ) : (
+        <ul className="mt-4 space-y-4">
+          {entries.map((entry) => (
+            <li key={entry.id} className="flex gap-3">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />
+              <div className="min-w-0">
+                <p className="text-xs text-neutral-600">{describeEntry(entry)}</p>
+                <p className="text-xs text-neutral-400">{formatTimestamp(entry.created_at)}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

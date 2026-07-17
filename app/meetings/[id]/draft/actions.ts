@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import type { Attendee } from "@/lib/types";
 
 export interface ActionResult {
   error?: string;
@@ -424,6 +425,55 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     entityId: draftId,
     action: "status_change",
     payload: { from: "reviewed", to: "final" },
+  });
+
+  revalidatePath(draftPath(meetingId), "page");
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// 5. Attendance & quorum
+// ---------------------------------------------------------------------------
+
+/**
+ * Saves the attendee list and quorum flag for a meeting. Rejected once the
+ * meeting's latest draft is 'final' (locked), same as the other editors.
+ * Blank name/role pairs are dropped before persisting.
+ */
+export async function saveAttendance(
+  meetingId: string,
+  attendees: Attendee[],
+  quorumMet: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const status = await getDraftStatusByMeeting(supabase, meetingId);
+  if (status === "final") {
+    return { error: "This draft is finalised and can no longer be edited." };
+  }
+
+  const cleanAttendees = attendees
+    .map((attendee) => ({
+      name: (attendee.name ?? "").trim(),
+      role: (attendee.role ?? "").trim(),
+    }))
+    .filter((attendee) => attendee.name.length > 0 || attendee.role.length > 0);
+
+  const { error } = await supabase
+    .from("meetings")
+    .update({ attendees: cleanAttendees, quorum_met: quorumMet })
+    .eq("id", meetingId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await logAudit(supabase, {
+    meetingId,
+    entityType: "meeting",
+    entityId: meetingId,
+    action: "edit_attendance",
+    payload: { attendee_count: cleanAttendees.length, quorum_met: quorumMet },
   });
 
   revalidatePath(draftPath(meetingId), "page");

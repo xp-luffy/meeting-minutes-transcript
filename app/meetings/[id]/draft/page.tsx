@@ -10,6 +10,9 @@ import { DraftBodyEditor } from "./draft-body-editor";
 import { ResolutionCard } from "./resolution-card";
 import { ActionItemRow } from "./action-item-row";
 import { StatusWorkflow } from "./status-workflow";
+import { AttendanceEditor } from "./attendance-editor";
+import { RegenerateButton } from "./regenerate-button";
+import { ActivityFeed, type AuditLogEntry } from "./activity-feed";
 
 export default async function DraftPage({
   params,
@@ -65,7 +68,7 @@ export default async function DraftPage({
     );
   }
 
-  const [{ data: resolutions }, { data: actionItems }] = await Promise.all([
+  const [{ data: resolutions }, { data: actionItems }, { data: auditLogs }] = await Promise.all([
     supabase
       .from("resolutions")
       .select(
@@ -80,10 +83,17 @@ export default async function DraftPage({
       )
       .eq("meeting_id", id)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("audit_logs")
+      .select("id, meeting_id, entity_type, entity_id, action, payload, created_at")
+      .eq("meeting_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
   const typedResolutions = (resolutions ?? []) as Resolution[];
   const typedActionItems = (actionItems ?? []) as ActionItem[];
+  const typedAuditLogs = (auditLogs ?? []) as AuditLogEntry[];
 
   const isLowConfidence =
     typedDraft.body_html_confidence !== null &&
@@ -117,6 +127,7 @@ export default async function DraftPage({
               draftId={typedDraft.id}
               disabled={!typedDraft.body_html || typedDraft.body_html.length === 0}
             />
+            {!isFinal ? <RegenerateButton meetingId={id} /> : null}
             <StatusWorkflow
               draftId={typedDraft.id}
               meetingId={id}
@@ -153,6 +164,13 @@ export default async function DraftPage({
         </div>
       </div>
 
+      <AttendanceEditor
+        meetingId={id}
+        initialAttendees={typedMeeting.attendees ?? []}
+        initialQuorumMet={typedMeeting.quorum_met}
+        isFinal={isFinal}
+      />
+
       <div>
         <h2 className="text-sm font-medium text-neutral-700">Resolutions</h2>
         {typedResolutions.length === 0 ? (
@@ -185,6 +203,8 @@ export default async function DraftPage({
           </ul>
         )}
       </div>
+
+      <ActivityFeed entries={typedAuditLogs} />
     </div>
   );
 }

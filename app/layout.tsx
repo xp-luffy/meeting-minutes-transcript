@@ -28,6 +28,12 @@ export default function RootLayout({
                 Meetings
               </Link>
               <Link
+                href="/action-items"
+                className="text-neutral-600 transition-colors hover:text-neutral-900"
+              >
+                Action Items
+              </Link>
+              <Link
                 href="/meetings/new"
                 className="rounded-md bg-indigo-600 px-3.5 py-1.5 font-medium text-white transition-colors hover:bg-indigo-700"
               >
