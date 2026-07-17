@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
-import { getProfile } from "@/lib/auth";
+import { getProfile, getSessionUser } from "@/lib/auth";
+import { runAssurance } from "@/lib/assurance";
 import type { Attendee } from "@/lib/types";
 
 export interface ActionResult {
@@ -412,6 +413,32 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
 
   const supabase = await createClient();
 
+  // Assurance gate: an unresolved fail-level completeness gap blocks
+  // finalising unless the risk has been explicitly acknowledged. A meeting
+  // with no assurance report at all is allowed through (the assurance engine
+  // may not have run yet), but the audit trail notes that fact.
+  let assuranceMissing = false;
+  const { data: latestReport } = await supabase
+    .from("assurance_reports")
+    .select("id, results, acknowledged_at")
+    .eq("draft_id", draftId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!latestReport) {
+    assuranceMissing = true;
+  } else {
+    const results = (latestReport.results ?? []) as { status: string }[];
+    const hasUnresolvedFail = results.some((r) => r.status === "fail");
+    if (hasUnresolvedFail && !latestReport.acknowledged_at) {
+      return {
+        error:
+          "Assurance found unresolved gaps — resolve them or acknowledge the risk before finalising.",
+      };
+    }
+  }
+
   const status = await getDraftStatusById(supabase, draftId);
   if (status === "final") {
     return { error: "This draft is already finalised." };
@@ -445,7 +472,7 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     entityType: "draft",
     entityId: draftId,
     action: "status_change",
-    payload: { from: "reviewed", to: "final" },
+    payload: { from: "reviewed", to: "final", assurance_missing: assuranceMissing },
   });
 
   revalidatePath(draftPath(meetingId), "page");
@@ -495,6 +522,156 @@ export async function saveAttendance(
     entityId: meetingId,
     action: "edit_attendance",
     payload: { attendee_count: cleanAttendees.length, quorum_met: quorumMet },
+  });
+
+  revalidatePath(draftPath(meetingId), "page");
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// 6. Assurance (completeness/defensibility) engine
+// ---------------------------------------------------------------------------
+
+/**
+ * Re-runs the assurance completeness checks for a draft using the current
+ * meeting/draft/resolutions/action-items/transcript state, and inserts a new
+ * assurance_reports row (reports are append-only history, not upserted).
+ */
+export async function rerunAssurance(draftId: string, meetingId: string): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (!user) {
+    return { error: "Sign in to run assurance checks." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: meeting, error: meetingError } = await supabase
+    .from("meetings")
+    .select("id, meeting_type, minutes_format, chairperson, attendees, quorum_met")
+    .eq("id", meetingId)
+    .maybeSingle();
+
+  if (meetingError || !meeting) {
+    return { error: "Meeting not found." };
+  }
+
+  const { data: draft, error: draftError } = await supabase
+    .from("minutes_drafts")
+    .select("id, body_html")
+    .eq("id", draftId)
+    .maybeSingle();
+
+  if (draftError || !draft) {
+    return { error: "Draft not found." };
+  }
+
+  const [{ data: resolutions }, { data: actionItems }, { data: transcript }] = await Promise.all([
+    supabase
+      .from("resolutions")
+      .select("resolution_number, resolution_text, outcome")
+      .eq("meeting_id", meetingId),
+    supabase
+      .from("action_items")
+      .select("description, owner_name, due_date")
+      .eq("meeting_id", meetingId),
+    supabase
+      .from("transcripts")
+      .select("raw_text")
+      .eq("meeting_id", meetingId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const result = runAssurance({
+    meeting: {
+      meeting_type: meeting.meeting_type,
+      minutes_format: meeting.minutes_format ?? undefined,
+      chairperson: meeting.chairperson,
+      attendees: meeting.attendees,
+      quorum_met: meeting.quorum_met,
+    },
+    bodyHtml: draft.body_html ?? "",
+    resolutions: (resolutions ?? []) as {
+      resolution_number: string | null;
+      resolution_text: string;
+      outcome: string;
+    }[],
+    actionItems: (actionItems ?? []) as {
+      description: string;
+      owner_name: string | null;
+      due_date: string | null;
+    }[],
+    transcriptText: transcript?.raw_text ?? "",
+  });
+
+  const { error: insertError } = await supabase.from("assurance_reports").insert({
+    draft_id: draftId,
+    meeting_id: meetingId,
+    results: result.checks,
+    score: result.score,
+  });
+
+  if (insertError) {
+    return { error: friendlyRlsMessage(insertError) };
+  }
+
+  await logAudit(supabase, {
+    meetingId,
+    entityType: "assurance_report",
+    entityId: draftId,
+    action: "assurance_rerun",
+    payload: {
+      score: result.score,
+      fail_count: result.checks.filter((c) => c.status === "fail").length,
+      warn_count: result.checks.filter((c) => c.status === "warn").length,
+    },
+  });
+
+  revalidatePath(draftPath(meetingId), "page");
+  return { success: true };
+}
+
+/**
+ * Records acknowledgement of an assurance report's open gaps: the cosec is
+ * accepting the risk of finalising despite outstanding fail-level checks,
+ * with a note explaining why (kept for the audit trail).
+ */
+export async function acknowledgeAssurance(
+  reportId: string,
+  meetingId: string,
+  note: string,
+): Promise<ActionResult> {
+  const user = await getSessionUser();
+  if (!user) {
+    return { error: "Sign in to acknowledge assurance findings." };
+  }
+
+  const trimmedNote = note.trim();
+  if (trimmedNote.length === 0) {
+    return { error: "A note is required to acknowledge outstanding gaps." };
+  }
+  if (trimmedNote.length > 500) {
+    return { error: "Note must be 500 characters or fewer." };
+  }
+
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("assurance_reports")
+    .update({ acknowledged_at: new Date().toISOString(), acknowledged_note: trimmedNote })
+    .eq("id", reportId);
+
+  if (error) {
+    return { error: friendlyRlsMessage(error) };
+  }
+
+  await logAudit(supabase, {
+    meetingId,
+    entityType: "assurance_report",
+    entityId: reportId,
+    action: "assurance_acknowledged",
+    payload: { note: trimmedNote },
   });
 
   revalidatePath(draftPath(meetingId), "page");

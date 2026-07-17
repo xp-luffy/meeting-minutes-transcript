@@ -18,6 +18,13 @@ import { Badge } from "@/components/ui";
 export async function PrecedentPanel({ meetingId }: { meetingId: string }) {
   const supabase = await createClient();
 
+  const { data: meetingRow } = await supabase
+    .from("meetings")
+    .select("company_id")
+    .eq("id", meetingId)
+    .maybeSingle();
+  const companyId = (meetingRow as { company_id: string | null } | null)?.company_id ?? null;
+
   const { data: resolutions } = await supabase
     .from("resolutions")
     .select("resolution_text")
@@ -29,9 +36,16 @@ export async function PrecedentPanel({ meetingId }: { meetingId: string }) {
 
   if (resolutionTexts.length === 0) return null;
 
-  const matches = await findSimilarResolutions(supabase, meetingId, resolutionTexts);
+  const matches = await findSimilarResolutions(supabase, meetingId, resolutionTexts, companyId);
 
   if (matches.length === 0) return null;
+
+  // Same-company precedent first (lib/precedents.ts already sorts this way;
+  // re-sorting here keeps the panel correct even if that ordering changes).
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (a.sameCompany !== b.sameCompany) return a.sameCompany ? -1 : 1;
+    return b.similarity - a.similarity;
+  });
 
   return (
     <details className="group rounded-lg border border-dashed border-neutral-200 bg-neutral-50/60 px-4 py-3 open:pb-4">
@@ -39,12 +53,12 @@ export async function PrecedentPanel({ meetingId }: { meetingId: string }) {
         <span className="inline-flex items-center gap-2">
           <span className="text-neutral-400 transition-transform group-open:rotate-90">›</span>
           Precedents from past minutes
-          <span className="text-xs font-normal text-neutral-400">({matches.length})</span>
+          <span className="text-xs font-normal text-neutral-400">({sortedMatches.length})</span>
         </span>
       </summary>
 
       <ul className="mt-3 space-y-2">
-        {matches.map((match) => (
+        {sortedMatches.map((match) => (
           <PrecedentMatchRow key={match.resolution_id} match={match} />
         ))}
       </ul>
@@ -73,7 +87,10 @@ function PrecedentMatchRow({ match }: { match: PrecedentMatch }) {
             </>
           ) : null}
         </span>
-        <Badge variant="neutral">{formatConfidencePercent(match.similarity)} similar</Badge>
+        <span className="flex items-center gap-1.5">
+          {match.sameCompany ? <Badge variant="indigo">This company</Badge> : null}
+          <Badge variant="neutral">{formatConfidencePercent(match.similarity)} similar</Badge>
+        </span>
       </div>
       <p className="mt-1 text-neutral-500">{excerpt(match.resolution_text)}</p>
       <Link

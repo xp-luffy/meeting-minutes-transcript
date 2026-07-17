@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { generateMinutesRuleBased, meetingTypeGuidance } from "@/lib/minutes-engine";
+import { runAssurance } from "@/lib/assurance";
 import type { GeneratedMinutes, Meeting, Transcript } from "@/lib/types";
 
 /**
@@ -375,6 +376,49 @@ export async function POST(request: Request) {
       }
     }
 
+    // Compute the assurance ("nothing legally required is missing") report
+    // for this freshly generated draft and store it. Non-fatal: an assurance
+    // failure must never block the minutes generation the user asked for.
+    let assuranceScore: number | null = null;
+    try {
+      const assuranceResult = runAssurance({
+        meeting: {
+          meeting_type: meetingTyped.meeting_type,
+          minutes_format: meetingTyped.minutes_format,
+          chairperson: meetingTyped.chairperson,
+          attendees: meetingTyped.attendees,
+          quorum_met: meetingTyped.quorum_met,
+        },
+        bodyHtml: generated.minutes_body_html,
+        resolutions: generated.resolutions.map((r) => ({
+          resolution_number: r.number,
+          resolution_text: r.text,
+          outcome: r.outcome,
+        })),
+        actionItems: generated.action_items.map((a) => ({
+          description: a.description,
+          owner_name: a.owner,
+          due_date: a.due_date,
+        })),
+        transcriptText,
+      });
+
+      assuranceScore = assuranceResult.score;
+
+      const { error: assuranceError } = await supabase.from("assurance_reports").insert({
+        draft_id: draftId,
+        meeting_id: meetingId,
+        results: assuranceResult.checks,
+        score: assuranceResult.score,
+      });
+
+      if (assuranceError) {
+        console.error("[generate-minutes] Failed to store assurance report", assuranceError);
+      }
+    } catch (assuranceErr) {
+      console.error("[generate-minutes] Assurance computation failed", assuranceErr);
+    }
+
     await logAudit(supabase, {
       meetingId,
       entityType: "minutes_draft",
@@ -386,6 +430,7 @@ export async function POST(request: Request) {
         resolution_count: generated.resolutions.length,
         action_item_count: generated.action_items.length,
         warnings,
+        assurance_score: assuranceScore,
       },
     });
 

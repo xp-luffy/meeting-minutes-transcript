@@ -1,6 +1,8 @@
 import { createMeeting } from "./actions";
 import { MEETING_TYPES } from "@/lib/constants";
 import { getMyWorkspaces } from "@/lib/workspace";
+import { getMyCompanies } from "@/lib/companies";
+import { CompanyPicker } from "./company-picker";
 
 export default async function NewMeetingPage({
   searchParams,
@@ -12,8 +14,9 @@ export default async function NewMeetingPage({
     typeof params[key] === "string" ? (params[key] as string) : "";
 
   const error = getParam("error");
-  const workspaces = await getMyWorkspaces();
+  const [workspaces, companies] = await Promise.all([getMyWorkspaces(), getMyCompanies()]);
   const selectedWorkspace = getParam("workspace_id") || getParam("workspace");
+  const selectedCompany = getParam("company_id") || getParam("company");
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -29,20 +32,11 @@ export default async function NewMeetingPage({
       ) : null}
 
       <form action={createMeeting} className="mt-6 space-y-5">
-        <div>
-          <label htmlFor="company_name" className="block text-sm font-medium text-neutral-700">
-            Company name <span className="text-red-600">*</span>
-          </label>
-          <input
-            id="company_name"
-            name="company_name"
-            type="text"
-            required
-            defaultValue={getParam("company_name")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            placeholder="e.g. Arca Holdings Sdn Bhd"
-          />
-        </div>
+        <CompanyPicker
+          companies={companies.map((c) => ({ id: c.id, name: c.name }))}
+          initialCompanyId={selectedCompany}
+          initialCompanyName={getParam("company_name")}
+        />
 
         <div>
           <label htmlFor="meeting_type" className="block text-sm font-medium text-neutral-700">
@@ -104,7 +98,8 @@ export default async function NewMeetingPage({
           </select>
           <p className="mt-1 text-xs text-neutral-500">
             Maisca style: header &amp; attendance tables, quorum per Terms of Reference,
-            Chairman&rsquo;s confidentiality address, numbered agenda-item table.
+            Chairman&rsquo;s confidentiality address, numbered agenda-item table. Format defaults
+            to this company&rsquo;s usual style if you leave this as Standard.
           </p>
         </div>
 
@@ -134,6 +129,9 @@ export default async function NewMeetingPage({
             className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="e.g. Level 12, Menara Arca, Kuala Lumpur"
           />
+          <p className="mt-1 text-xs text-neutral-500">
+            Leave blank to use this company&rsquo;s usual venue, if it has one on record.
+          </p>
         </div>
 
         <div>
@@ -148,6 +146,9 @@ export default async function NewMeetingPage({
             className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             placeholder="e.g. Dato' Ahmad Fauzi bin Ismail"
           />
+          <p className="mt-1 text-xs text-neutral-500">
+            Leave blank to use this company&rsquo;s usual chairperson, if it has one on record.
+          </p>
         </div>
 
         <div>
@@ -164,6 +165,7 @@ export default async function NewMeetingPage({
           />
           <p className="mt-1 text-xs text-neutral-500">
             One per line, as &ldquo;Name — Role&rdquo; (a comma also works as the separator).
+            Leave blank to use this company&rsquo;s usual attendee list, if it has one on record.
           </p>
         </div>
 

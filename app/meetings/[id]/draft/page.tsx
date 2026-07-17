@@ -15,6 +15,9 @@ import { RegenerateButton } from "./regenerate-button";
 import { ActivityFeed, type AuditLogEntry } from "./activity-feed";
 import { PrecedentPanel } from "./precedent-panel";
 import { SendForReview } from "./send-for-review";
+import { AssurancePanel } from "./assurance-panel";
+import { ConfirmationStatus } from "./confirmation-status";
+import type { AssuranceCheck } from "@/lib/assurance";
 
 export default async function DraftPage({
   params,
@@ -70,7 +73,7 @@ export default async function DraftPage({
     );
   }
 
-  const [{ data: resolutions }, { data: actionItems }, { data: auditLogs }] = await Promise.all([
+  const [{ data: resolutions }, { data: actionItems }, { data: auditLogs }, { data: assuranceRow }] = await Promise.all([
     supabase
       .from("resolutions")
       .select(
@@ -91,7 +94,25 @@ export default async function DraftPage({
       .eq("meeting_id", id)
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase
+      .from("assurance_reports")
+      .select("id, results, score, acknowledged_at, acknowledged_note, created_at")
+      .eq("draft_id", typedDraft.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const assuranceReport = assuranceRow
+    ? {
+        id: assuranceRow.id as string,
+        results: (assuranceRow.results ?? []) as AssuranceCheck[],
+        score: Number(assuranceRow.score ?? 0),
+        acknowledged_at: (assuranceRow.acknowledged_at ?? null) as string | null,
+        acknowledged_note: (assuranceRow.acknowledged_note ?? null) as string | null,
+        created_at: assuranceRow.created_at as string,
+      }
+    : null;
 
   const typedResolutions = (resolutions ?? []) as Resolution[];
   const typedActionItems = (actionItems ?? []) as ActionItem[];
@@ -142,6 +163,15 @@ export default async function DraftPage({
               finalisedAt={typedDraft.finalised_at}
             />
           </div>
+        </div>
+
+        <div className="mt-3">
+          <ConfirmationStatus
+            meetingId={id}
+            draftId={typedDraft.id}
+            meetingDate={typedMeeting.meeting_date}
+            draftStatus={typedDraft.status}
+          />
         </div>
 
         <div
@@ -210,6 +240,13 @@ export default async function DraftPage({
           </ul>
         )}
       </div>
+
+      <AssurancePanel
+        report={assuranceReport}
+        meetingId={id}
+        draftId={typedDraft.id}
+        isFinal={isFinal}
+      />
 
       <PrecedentPanel meetingId={id} />
 

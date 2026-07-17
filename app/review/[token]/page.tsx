@@ -1,6 +1,23 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
+import { ConfirmDraftCard } from "./confirm-draft-card";
+
+// get_shared_draft (0006_insights_v2.sql) now also returns
+// already_confirmed_by — the RPC's generated Supabase types haven't caught
+// up, so the row shape is typed locally here.
+type SharedDraftRow = {
+  company_name: string;
+  meeting_type: string;
+  meeting_date: string;
+  venue: string | null;
+  body_html: string | null;
+  body_html_source: string | null;
+  status: string;
+  version: number;
+  expires_at: string;
+  already_confirmed_by: string[] | null;
+};
 
 // Token-gated read-only draft view (send_draft_for_review). The token is the
 // credential: lookup happens via the get_shared_draft security-definer RPC.
@@ -15,8 +32,10 @@ export default async function SharedReviewPage({
     share_token: token,
   });
 
-  const draft = Array.isArray(data) ? data[0] : data;
+  const draft = (Array.isArray(data) ? data[0] : data) as SharedDraftRow | null;
   if (error || !draft) notFound();
+
+  const alreadyConfirmedBy = draft.already_confirmed_by ?? [];
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
@@ -50,6 +69,9 @@ export default async function SharedReviewPage({
           />
         )}
       </div>
+
+      <ConfirmDraftCard token={token} alreadyConfirmedBy={alreadyConfirmedBy} />
+
       <p className="mt-6 text-center text-xs text-neutral-400">
         Generated with Meeting Minutes — statutory minutes from transcripts.
       </p>

@@ -47,15 +47,18 @@ export function SendForReview({
         title={disabled ? "Draft is empty" : undefined}
         className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Creating link…" : "Send for review"}
+        {pending ? "Creating link…" : "Circulate for confirmation"}
       </button>
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
       {url && (
         <div className="absolute right-0 z-10 mt-2 w-80 rounded-lg border border-neutral-200 bg-white p-3 shadow-lg">
           <p className="text-xs font-medium text-neutral-800">
-            Read-only review link
+            Confirmation &amp; review link
           </p>
-          <p className="mt-1 break-all rounded bg-neutral-50 p-2 text-[11px] text-neutral-600">
+          <p className="mt-1 text-[11px] text-neutral-500">
+            Recipients can read AND formally confirm the minutes from this link.
+          </p>
+          <p className="mt-2 break-all rounded bg-neutral-50 p-2 text-[11px] text-neutral-600">
             {url}
           </p>
           <div className="mt-2 flex items-center gap-2">

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Attendee } from "@/lib/types";
 import { MEETING_TYPES } from "@/lib/constants";
+import { getCompany, upsertCompanyDefaultsFromMeeting, type CompanyDefaults } from "@/lib/companies";
+import { NEW_COMPANY_VALUE } from "./company-picker";
 
 /**
  * Parses a textarea of "Name — Role" (or "Name, Role") lines, one per line,
@@ -47,7 +49,8 @@ function friendlyInsertError(error: { code?: string; message: string } | null): 
 }
 
 export async function createMeeting(formData: FormData): Promise<void> {
-  const companyName = String(formData.get("company_name") ?? "").trim();
+  const companyIdRaw = String(formData.get("company_id") ?? "").trim();
+  const companyNameRaw = String(formData.get("company_name") ?? "").trim();
   const meetingType = String(formData.get("meeting_type") ?? "").trim();
   const meetingDate = String(formData.get("meeting_date") ?? "").trim();
   const venue = String(formData.get("venue") ?? "").trim();
@@ -57,59 +60,117 @@ export async function createMeeting(formData: FormData): Promise<void> {
   const minutesFormat = minutesFormatRaw === "maisca" ? "maisca" : "standard";
   const workspaceId = String(formData.get("workspace_id") ?? "").trim();
 
+  const isNewCompany = !companyIdRaw || companyIdRaw === NEW_COMPANY_VALUE;
+
+  const redirectFields: Record<string, string> = {
+    company_id: companyIdRaw,
+    company_name: companyNameRaw,
+    meeting_type: meetingType,
+    meeting_date: meetingDate,
+    venue,
+    chairperson,
+    attendees: attendeesRaw,
+    minutes_format: minutesFormatRaw,
+    workspace_id: workspaceId,
+  };
+
   const errors: string[] = [];
-  if (!companyName) errors.push("Company name is required.");
+  if (isNewCompany && !companyNameRaw) errors.push("Company name is required.");
   if (!meetingType || !MEETING_TYPES.includes(meetingType as (typeof MEETING_TYPES)[number])) {
     errors.push("Meeting type is required.");
   }
   if (!meetingDate) errors.push("Meeting date is required.");
 
   if (errors.length > 0) {
-    const query = buildRedirectQuery({
-      error: errors.join(" "),
-      company_name: companyName,
-      meeting_type: meetingType,
-      meeting_date: meetingDate,
-      venue,
-      chairperson,
-      attendees: attendeesRaw,
-      workspace_id: workspaceId,
-    });
-    redirect(`/meetings/new${query}`);
+    redirect(`/meetings/new${buildRedirectQuery({ error: errors.join(" "), ...redirectFields })}`);
   }
 
-  const attendees = parseAttendees(attendeesRaw);
-
   const supabase = await createClient();
+
+  // Resolve the company: either load the existing one (for its name +
+  // defaults) or create a new one now, scoped to the chosen workspace.
+  let companyId: string | null = null;
+  let companyName = companyNameRaw;
+  let companyDefaults: CompanyDefaults | null = null;
+
+  if (isNewCompany) {
+    const { data: newCompany, error: companyError } = await supabase
+      .from("companies")
+      .insert({ name: companyNameRaw, workspace_id: workspaceId || null })
+      .select("id, name")
+      .single();
+
+    if (companyError || !newCompany) {
+      redirect(
+        `/meetings/new${buildRedirectQuery({
+          error: friendlyInsertError(companyError),
+          ...redirectFields,
+        })}`,
+      );
+    }
+
+    companyId = newCompany.id;
+    companyName = newCompany.name;
+  } else {
+    const company = await getCompany(companyIdRaw);
+    if (!company) {
+      redirect(
+        `/meetings/new${buildRedirectQuery({
+          error: "That company could not be found. Pick another, or create a new one.",
+          ...redirectFields,
+        })}`,
+      );
+    }
+    companyId = company.id;
+    companyName = company.name;
+    companyDefaults = company.defaults;
+  }
+
+  // Explicit user input always wins; an empty field falls back to the
+  // company's usual default, if it has one on record.
+  const effectiveVenue = venue || companyDefaults?.venue || "";
+  const effectiveChairperson = chairperson || companyDefaults?.chairperson || "";
+  const attendeesFromForm = parseAttendees(attendeesRaw);
+  const effectiveAttendees =
+    attendeesFromForm.length > 0 ? attendeesFromForm : companyDefaults?.attendees ?? [];
+
+  // The format select's "standard" option doubles as "unset" — if the user
+  // left it there and the company's usual style is Maisca, use that;
+  // otherwise the user's explicit choice (standard or maisca) always wins.
+  const effectiveMinutesFormat: "standard" | "maisca" =
+    minutesFormatRaw === "standard" && companyDefaults?.minutes_format === "maisca"
+      ? "maisca"
+      : minutesFormat;
+
   const { data, error } = await supabase
     .from("meetings")
     .insert({
+      company_id: companyId,
       company_name: companyName,
       meeting_type: meetingType,
       meeting_date: meetingDate,
-      venue: venue || null,
-      chairperson: chairperson || null,
-      attendees: attendees.length > 0 ? attendees : null,
+      venue: effectiveVenue || null,
+      chairperson: effectiveChairperson || null,
+      attendees: effectiveAttendees.length > 0 ? effectiveAttendees : null,
       status: "draft",
       workspace_id: workspaceId || null,
-      minutes_format: minutesFormat,
+      minutes_format: effectiveMinutesFormat,
     })
     .select("id")
     .single();
 
   if (error || !data) {
-    const query = buildRedirectQuery({
-      error: friendlyInsertError(error),
-      company_name: companyName,
-      meeting_type: meetingType,
-      meeting_date: meetingDate,
-      venue,
-      chairperson,
-      attendees: attendeesRaw,
-      workspace_id: workspaceId,
-    });
-    redirect(`/meetings/new${query}`);
+    redirect(
+      `/meetings/new${buildRedirectQuery({
+        error: friendlyInsertError(error),
+        ...redirectFields,
+      })}`,
+    );
   }
+
+  // Memory improves with every meeting: fold this meeting's fields back
+  // into the company's defaults (last-write-wins) for next time.
+  await upsertCompanyDefaultsFromMeeting(data.id);
 
   redirect(`/meetings/${data.id}/transcript`);
 }

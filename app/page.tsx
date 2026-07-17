@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Meeting, MinutesDraft } from "@/lib/types";
-import { StatusBadge } from "@/components/ui";
+import { StatusBadge, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { getSessionUser } from "@/lib/auth";
 import { getMyWorkspaces, type WorkspaceSummary } from "@/lib/workspace";
 
 type MeetingRow = Meeting & { user_id: string | null; workspace_id: string | null };
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
 async function getMeetingsWithLatestDrafts(): Promise<{
   meetings: MeetingRow[];
   latestDraftByMeeting: Map<string, MinutesDraft>;
+  confirmationCountByMeeting: Map<string, number>;
   error: string | null;
 }> {
   const supabase = await createClient();
@@ -23,22 +26,33 @@ async function getMeetingsWithLatestDrafts(): Promise<{
     .order("meeting_date", { ascending: false });
 
   if (meetingsError) {
-    return { meetings: [], latestDraftByMeeting: new Map(), error: meetingsError.message };
+    return {
+      meetings: [],
+      latestDraftByMeeting: new Map(),
+      confirmationCountByMeeting: new Map(),
+      error: meetingsError.message,
+    };
   }
 
   const meetingList = (meetings ?? []) as MeetingRow[];
   const meetingIds = meetingList.map((m) => m.id);
 
   const latestDraftByMeeting = new Map<string, MinutesDraft>();
+  const confirmationCountByMeeting = new Map<string, number>();
 
   if (meetingIds.length > 0) {
-    const { data: drafts, error: draftsError } = await supabase
-      .from("minutes_drafts")
-      .select(
-        "id, meeting_id, transcript_id, body_html, body_html_source, body_html_confidence, body_html_review_status, status, version, created_at",
-      )
-      .in("meeting_id", meetingIds)
-      .order("version", { ascending: false });
+    const [{ data: drafts, error: draftsError }, { data: confirmationRows }] = await Promise.all([
+      supabase
+        .from("minutes_drafts")
+        .select(
+          "id, meeting_id, transcript_id, body_html, body_html_source, body_html_confidence, body_html_review_status, status, version, created_at",
+        )
+        .in("meeting_id", meetingIds)
+        .order("version", { ascending: false }),
+      // Bulk confirmations lookup for the exposure chip below — one query
+      // for the whole list, counted per meeting in JS (no N+1).
+      supabase.from("confirmations").select("meeting_id").in("meeting_id", meetingIds),
+    ]);
 
     if (!draftsError && drafts) {
       for (const draft of drafts as MinutesDraft[]) {
@@ -47,12 +61,35 @@ async function getMeetingsWithLatestDrafts(): Promise<{
         }
       }
     }
+
+    if (confirmationRows) {
+      for (const row of confirmationRows as { meeting_id: string }[]) {
+        confirmationCountByMeeting.set(
+          row.meeting_id,
+          (confirmationCountByMeeting.get(row.meeting_id) ?? 0) + 1,
+        );
+      }
+    }
   }
 
-  return { meetings: meetingList, latestDraftByMeeting, error: null };
+  return { meetings: meetingList, latestDraftByMeeting, confirmationCountByMeeting, error: null };
 }
 
-function MeetingCard({ meeting, draft }: { meeting: MeetingRow; draft?: MinutesDraft }) {
+function MeetingCard({
+  meeting,
+  draft,
+  confirmationCount,
+}: {
+  meeting: MeetingRow;
+  draft?: MinutesDraft;
+  confirmationCount: number;
+}) {
+  const daysSinceMeeting = Math.floor(
+    (Date.now() - new Date(meeting.meeting_date).getTime()) / MS_PER_DAY,
+  );
+  const showUnconfirmedChip =
+    !!draft && draft.status !== "final" && confirmationCount === 0 && daysSinceMeeting > 7;
+
   return (
     <li className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -62,6 +99,9 @@ function MeetingCard({ meeting, draft }: { meeting: MeetingRow; draft?: MinutesD
               {meeting.company_name}
             </h2>
             <StatusBadge status={meeting.status} />
+            {showUnconfirmedChip ? (
+              <Badge variant="amber">Unconfirmed · {daysSinceMeeting}d</Badge>
+            ) : null}
           </div>
           <p className="mt-1 text-sm text-neutral-500">
             {meeting.meeting_type} &middot; {formatDate(meeting.meeting_date)}
@@ -94,11 +134,13 @@ function MeetingGroup({
   title,
   meetings,
   latestDraftByMeeting,
+  confirmationCountByMeeting,
   emptyHint,
 }: {
   title: string;
   meetings: MeetingRow[];
   latestDraftByMeeting: Map<string, MinutesDraft>;
+  confirmationCountByMeeting: Map<string, number>;
   emptyHint?: React.ReactNode;
 }) {
   return (
@@ -117,6 +159,7 @@ function MeetingGroup({
               key={meeting.id}
               meeting={meeting}
               draft={latestDraftByMeeting.get(meeting.id)}
+              confirmationCount={confirmationCountByMeeting.get(meeting.id) ?? 0}
             />
           ))}
         </ul>
@@ -126,10 +169,8 @@ function MeetingGroup({
 }
 
 export default async function Home() {
-  const [{ meetings, latestDraftByMeeting, error }, sessionUser] = await Promise.all([
-    getMeetingsWithLatestDrafts(),
-    getSessionUser(),
-  ]);
+  const [{ meetings, latestDraftByMeeting, confirmationCountByMeeting, error }, sessionUser] =
+    await Promise.all([getMeetingsWithLatestDrafts(), getSessionUser()]);
   const workspaces: WorkspaceSummary[] = sessionUser ? await getMyWorkspaces() : [];
 
   if (error) {
@@ -170,6 +211,7 @@ export default async function Home() {
               key={meeting.id}
               meeting={meeting}
               draft={latestDraftByMeeting.get(meeting.id)}
+              confirmationCount={confirmationCountByMeeting.get(meeting.id) ?? 0}
             />
           ))}
         </ul>
@@ -204,6 +246,7 @@ export default async function Home() {
           title={ws.name}
           meetings={byWorkspace.get(ws.id) ?? []}
           latestDraftByMeeting={latestDraftByMeeting}
+          confirmationCountByMeeting={confirmationCountByMeeting}
           emptyHint={
             <>
               No meetings in this workspace yet.{" "}
@@ -217,11 +260,21 @@ export default async function Home() {
       ))}
 
       {personal.length > 0 ? (
-        <MeetingGroup title="Personal" meetings={personal} latestDraftByMeeting={latestDraftByMeeting} />
+        <MeetingGroup
+          title="Personal"
+          meetings={personal}
+          latestDraftByMeeting={latestDraftByMeeting}
+          confirmationCountByMeeting={confirmationCountByMeeting}
+        />
       ) : null}
 
       {demo.length > 0 ? (
-        <MeetingGroup title="Demo library" meetings={demo} latestDraftByMeeting={latestDraftByMeeting} />
+        <MeetingGroup
+          title="Demo library"
+          meetings={demo}
+          latestDraftByMeeting={latestDraftByMeeting}
+          confirmationCountByMeeting={confirmationCountByMeeting}
+        />
       ) : null}
     </div>
   );
