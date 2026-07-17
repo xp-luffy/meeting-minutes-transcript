@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@layer components {
+  /* Hand-rolled "prose" styling for AI-generated minutes body_html, since the
+     typography plugin isn't installed. Scope any generated HTML in this class. */
+  .minutes-body h2 {
+    @apply mt-6 mb-2 text-lg font-semibold text-neutral-900 first:mt-0;
+  }
+  .minutes-body h3 {
+    @apply mt-5 mb-2 text-base font-semibold text-neutral-900 first:mt-0;
+  }
+  .minutes-body p {
+    @apply mb-3 text-sm leading-relaxed text-neutral-700;
+  }
+  .minutes-body ul {
+    @apply mb-3 list-disc space-y-1 pl-5 text-sm text-neutral-700;
+  }
+  .minutes-body ol {
+    @apply mb-3 list-decimal space-y-1 pl-5 text-sm text-neutral-700;
+  }
+  .minutes-body li {
+    @apply text-sm text-neutral-700;
+  }
+  .minutes-body strong {
+    @apply font-semibold text-neutral-900;
+  }
+}

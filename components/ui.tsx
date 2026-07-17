@@ -1,0 +1,104 @@
+import type { ReactNode } from "react";
+import type { MeetingStatus } from "@/lib/types";
+import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
+import { formatConfidencePercent } from "@/lib/format";
+
+type BadgeVariant = "neutral" | "amber" | "green" | "red" | "indigo";
+
+const BADGE_VARIANT_CLASSES: Record<BadgeVariant, string> = {
+  neutral: "bg-neutral-100 text-neutral-700 ring-1 ring-inset ring-neutral-300",
+  amber: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-300",
+  green: "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-300",
+  red: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-300",
+  indigo: "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-300",
+};
+
+/** Small pill badge used across the app for statuses, outcomes, and tags. */
+export function Badge({
+  children,
+  variant = "neutral",
+  className = "",
+}: {
+  children: ReactNode;
+  variant?: BadgeVariant;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${BADGE_VARIANT_CLASSES[variant]} ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+const MEETING_STATUS_VARIANT: Record<MeetingStatus, BadgeVariant> = {
+  draft: "neutral",
+  reviewed: "amber",
+  final: "green",
+};
+
+const MEETING_STATUS_LABEL: Record<MeetingStatus, string> = {
+  draft: "Draft",
+  reviewed: "Reviewed",
+  final: "Final",
+};
+
+/** Badge for a meeting / draft status (draft, reviewed, final). */
+export function StatusBadge({ status }: { status: MeetingStatus }) {
+  return <Badge variant={MEETING_STATUS_VARIANT[status]}>{MEETING_STATUS_LABEL[status]}</Badge>;
+}
+
+const OUTCOME_VARIANT: Record<string, BadgeVariant> = {
+  carried: "green",
+  deferred: "amber",
+  lapsed: "red",
+};
+
+/** Pill for a resolution outcome (carried, deferred, lapsed). */
+export function OutcomePill({ outcome }: { outcome: string }) {
+  const variant = OUTCOME_VARIANT[outcome] ?? "neutral";
+  return (
+    <Badge variant={variant} className="capitalize">
+      {outcome}
+    </Badge>
+  );
+}
+
+/** Pill for an action item status (open, done). */
+export function ItemStatusPill({ status }: { status: "open" | "done" }) {
+  return (
+    <Badge variant={status === "done" ? "green" : "indigo"} className="capitalize">
+      {status}
+    </Badge>
+  );
+}
+
+/**
+ * Amber "needs review" tag shown when a confidence score is below the
+ * review threshold. Renders nothing when confidence is missing or high enough.
+ */
+export function ConfidenceTag({
+  confidence,
+  label = "Needs review",
+  threshold = CONFIDENCE_REVIEW_THRESHOLD,
+}: {
+  confidence: number | null | undefined;
+  label?: string;
+  threshold?: number;
+}) {
+  if (confidence === null || confidence === undefined) return null;
+  if (confidence >= threshold) return null;
+  return <Badge variant="amber">{label}</Badge>;
+}
+
+/** Chip that displays a confidence percentage, e.g. "Confidence 91%". */
+export function ConfidenceChip({ confidence }: { confidence: number | null | undefined }) {
+  if (confidence === null || confidence === undefined) return null;
+  const isLow = confidence < CONFIDENCE_REVIEW_THRESHOLD;
+  return (
+    <Badge variant={isLow ? "amber" : "neutral"}>
+      Confidence {formatConfidencePercent(confidence)}
+    </Badge>
+  );
+}
