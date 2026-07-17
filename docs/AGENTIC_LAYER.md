@@ -1,33 +1,33 @@
-# Agentic Layer — Meeting Minutes Transcript
+# Agentic Layer
 
-## Risk Classification
+## Risk Levels & Actions
 
-### Low — Auto-execute (no approval needed)
-- **extract_structure:** Parse transcript → structured JSON fields (attendance, resolutions, actions) and write to DB with confidence scores
-- **flag_low_confidence:** Set `review_status = 'flagged'` on any AI field with confidence < 0.75
-- **generate_draft_sections:** Assemble section text from structured data and write to `minutes_drafts`
+### Low — Auto-execute (no approval)
+- `generate_minutes_draft` — calls GPT-4o, writes draft + resolutions + action items to DB
+- `flag_low_confidence_items` — marks items with confidence < 0.70 as 'flagged'
+- `auto_save_draft` — patches `minutes_drafts.content` on edit debounce
 
-### Medium — Show result, one-click confirm
-- **update_meeting_status:** Advance status from `draft → reviewed → final` (shown to cosec, confirmed with button)
-- **assign_action_owner:** AI suggests owner from attendee list; cosec confirms before saving
+### Medium — Shown to user before save
+- `update_draft_status` — promote draft → reviewed → final (user clicks confirm)
+- `bulk_approve_resolutions` — mark all flagged resolutions as approved
 
-### High — Always requires explicit approval
-- **export_and_share:** Generate DOCX/PDF and send via email to attendees (not v1 — requires approval flow)
-- **overwrite_reviewed_section:** Replace a section the cosec has already marked reviewed
+### High — Explicit user approval required
+- `export_final_document` — generates and streams DOCX/PDF (irreversible download)
 
 ### Critical — Human only
-- **delete_meeting:** Permanent deletion of meeting + all linked records
-- **finalise_minutes:** Advance to `final` status (irreversible; requires cosec role)
+- `delete_meeting` — removes meeting + all child records; requires confirmation modal + cannot be undone by agent
 
-## Named Tools (v1)
-- `openai.chat.completions` — structured extraction only, called server-side
-- `supabase.storage.upload` — transcript file upload
-- `docx.build` — DOCX generation from DB rows
-- `pdf.render` — PDF generation from DB rows
+## Named Tools (server-side only)
+- `openai_chat_completion` — structured prompt → JSON
+- `supabase_db_write` — all DB mutations
+- `docx_renderer` — DOCX generation
+- `pdf_renderer` — PDF generation
 
 ## Audit Log Fields
-Each meaningful action logs: `action_type`, `actor_id` (null pre-auth), `target_table`, `target_id`, `before_value` (jsonb), `after_value` (jsonb), `timestamp`, `ip_address`.
+`id, actor_user_id, action, target_table, target_id, payload_summary, risk_level, created_at`
+
+Every Generate, status change, and export is logged.
 
 ## v1 vs Later
-**v1:** Auto-extract + flag; manual status advance; manual export
-**Later:** Email distribution with approval gate; resolution cross-reference against company register; SSM filing agent (critical — human-only approval)
+- **v1:** generate_minutes_draft + export only
+- **Later:** scheduled action-item reminders (email), re-generate on transcript edit

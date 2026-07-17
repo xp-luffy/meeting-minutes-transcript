@@ -1,36 +1,30 @@
 # Product Requirements — Meeting Minutes Transcript
 
 ## Problem
-Drafting statutory board/committee minutes from a raw transcript is slow, error-prone, and requires expert judgment on format. Company secretaries spend hours producing what should be a structured, predictable document.
+Drafting statutory board/committee minutes from a raw transcript is slow and error-prone. Company secretaries spend hours reformatting deliberations, resolutions, and action items into the required legal structure.
 
-## Target User
-Company secretaries (Cosecs) and cosec support staff — specifically Maisca members who draft Board, AGM/EGM, and Committee minutes regularly.
+## Target Users
+Company secretaries (Cosecs) and support staff at Maisca member firms who draft board, AGM/EGM, and committee minutes.
 
 ## Core Objects
-| Object | Purpose |
-|---|---|
-| Meeting | Company, type, date, attendees, quorum, status |
-| Transcript | Raw pasted or uploaded text linked to a meeting |
-| Minutes Draft | AI-generated, section-structured draft (attendance, quorum, deliberations, resolutions, actions) |
-| Resolution | Extracted resolution with mover, seconder, vote outcome, review status |
-| Action Item | Extracted task with owner, due date, open/closed status |
+- **Meeting** — company, type (Board/AGM/EGM/Committee), date, attendees, quorum status
+- **Transcript** — raw pasted or uploaded text, linked to a Meeting
+- **MinutesDraft** — generated statutory document, status (draft → reviewed → final), editable content
+- **Resolution** — extracted item, type (ordinary/special), mover, seconder, outcome
+- **ActionItem** — task, owner, due date, status, linked to a Meeting
 
-## MVP Must-Haves
-- [ ] Paste or upload a meeting transcript
-- [ ] Trigger AI generation → receive structured minutes draft
-- [ ] View draft in section editor (attendance, quorum, deliberations, resolutions, action items)
-- [ ] Edit any section and save to database
-- [ ] Review and approve individual resolutions and action items
-- [ ] Advance meeting status: draft → reviewed → final
-- [ ] Export minutes to DOCX and PDF
-- [ ] Meetings dashboard showing all meetings and their status
-- [ ] Works without login (demo-first; auth added later)
+## MVP Checklist (v1 must-haves)
+- [ ] Create a Meeting with metadata (company, type, date, attendees)
+- [ ] Paste or upload a transcript
+- [ ] AI generates a statutory-format minutes draft (attendance & quorum, deliberations, resolutions, action items)
+- [ ] Edit the draft in-browser (rich text)
+- [ ] Export draft to DOCX and PDF
+- [ ] View extracted Resolutions and Action Items as structured lists
+- [ ] Mark draft status: draft → reviewed → final
+- [ ] Shared access — multiple team members see all meetings
 
 ## Non-Goals (v1)
-Live audio transcription, Zoom/Teams sync, e-signatures, SSM filing, billing, real-time collaboration, email reminders.
+Live audio capture, e-signatures, SSM filing, billing, Zoom/Fireflies sync, per-user data isolation (Sprint 5).
 
 ## Success Criteria
-A cosec pastes a real 500-word board meeting transcript, clicks Generate, receives a correctly structured minutes draft with at least 2 resolutions and 1 action item extracted, edits one section inline, advances status to Reviewed, and exports a DOCX — all within 5 minutes. The exported document matches the on-screen draft.
-
-## Definition of Done
-Pass/fail: a tester can complete the above scenario on the live URL from a fresh browser session with no login, and the exported DOCX contains the edited content persisted in the database.
+A cosec pastes a real 2,000-word board meeting transcript, clicks **Generate Minutes**, and within 60 seconds receives a correctly structured draft with resolutions and action items extracted — requiring only minor edits before export.

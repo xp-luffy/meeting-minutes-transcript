@@ -1,61 +1,42 @@
-# Intelligence Layer — Meeting Minutes Transcript
+# Intelligence Layer
 
 ## Messy Input
-Raw transcript: unstructured speaker-tagged text, varying quality, abbreviations, Malaysian legal terms, mixed English/Malay, missing mover/seconder names, informal vote descriptions.
+Raw meeting transcript: speaker labels inconsistent, agenda items mixed with side discussion, resolutions buried in prose, action owners implied not stated.
 
-## Auto-Structure Schema (AI → JSON)
+## Auto-Structured Output (v1)
 ```json
 {
-  "attendance": [
-    {"name": "Tan Sri Ahmad Razali", "designation": "Chairman", "present": true}
-  ],
-  "apologies": [
-    {"name": "Dato Seri Faiz Othman", "designation": "NED"}
-  ],
+  "attendance": [{"name": "Dato Sri Lim", "role": "Chairman", "present": true}],
   "quorum_met": true,
-  "quorum_required": 3,
-  "quorum_present": 4,
-  "deliberations": "The Board reviewed Q1 financials...",
-  "resolutions": [
-    {
-      "number": "1/2025",
-      "text": "That the Company engage an external procurement consultant.",
-      "mover": "Encik Rashid",
-      "seconder": "Ms Priya Nair",
-      "outcome": "Carried unanimously",
-      "type": "ordinary",
-      "confidence": 0.92
-    }
-  ],
-  "action_items": [
-    {
-      "description": "Shortlist procurement consultants for Board approval.",
-      "owner": "CFO",
-      "due_date": "2025-05-16",
-      "confidence": 0.88
-    }
-  ]
+  "deliberations": [{"agenda_item": "1. Approval of Previous Minutes", "summary": "..."}],
+  "resolutions": [{
+    "text": "RESOLVED that the audited financial statements for FY2024 be adopted.",
+    "type": "ordinary",
+    "outcome": "passed",
+    "source": "openai-gpt4o",
+    "confidence": 0.91
+  }],
+  "action_items": [{
+    "description": "File annual return by 31 Aug",
+    "owner": "Company Secretary",
+    "due_date": "2024-08-31",
+    "confidence": 0.85
+  }],
+  "minutes_prose": "<full statutory HTML draft>"
 }
 ```
 
-## Events to Track
-- Transcript submitted (word count, source type)
-- Generation triggered (model, prompt version)
-- Generation completed or failed (duration, token count)
-- Section edited post-generation (which section, before/after length)
-- Resolution review_status changed
-- Minutes exported (format)
+## Events Tracked
+- Transcript submitted
+- Generation completed / failed
+- Resolution confidence < 0.7 (flag for review)
+- Action item owner confidence < 0.75 (flag)
 
-## Scoring Rules (v1 — rule-based)
-- Confidence < 0.75 → flag for mandatory cosec review (yellow badge)
-- Confidence < 0.60 → flag as low confidence (red badge, block export until reviewed)
-- Resolution missing mover or seconder → flag incomplete
-- Action item missing owner → flag unassigned
-
-## What Gets Ranked
-- Resolutions sorted by confidence ascending (lowest first in review list)
-- Action items sorted: unassigned owner first, then by due date
+## Scoring Rules (rule-based v1)
+- Confidence < 0.70 → `review_status = 'flagged'`, shown in amber in UI
+- Confidence ≥ 0.85 → auto-accepted, shown in green
+- All AI fields editable by user regardless of score
 
 ## v1 vs Later
-**v1:** Single OpenAI call, structured JSON output, rule-based confidence flags
-**Later:** Fine-tuned prompt per meeting type, multi-pass extraction, similarity check against prior resolutions, automatic resolution numbering from company register
+- **v1:** Single GPT-4o prompt, structured JSON output, flag low-confidence items
+- **Later:** Fine-tuned model on Maisca format, per-company template learning, confidence trend dashboard

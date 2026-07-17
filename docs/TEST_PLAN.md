@@ -1,54 +1,30 @@
-# Test Plan — Meeting Minutes Transcript
+# Test Plan
 
-## v1 Success Scenario (manual walkthrough)
-
-### Setup
-- Open live URL as a logged-out stranger in an incognito window
-- Confirm `/meetings` loads with 3 seeded meeting cards (no redirect to login)
-
-### Step 1 — Create a new meeting
-1. Click **New Meeting**
-2. Fill: Company = "Test Co Sdn Bhd", Type = "Board of Directors", Date = today, Chair = "Ms Tan"
-3. Paste a 200-word sample board transcript (include one clear resolution and one action)
-4. Click **Save** → expect redirect to `/meetings/[new-id]`
-5. Refresh page → meeting still present ✅
-
-### Step 2 — Generate minutes
-1. On meeting detail page, click **Generate Minutes**
-2. Expect loading spinner during generation (5–20 sec)
-3. Draft sections render: attendance, quorum, deliberations, resolutions, action items ✅
-4. At least 1 resolution card visible with confidence badge ✅
-5. At least 1 action item visible with owner field ✅
-
-### Step 3 — Edit and save
-1. Click into **Deliberations** section, change one sentence, click **Save**
-2. Refresh page → edited text persists ✅
-3. Mark resolution as **Reviewed** → badge updates ✅
-4. Advance status to **Reviewed** → status badge on dashboard updates ✅
-
-### Step 4 — Export
-1. Click **Export DOCX** → file downloads
-2. Open in Word → confirm edited deliberation text is present ✅
-3. Click **Export PDF** → file downloads and renders all sections ✅
-
----
+## Success Scenario (manual walkthrough)
+1. Open `/meetings` — 3 seeded meetings visible ✓
+2. Click **New Meeting** — fill company "Acme Bhd", type "Board", date today, 5 attendees, quorum Yes → Save
+3. Meeting appears in list; click to open ✓
+4. Click **Add Transcript** — paste 500-word sample board transcript → Save
+5. Click **Generate Minutes** — spinner shows; within 90 s draft appears ✓
+6. Verify: `minutes_drafts` row in DB with content; at least 1 resolution; at least 1 action item ✓
+7. Edit one resolution text in UI → auto-save → refresh page → edit persists ✓
+8. Mark draft status **Reviewed** → confirm modal → status badge updates ✓
+9. Click **Export DOCX** → file downloads; open in Word — content present ✓
+10. Click **Export PDF** → file downloads; opens correctly ✓
 
 ## Empty / Error Cases
-
-| Scenario | Expected behaviour |
+| Scenario | Expected |
 |---|---|
-| `/meetings` with no meetings in DB | Empty state: "No meetings yet — create your first" with New Meeting button |
-| Generate clicked with blank transcript | Validation error: "Transcript cannot be empty" — no API call made |
-| OpenAI API returns error | Error banner: "Generation failed — please try again"; retry button shown; no partial rows written |
-| OpenAI returns malformed JSON | Schema validation rejects response; error shown; draft_status set to `failed` |
-| Export clicked before generation | Export button disabled / tooltip: "Generate a draft first" |
-| Low-confidence resolution (< 0.60) | Red badge; export blocked until marked reviewed |
-| Delete meeting | Confirm dialog → row removed → redirect to `/meetings` → meeting gone from list |
-| Section edit save fails (network) | Inline error: "Save failed — your changes are not lost"; retry available |
+| No transcript saved, click Generate | Error banner: "Please add a transcript first" |
+| OpenAI timeout (mock 30 s) | Error banner: "Generation failed — try again"; no partial DB write |
+| Meeting list with no meetings | Empty state: "No meetings yet — create your first one" |
+| Transcript field blank on submit | Inline validation: "Transcript text is required" |
+| Export on draft status (not final) | Warning: "Draft not yet marked as reviewed" + allow override |
 
-## Regression Check (run after each sprint)
-- Seeded demo rows still visible after migrations
-- New meeting form still submits and persists
-- Generate still produces draft with sections
-- Export still returns correct file
-- Status advance still updates badge on dashboard
+## Confidence Flag Check
+- Inject a transcript where owner is ambiguous → action item `owner_confidence` < 0.75 → row displays amber badge in UI ✓
+
+## Security Smoke Test
+- `OPENAI_API_KEY` not present in any browser network response ✓
+- Direct `POST /api/generate` with oversized payload (>50 KB) → 413 response ✓
+- After Sprint 5: unauthenticated `GET /api/meetings` → 401 ✓

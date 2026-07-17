@@ -1,29 +1,28 @@
-# Architecture — Meeting Minutes Transcript
+# Architecture
 
 ## Stack
-- **Frontend:** Next.js 14 (App Router) — hosted on Vercel
-- **Database + Storage:** Supabase (Postgres + Storage for file uploads)
-- **AI:** OpenAI GPT-4o via server-side API route (key never exposed to client)
-- **Export:** `docx` npm package for Word; `@react-pdf/renderer` for PDF
-- **Auth (later):** Supabase Auth with RLS owner policies
+- **Frontend:** Next.js 14 (App Router) on Vercel
+- **Database:** Supabase (Postgres + RLS)
+- **AI:** OpenAI GPT-4o via server-side API route (key never in browser)
+- **Export:** `docx` npm package + `puppeteer`/`html-pdf` for PDF
+- **Storage:** Supabase Storage for uploaded transcript files
 
-## What to Build Now vs Later
-**Now:** Transcript intake → AI generation → structured draft editor → resolution/action review → export
-**Later:** Auth + team workspaces, custom templates, comment threads, action item reminders, audit log viewer
-
-## Key User Action — Step by Step
-1. Cosec opens `/meetings/new`, fills meeting metadata, pastes transcript → `POST /api/meetings` saves meeting + transcript rows
-2. Clicks **Generate Minutes** → `POST /api/generate` sends transcript to OpenAI, receives structured JSON
-3. Server parses JSON, writes `minutes_drafts`, `resolutions`, `action_items` rows with `source`, `confidence`, `review_status`
-4. UI loads `/meetings/[id]` — renders draft sections, resolutions list, action items list from DB (not from memory)
-5. Cosec edits a section → `PATCH /api/minutes-drafts/[id]` persists change
-6. Cosec marks resolutions reviewed, advances status to `reviewed` → DB update
-7. Clicks **Export DOCX** → server builds document from DB rows, returns file
+## Key User-Action Flow
+1. User fills Meeting form → row saved to `meetings`
+2. User pastes/uploads transcript → saved to `transcripts`
+3. User clicks **Generate Minutes** → Next.js server action calls OpenAI with structured prompt + transcript text
+4. Response parsed into: full minutes prose + resolutions array + action items array
+5. All three written to DB (`minutes_drafts`, `resolutions`, `action_items`)
+6. UI renders editable draft; extracted items shown in side panels
+7. User edits → auto-save patches `minutes_drafts.content`
+8. User clicks Export → server renders DOCX/PDF and streams download
 
 ## Layer Plan
-1. **Data first** — tables + RLS + seed data; all reads/writes go through Supabase
-2. **App logic** — CRUD routes, status machine, export builder; core works if AI is disabled
-3. **Smart layer** — OpenAI structured extraction on top; every AI value stored with provenance
+| Layer | v1 | Later |
+|---|---|---|
+| Data | meetings, transcripts, drafts, resolutions, action items | audit_logs, teams, memberships |
+| App Logic | generate, edit, export, status transitions | version history, diff view |
+| Smart | GPT-4o minutes generation | fine-tuned model, confidence scoring UI |
 
 ## Core Without AI
-If OpenAI is unavailable, cosecs can manually enter resolutions and action items via the editor. The status workflow, export, and dashboard all function without generation.
+All CRUD (create meeting, save transcript, edit draft, manage action items) works if the AI route is disabled. The Generate button shows an error; everything else functions.
