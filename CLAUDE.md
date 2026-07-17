@@ -22,6 +22,7 @@
 
 - No objective is currently set for this project, requiring clarity on success criteria and prioritization
 - Vercel build skipping is implemented for claude/agents.md-only commits to prevent runaway launchpad sync loop cycles
+- Vercel builds are configured to skip for documentation-only commits (claude.md, agents.md) to prevent wasteful deployment cycles from launchpad sync operations
 
 ## Notes
 
