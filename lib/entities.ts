@@ -396,7 +396,14 @@ export async function resolveEntitiesForMeeting(
       attendees: MeetingAttendee[] | null;
     };
 
-    const scope = { user_id: meetingRow.user_id, workspace_id: meetingRow.workspace_id };
+    // Inserts must be stamped with the ACTING user (auth.uid()), not the
+    // meeting owner — otherwise a workspace co-member generating a shared
+    // meeting's minutes fails the entity_links/entities insert RLS and the
+    // graph silently doesn't build (audit V3 P2). Entities in a workspace are
+    // shared, so match by workspace; personal meetings match by owner.
+    const { data: authData } = await supabase.auth.getUser();
+    const actingUid = authData?.user?.id ?? meetingRow.user_id;
+    const insertScope = { user_id: actingUid, workspace_id: meetingRow.workspace_id };
 
     // Bounded candidate load: a meeting resolves a handful of attendees, so the
     // most-recent slice is more than enough to match returning people. Caps the
@@ -408,12 +415,15 @@ export async function resolveEntitiesForMeeting(
       .eq("kind", "person")
       .order("created_at", { ascending: false })
       .limit(2000);
-    candidateQuery = scope.workspace_id
-      ? candidateQuery.eq("workspace_id", scope.workspace_id)
-      : candidateQuery.is("workspace_id", null);
-    candidateQuery = scope.user_id
-      ? candidateQuery.eq("user_id", scope.user_id)
-      : candidateQuery.is("user_id", null);
+    if (meetingRow.workspace_id) {
+      // shared workspace scope — every member's entities are candidates
+      candidateQuery = candidateQuery.eq("workspace_id", meetingRow.workspace_id);
+    } else {
+      candidateQuery = candidateQuery.is("workspace_id", null);
+      candidateQuery = meetingRow.user_id
+        ? candidateQuery.eq("user_id", meetingRow.user_id)
+        : candidateQuery.is("user_id", null);
+    }
 
     const { data: candidateRows, error: candidateError } = await candidateQuery;
     if (candidateError) {
@@ -433,7 +443,7 @@ export async function resolveEntitiesForMeeting(
       const rawName = attendee.name.trim();
       if (isGenericName(rawName)) continue;
 
-      const entity = await ensureEntity(supabase, rawName, scope, candidates);
+      const entity = await ensureEntity(supabase, rawName, insertScope, candidates);
       if (!entity) continue;
       if (entity.created) created += 1;
       if (!personIds.includes(entity.id)) personIds.push(entity.id);
@@ -445,7 +455,7 @@ export async function resolveEntitiesForMeeting(
         target_id: meetingRow.id,
         relation: meetingRelation,
         meeting_id: meetingRow.id,
-        user_id: scope.user_id,
+        user_id: insertScope.user_id,
       });
       if (linkedMeeting) linked += 1;
 
@@ -456,7 +466,7 @@ export async function resolveEntitiesForMeeting(
           target_id: meetingRow.company_id,
           relation: roleToCompanyRelation(attendee.role ?? ""),
           meeting_id: meetingRow.id,
-          user_id: scope.user_id,
+          user_id: insertScope.user_id,
         });
         if (linkedCompany) linked += 1;
       }
@@ -478,7 +488,7 @@ export async function resolveEntitiesForMeeting(
         const ownerName = item.owner_name?.trim();
         if (!ownerName || isGenericName(ownerName)) continue;
 
-        const entity = await ensureEntity(supabase, ownerName, scope, candidates);
+        const entity = await ensureEntity(supabase, ownerName, insertScope, candidates);
         if (!entity) continue;
         if (entity.created) created += 1;
         if (!personIds.includes(entity.id)) personIds.push(entity.id);
@@ -489,7 +499,7 @@ export async function resolveEntitiesForMeeting(
           target_id: item.id,
           relation: "owner",
           meeting_id: meetingRow.id,
-          user_id: scope.user_id,
+          user_id: insertScope.user_id,
         });
         if (linkedOwner) linked += 1;
       }

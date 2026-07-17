@@ -180,10 +180,13 @@ export async function findCompanyIdForOrgEntity(entity: EntityRow): Promise<stri
     if (data?.id) return data.id as string;
   }
 
+  // Escape LIKE wildcards — a company literally named "%" or "A_B" must match
+  // itself, not act as a wildcard against other accessible companies (audit P2).
+  const escaped = entity.canonical_name.replace(/[\\%_]/g, (m) => `\\${m}`);
   const { data } = await supabase
     .from("companies")
     .select("id")
-    .ilike("name", entity.canonical_name)
+    .ilike("name", escaped)
     .limit(1)
     .maybeSingle();
 
