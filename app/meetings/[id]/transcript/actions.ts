@@ -10,6 +10,18 @@ export interface SaveTranscriptResult {
 }
 
 /**
+ * Maps a Supabase RLS-denial error (code 42501, or message mentioning
+ * "row-level security") to a friendlier message; passes other errors through
+ * unchanged.
+ */
+function friendlyRlsMessage(error: { code?: string; message: string }): string {
+  if (error.code === "42501" || error.message.toLowerCase().includes("row-level security")) {
+    return "Sign in to save changes — browsing the demo is read-only.";
+  }
+  return error.message;
+}
+
+/**
  * Inserts a new transcript row for the meeting (transcripts are append-only —
  * each save creates a new row rather than mutating an existing one).
  */
@@ -38,7 +50,7 @@ export async function saveTranscript(
     .single();
 
   if (error || !data) {
-    return { error: error?.message ?? "Could not save transcript." };
+    return { error: error ? friendlyRlsMessage(error) : "Could not save transcript." };
   }
 
   revalidatePath(`/meetings/${meetingId}/transcript`);

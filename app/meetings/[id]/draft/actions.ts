@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { getProfile } from "@/lib/auth";
 import type { Attendee } from "@/lib/types";
 
 export interface ActionResult {
@@ -63,6 +64,18 @@ async function getDraftStatusById(
 
 function draftPath(meetingId: string): string {
   return `/meetings/${meetingId}/draft`;
+}
+
+/**
+ * Maps a Supabase RLS-denial error (code 42501, or message mentioning
+ * "row-level security") to a friendlier message; passes other errors through
+ * unchanged.
+ */
+function friendlyRlsMessage(error: { code?: string; message: string }): string {
+  if (error.code === "42501" || error.message.toLowerCase().includes("row-level security")) {
+    return "Sign in to save changes — browsing the demo is read-only.";
+  }
+  return error.message;
 }
 
 const RESOLUTION_OUTCOMES = ["carried", "deferred", "lapsed"] as const;
@@ -389,6 +402,14 @@ export async function markDraftReviewed(
 
 /** Moves a draft (and its parent meeting) from 'reviewed' to 'final'. Locks all editing once applied. */
 export async function markDraftFinal(draftId: string, meetingId: string): Promise<ActionResult> {
+  const profile = await getProfile();
+  if (!profile) {
+    return { error: "Sign in to finalise minutes." };
+  }
+  if (profile.role === "reviewer") {
+    return { error: "Reviewers cannot finalise minutes — ask a cosec or admin." };
+  }
+
   const supabase = await createClient();
 
   const status = await getDraftStatusById(supabase, draftId);
@@ -407,7 +428,7 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     .eq("id", draftId);
 
   if (draftError) {
-    return { error: draftError.message };
+    return { error: friendlyRlsMessage(draftError) };
   }
 
   const { error: meetingError } = await supabase
@@ -416,7 +437,7 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     .eq("id", meetingId);
 
   if (meetingError) {
-    return { error: meetingError.message };
+    return { error: friendlyRlsMessage(meetingError) };
   }
 
   await logAudit(supabase, {

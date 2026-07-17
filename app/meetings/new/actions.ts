@@ -33,6 +33,19 @@ function buildRedirectQuery(params: Record<string, string>): string {
   return `?${query.toString()}`;
 }
 
+/**
+ * Maps a Supabase error to a user-facing message: RLS denials (code 42501,
+ * or message mentioning "row-level security") get a friendlier prompt to
+ * sign in; other errors are prefixed with context.
+ */
+function friendlyInsertError(error: { code?: string; message: string } | null): string {
+  if (!error) return "Could not create meeting: unknown error.";
+  if (error.code === "42501" || error.message.toLowerCase().includes("row-level security")) {
+    return "Sign in to save changes — browsing the demo is read-only.";
+  }
+  return `Could not create meeting: ${error.message}`;
+}
+
 export async function createMeeting(formData: FormData): Promise<void> {
   const companyName = String(formData.get("company_name") ?? "").trim();
   const meetingType = String(formData.get("meeting_type") ?? "").trim();
@@ -80,7 +93,7 @@ export async function createMeeting(formData: FormData): Promise<void> {
 
   if (error || !data) {
     const query = buildRedirectQuery({
-      error: `Could not create meeting: ${error?.message ?? "unknown error"}`,
+      error: friendlyInsertError(error),
       company_name: companyName,
       meeting_type: meetingType,
       meeting_date: meetingDate,

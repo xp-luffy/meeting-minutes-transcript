@@ -24,6 +24,32 @@ import type { GeneratedMinutes, Meeting, Transcript } from "@/lib/types";
 const MAX_TRANSCRIPT_TOKENS = 15000;
 const MAX_TRANSCRIPT_CHARS = MAX_TRANSCRIPT_TOKENS * 4;
 
+// --- Rate limiting ---------------------------------------------------------
+// Simple in-memory sliding window, keyed by IP: max 5 requests / 60s.
+// NOTE: this state is per-instance (module-level Map), so it resets on cold
+// start and isn't shared across serverless instances — fine for v1, but a
+// real deployment with multiple instances would need a shared store (e.g.
+// Redis) for a hard global limit.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 5;
+const requestTimestampsByIp = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (requestTimestampsByIp.get(ip) ?? []).filter(
+    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
+  );
+
+  if (recent.length >= RATE_LIMIT_MAX_REQUESTS) {
+    requestTimestampsByIp.set(ip, recent);
+    return true;
+  }
+
+  recent.push(now);
+  requestTimestampsByIp.set(ip, recent);
+  return false;
+}
+
 const GeneratedMinutesSchema = z.object({
   quorum_met: z.boolean(),
   minutes_body_html: z.string().min(1),
@@ -133,6 +159,16 @@ ${transcriptText}
 }
 
 export async function POST(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  const ip = forwardedFor?.split(",")[0]?.trim() || "unknown";
+
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: "Too many generation requests — try again in a minute." },
+      { status: 429 },
+    );
+  }
+
   try {
     let body: { meetingId?: string; transcriptId?: string };
     try {

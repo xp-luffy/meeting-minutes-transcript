@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { getProfile } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Meeting Minutes — Statutory Minutes from Transcripts",
   description: "Generate statutory board and committee minutes from meeting transcripts.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const profile = await getProfile();
+
   return (
     <html lang="en">
       <body className="antialiased min-h-screen bg-neutral-50 text-neutral-900">
@@ -39,6 +42,31 @@ export default function RootLayout({
               >
                 New Meeting
               </Link>
+              {profile ? (
+                <div className="flex items-center gap-2 border-l border-neutral-200 pl-4">
+                  <span className="max-w-[12rem] truncate text-neutral-600">
+                    {profile.email}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                    {profile.role}
+                  </span>
+                  <form action="/auth/signout" method="post">
+                    <button
+                      type="submit"
+                      className="text-neutral-500 transition-colors hover:text-neutral-900"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="border-l border-neutral-200 pl-4 text-neutral-500 transition-colors hover:text-neutral-900"
+                >
+                  Log in
+                </Link>
+              )}
             </nav>
           </div>
         </header>
