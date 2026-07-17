@@ -23,7 +23,8 @@ async function getMeetingsWithLatestDrafts(): Promise<{
     .select(
       "id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, created_at, user_id, workspace_id",
     )
-    .order("meeting_date", { ascending: false });
+    .order("meeting_date", { ascending: false })
+    .limit(50);
 
   if (meetingsError) {
     return {

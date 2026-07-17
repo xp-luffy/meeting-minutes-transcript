@@ -38,22 +38,49 @@ function weekFromNowIso(): string {
   return d.toISOString().slice(0, 10);
 }
 
-async function getActionItemsWithMeetings(): Promise<{
+const PAGE_LIMIT = 200;
+
+async function getActionItemsWithMeetings(statusFilter: StatusFilter): Promise<{
   items: ActionItem[];
   meetingsById: Map<string, Meeting>;
+  counts: { open: number; done: number; overdue: number };
+  atLimit: boolean;
   error: string | null;
 }> {
   const supabase = await createClient();
 
-  const { data: items, error: itemsError } = await supabase
+  // Status pushed into the query + hard LIMIT: at portfolio scale (40k+ rows)
+  // fetching everything and filtering in JS is 50x slower (docs/SIM_REPORT.md).
+  let query = supabase
     .from("action_items")
     .select(
       "id, meeting_id, description, description_confidence, description_review_status, owner_name, due_date, item_status, created_at",
     )
-    .order("due_date", { ascending: true, nullsFirst: false });
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .limit(PAGE_LIMIT);
+  if (statusFilter !== "all") {
+    query = query.eq("item_status", statusFilter);
+  }
+
+  const [{ data: items, error: itemsError }, openRes, doneRes, overdueRes] = await Promise.all([
+    query,
+    supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "open"),
+    supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "done"),
+    supabase
+      .from("action_items")
+      .select("id", { count: "exact", head: true })
+      .eq("item_status", "open")
+      .lt("due_date", todayIso()),
+  ]);
+
+  const counts = {
+    open: openRes.count ?? 0,
+    done: doneRes.count ?? 0,
+    overdue: overdueRes.count ?? 0,
+  };
 
   if (itemsError) {
-    return { items: [], meetingsById: new Map(), error: itemsError.message };
+    return { items: [], meetingsById: new Map(), counts, atLimit: false, error: itemsError.message };
   }
 
   const itemList = (items ?? []) as ActionItem[];
@@ -73,7 +100,13 @@ async function getActionItemsWithMeetings(): Promise<{
     }
   }
 
-  return { items: itemList, meetingsById, error: null };
+  return {
+    items: itemList,
+    meetingsById,
+    counts,
+    atLimit: itemList.length === PAGE_LIMIT,
+    error: null,
+  };
 }
 
 export default async function ActionItemsPage({
@@ -86,7 +119,7 @@ export default async function ActionItemsPage({
   const dueFilter = parseDueFilter(params.due);
   const statusFilter = parseStatusFilter(params.status);
 
-  const { items, meetingsById, error } = await getActionItemsWithMeetings();
+  const { items, meetingsById, counts, atLimit, error } = await getActionItemsWithMeetings(statusFilter);
 
   if (error) {
     return (
@@ -104,13 +137,10 @@ export default async function ActionItemsPage({
     ? items.filter((item) => (item.owner_name ?? "").toLowerCase().includes(ownerNeedle))
     : items;
 
-  const openCount = ownerMatched.filter((item) => item.item_status === "open").length;
-  const doneCount = ownerMatched.filter((item) => item.item_status === "done").length;
-  const overdueCount = ownerMatched.filter(
-    (item) => item.item_status === "open" && item.due_date !== null && item.due_date < today,
-  ).length;
+  const { open: openCount, done: doneCount, overdue: overdueCount } = counts;
 
   const rows = ownerMatched.filter((item) => {
+    // status already applied in the query; kept as a defensive no-op check
     if (statusFilter !== "all" && item.item_status !== statusFilter) return false;
 
     if (dueFilter === "overdue") {
@@ -132,6 +162,12 @@ export default async function ActionItemsPage({
           <Badge variant="green">{doneCount} done</Badge>
         </div>
       </div>
+
+      {atLimit ? (
+        <p className="text-xs text-neutral-500">
+          Showing the first {200} items by due date — narrow with the filters below.
+        </p>
+      ) : null}
 
       <form
         method="get"
