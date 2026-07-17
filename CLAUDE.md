@@ -17,6 +17,7 @@
 ## Architecture
 
 - RLS (row-level security) is being implemented as part of Sprint 4 to enforce data access control at the database level
+- Vercel builds are configured to skip on claude.md and agents.md-only commits to prevent launchpad sync loop cycles
 
 ## Gotchas
 
