@@ -22,6 +22,7 @@
 - Vercel builds are configured to skip on claude.md and agents.md-only commits to prevent launchpad sync loop cycles
 - Vercel build skipping is configured to prevent runaway launchpad sync loop cycles when only claude.md or agents.md files change
 - V2 architecture established on three core pillars: assurance engine, company memory, and confirmation flow
+- V2 deployment complete with all audit findings resolved; project cleared for production across opus and codex implementations
 
 ## Gotchas
 
@@ -69,8 +70,8 @@
 - Recent commit activity is documentation-only (house-style minutes format synced); no code changes or feature development underway
 - Recent commit activity is purely documentation maintenance (CLAUDE.md sync); no feature development or code changes detected in current commit cycle
 - Recent commit activity consists of documentation maintenance only (claude.md sync); no feature development or code changes detected in current commit cycle
-- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Latest commit is documentation-only (chore: sync CLAUDE.md); no code changes or feature development.
+- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Project has no objective currently set; feature development is continuing across later-phase scope (workspaces, docx upload, tiptap editor, intelligence layer, review shares) but prioritization clarity is lacking
 - Recent commit activity is documentation maintenance only (claude.md sync); no feature development or code changes detected
 - No objective currently set for the project; clarity needed on success criteria and prioritization
@@ -90,3 +91,4 @@
 - Recent commit cycle continues documentation-only pattern with claude.md sync; no active code changes or feature development
 - Latest commit is chore: sync claude.md - purely documentation maintenance with no code changes
 - All audit findings resolved across both Opus and Codex implementations; project cleared for deployment
+- Production deploy triggered for V2 with assurance engine, company memory, and confirmation flow ready
