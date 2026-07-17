@@ -62,3 +62,4 @@
 - No objective currently set for the project; clarity needed on success criteria and prioritization
 - Latest commit (chore: sync AGENTS.md) is documentation maintenance only with no code changes or feature development
 - Latest commit is agents.md sync only; no code changes or feature development in this cycle.
+- Vercel build skipping is in place for claude/agents.md-only commits to prevent launchpad sync loop cycles
