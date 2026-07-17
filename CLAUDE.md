@@ -13,6 +13,7 @@
 ## Decisions
 
 - Vercel build skipping implemented for CLAUDE/AGENTS.md-only commits to prevent runaway Launchpad sync loop cycles
+- Vercel builds are skipped for documentation-only commits (claude.md/agents.md changes) to prevent unnecessary build cycles
 
 ## Architecture
 
