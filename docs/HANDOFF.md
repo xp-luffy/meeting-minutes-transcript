@@ -2,7 +2,7 @@
 
 Live: **https://meeting-minutes-transcript.vercel.app**
 
-## ⚠️ Deploys are currently MANUAL
+## Deploys: AUTO (git reconnected 2026-07-18 after Launchpad loop fixed)
 The Launchpad memory-sync bot is in a runaway loop (commits every ~2s to the repo).
 Its flood cancels every git-triggered Vercel build before it finishes, so the
 Vercel↔GitHub integration is **disconnected**. Deploy with:
