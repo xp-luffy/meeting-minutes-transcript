@@ -60,3 +60,11 @@ bun dev
 ## QA data in DB (delete when done)
 QA accounts xienpuo+qa-cosec@ (cosec) / xienpuo+qa-reviewer@ (reviewer), and their
 test meetings/companies/workspace ("Maisca", "Maisca Secretarial", Nusantara, etc.).
+
+## Pilot / QA — read this first
+`docs/PILOT_PLAYBOOK.md` encodes every bug class that escaped to production in this
+build, why typecheck/build missed each, and the exact probe that catches it, plus a
+7-step pilot run sheet. **Run that playbook for any QA/pilot pass** — the headline
+finding is that every user-visible bug in this project passed a green build, so
+verification must measure the running system (computed styles, live DB effects, the
+generated artifact's text, deployed infra) rather than trust compilation.
