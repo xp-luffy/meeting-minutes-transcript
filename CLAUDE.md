@@ -75,8 +75,8 @@
 - Recent commit activity is documentation-only (house-style minutes format synced); no code changes or feature development underway
 - Recent commit activity is purely documentation maintenance (CLAUDE.md sync); no feature development or code changes detected in current commit cycle
 - Recent commit activity consists of documentation maintenance only (claude.md sync); no feature development or code changes detected in current commit cycle
-- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Latest commit is documentation-only (chore: sync CLAUDE.md); no code changes or feature development.
+- Vercel build skipping is configured for claude/agents.md-only commits to prevent launchpad sync loop cycles.
 - Project has no objective currently set; feature development is continuing across later-phase scope (workspaces, docx upload, tiptap editor, intelligence layer, review shares) but prioritization clarity is lacking
 - Recent commit activity is documentation maintenance only (claude.md sync); no feature development or code changes detected
 - No objective currently set for the project; clarity needed on success criteria and prioritization
@@ -101,3 +101,4 @@
 - Latest commit is chore: sync AGENTS.md—documentation maintenance only with no code changes or feature development in current cycle
 - Mobile polish and graph surface scale fixes completed in V3-2 and V3-3
 - Latest commit: OpenRouter support + QA optimizations (final screen/button pass) - indicates active feature development resuming after documentation maintenance cycles
+- OpenRouter environment setup documented in handoff.md, part of ongoing knowledge transfer documentation
