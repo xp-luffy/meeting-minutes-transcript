@@ -93,7 +93,7 @@ export function ExportButtons({
             disabled={disabled || preparing !== null}
             title={disabled ? "Draft is empty" : undefined}
             onClick={() => handleExport(kind)}
-            className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white sm:min-h-0 ${FOCUS_RING}`}
           >
             {preparing === kind ? (
               <span className="inline-flex items-center gap-1.5">

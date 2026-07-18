@@ -36,7 +36,7 @@ function ToolbarButton({ label, onClick, isActive, disabled }: ToolbarButtonProp
       onClick={onClick}
       disabled={disabled}
       aria-pressed={isActive}
-      className={`flex-none rounded-sm px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`inline-flex flex-none min-h-11 min-w-11 items-center justify-center sm:min-h-0 sm:min-w-0 rounded-sm px-2 py-1 text-xs font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-40 ${
         isActive
           ? "bg-indigo-100 text-indigo-700"
           : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"

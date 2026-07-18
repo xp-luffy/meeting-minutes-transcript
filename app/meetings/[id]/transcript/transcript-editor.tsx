@@ -188,7 +188,7 @@ export function TranscriptEditor({
           <span>{wordCount} words</span>
           <label
             className={
-              "rounded " +
+              "inline-flex min-h-11 items-center rounded px-1 -mx-1 sm:min-h-0 " +
               (isParsingDocx
                 ? "cursor-wait text-neutral-400"
                 : "cursor-pointer text-indigo-600 hover:text-indigo-700 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2")
@@ -251,7 +251,7 @@ export function TranscriptEditor({
             type="button"
             onClick={() => handleSave()}
             disabled={isSaving || text.trim().length === 0}
-            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:py-2"
           >
             {isSaving ? (
               <>
@@ -274,7 +274,7 @@ export function TranscriptEditor({
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="focus-ring inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
           >
             {isGenerating ? (
               <>

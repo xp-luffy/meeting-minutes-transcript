@@ -65,10 +65,12 @@ export default async function SharedReviewPage({
             {draft.body_html}
           </pre>
         ) : (
-          <div
-            className="minutes-body"
-            dangerouslySetInnerHTML={{ __html: sanitizeMinutesHtml(draft.body_html ?? "") }}
-          />
+          <div className="overflow-x-auto">
+            <div
+              className="minutes-body"
+              dangerouslySetInnerHTML={{ __html: sanitizeMinutesHtml(draft.body_html ?? "") }}
+            />
+          </div>
         )}
       </div>
 

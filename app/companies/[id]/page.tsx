@@ -76,7 +76,7 @@ export default async function CompanyDetailPage({
         </div>
         <Link
           href={`/meetings/new?company=${company.id}`}
-          className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:py-1.5 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:w-auto sm:py-1.5 ${FOCUS_RING}`}
         >
           New meeting for this company
         </Link>

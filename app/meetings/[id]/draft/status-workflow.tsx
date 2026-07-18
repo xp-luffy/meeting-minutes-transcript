@@ -85,7 +85,7 @@ export function StatusWorkflow({
           type="button"
           onClick={handleMarkReviewed}
           disabled={isPending}
-          className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
         >
           {isPending ? "Saving…" : "Mark Reviewed"}
         </button>
@@ -95,7 +95,7 @@ export function StatusWorkflow({
           type="button"
           onClick={handleMarkFinalClick}
           disabled={isPending}
-          className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING} ${
+          className={`inline-flex min-h-11 items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING} ${
             confirmingFinal
               ? "bg-red-600 text-white hover:bg-red-700"
               : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"

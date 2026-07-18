@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { getMyCompanies, getCompanyStatsMap } from "@/lib/companies";
 import { formatDate } from "@/lib/format";
 import { EmptyState, FOCUS_RING } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { createCompany } from "./actions";
 
 export default async function CompaniesPage({
@@ -113,12 +114,12 @@ export default async function CompaniesPage({
             />
           </div>
           <div className="pt-1">
-            <button
-              type="submit"
-              className={`inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto ${FOCUS_RING}`}
+            <SubmitButton
+              pendingLabel="Adding company…"
+              className={`inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto ${FOCUS_RING}`}
             >
               Add company
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </div>

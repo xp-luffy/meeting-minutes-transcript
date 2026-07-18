@@ -21,7 +21,7 @@ export function CopyIdButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 ${FOCUS_RING}`}
+      className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 ${FOCUS_RING}`}
     >
       {copied ? "Copied!" : "Copy"}
     </button>

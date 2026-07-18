@@ -34,7 +34,7 @@ export default async function InvitePage() {
 
         <a
           href={mailtoHref}
-          className="focus-ring mt-4 inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
+          className="focus-ring mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:w-auto sm:py-2"
         >
           Email an invite
         </a>
@@ -49,7 +49,7 @@ export default async function InvitePage() {
         </p>
         <Link
           href="/workspaces"
-          className="focus-ring mt-3 inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
+          className="focus-ring mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:w-auto sm:py-2"
         >
           Go to Workspaces
         </Link>

@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { getMyWorkspaces, getWorkspaceMeetingCount, getWorkspaceMembers } from "@/lib/workspace";
 import { EmptyState, FOCUS_RING } from "@/components/ui";
 import { createWorkspace, joinWorkspace } from "./actions";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function WorkspacesPage({
   searchParams,
@@ -80,12 +81,12 @@ export default async function WorkspacesPage({
             placeholder="e.g. Arca Holdings — Company Secretaries"
             className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
-          <button
-            type="submit"
-            className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
+          <SubmitButton
+            pendingLabel="Creating…"
+            className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
           >
             Create
-          </button>
+          </SubmitButton>
         </form>
       </div>
 
@@ -111,12 +112,12 @@ export default async function WorkspacesPage({
             placeholder="Workspace ID"
             className="block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
-          <button
-            type="submit"
-            className={`inline-flex shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 ${FOCUS_RING}`}
+          <SubmitButton
+            pendingLabel="Joining…"
+            className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
           >
             Join
-          </button>
+          </SubmitButton>
         </form>
         <p className="mt-2 text-[11px] text-neutral-400">
           v1 note: the workspace ID acts as a join token — anyone signed in who has it can join.

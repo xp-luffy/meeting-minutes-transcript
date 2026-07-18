@@ -47,7 +47,7 @@ export function SendForReview({
         onClick={handleShare}
         disabled={disabled || pending}
         title={disabled ? "Draft is empty" : undefined}
-        className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`}
+        className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 ${FOCUS_RING}`}
       >
         {pending ? "Creating link…" : "Circulate for confirmation"}
       </button>
@@ -67,7 +67,7 @@ export function SendForReview({
             <button
               type="button"
               onClick={handleCopy}
-              className={`rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 sm:min-h-0 ${FOCUS_RING}`}
             >
               {copied ? "Copied!" : "Copy link"}
             </button>

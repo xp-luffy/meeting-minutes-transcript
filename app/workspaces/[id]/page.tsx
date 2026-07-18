@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import type { Meeting } from "@/lib/types";
 import { CopyIdButton } from "../copy-id-button";
 import { inviteToWorkspace, removeInvite } from "../actions";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function WorkspaceDetailPage({
   params,
@@ -115,12 +116,12 @@ export default async function WorkspaceDetailPage({
             placeholder="colleague@company.com"
             className="block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
           />
-          <button
-            type="submit"
-            className={`inline-flex shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
+          <SubmitButton
+            pendingLabel="Inviting…"
+            className={`inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
           >
             Invite
-          </button>
+          </SubmitButton>
         </form>
 
         <div className="mt-4 rounded-md border border-neutral-200 bg-neutral-50 p-3">
@@ -152,7 +153,7 @@ export default async function WorkspaceDetailPage({
           <h2 className="text-sm font-semibold text-neutral-900">Meetings</h2>
           <Link
             href={`/meetings/new?workspace=${workspace.id}`}
-            className={`inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:py-1.5 ${FOCUS_RING}`}
           >
             New meeting in this workspace
           </Link>

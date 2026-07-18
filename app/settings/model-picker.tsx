@@ -112,7 +112,7 @@ export function ModelPicker({
                 setCustom("");
                 save("");
               }}
-              className="text-xs text-neutral-500 hover:text-neutral-700"
+              className={`inline-flex min-h-11 items-center text-xs text-neutral-500 hover:text-neutral-700 sm:min-h-0 ${FOCUS_RING}`}
             >
               Reset to default
             </button>

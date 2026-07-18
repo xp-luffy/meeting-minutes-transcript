@@ -65,7 +65,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
         type="button"
         onClick={handleRegenerateClick}
         disabled={isRegenerating}
-        className={`inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+        className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
       >
         {isRegenerating ? "Regenerating…" : "Regenerate"}
       </button>
@@ -83,7 +83,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={() => setConfirming(false)}
               disabled={isRegenerating}
-              className={`rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed sm:min-h-0 ${FOCUS_RING}`}
             >
               Cancel
             </button>
@@ -91,7 +91,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={handleConfirm}
               disabled={isRegenerating}
-              className={`rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
             >
               {isRegenerating ? "Regenerating…" : "Confirm regenerate"}
             </button>

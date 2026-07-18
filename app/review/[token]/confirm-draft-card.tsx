@@ -79,7 +79,7 @@ export function ConfirmDraftCard({
             onChange={(event) => setName(event.target.value)}
             disabled={pending}
             placeholder="Jane Tan"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base sm:text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
           />
         </div>
         <div>
@@ -92,14 +92,14 @@ export function ConfirmDraftCard({
             onChange={(event) => setRole(event.target.value)}
             disabled={pending}
             placeholder="Chairman"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base sm:text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
           />
         </div>
         {error ? <p className="text-xs text-red-600">{error}</p> : null}
         <button
           type="submit"
           disabled={pending}
-          className={`inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:py-2 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2 ${FOCUS_RING}`}
         >
           {pending ? "Confirming…" : "I confirm these minutes are accurate"}
         </button>

@@ -234,13 +234,13 @@ export default async function ActionItemsPage({
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className={`flex-1 rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Apply
           </button>
           <Link
             href="/action-items"
-            className={`flex-1 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Clear
           </Link>

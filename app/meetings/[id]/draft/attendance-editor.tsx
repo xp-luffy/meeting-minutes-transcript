@@ -117,7 +117,7 @@ export function AttendanceEditor({
             <button
               type="button"
               onClick={addAttendee}
-              className={`mt-3 inline-flex items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 ${FOCUS_RING}`}
+              className={`mt-3 inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 ${FOCUS_RING}`}
             >
               + Add attendee
             </button>
