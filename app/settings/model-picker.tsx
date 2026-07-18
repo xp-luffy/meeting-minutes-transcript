@@ -73,11 +73,14 @@ export function ModelPicker({
           className={`block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base sm:text-sm ${FOCUS_RING}`}
         >
           <option value="">Use workspace default ({envDefault})</option>
-          {models.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name === m.id ? m.id : `${m.name} — ${m.id}`}
-            </option>
-          ))}
+          {models.map((m) => {
+            const base = m.name === m.id ? m.id : `${m.name} (${m.id})`;
+            return (
+              <option key={m.id} value={m.id}>
+                {m.priceLabel ? `${base} — ${m.priceLabel}` : base}
+              </option>
+            );
+          })}
           <option value="__custom__">Other (type a slug)…</option>
         </select>
 

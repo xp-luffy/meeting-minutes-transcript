@@ -31,6 +31,17 @@ export async function saveAiModel(model: string): Promise<SaveModelResult> {
 export interface ModelOption {
   id: string;
   name: string;
+  /** e.g. "$0.41/$1.29 per Mtok" (prompt/completion per million tokens), or "" if unknown. */
+  priceLabel: string;
+}
+
+/** OpenRouter pricing is USD-per-token strings; ×1e6 → per-million-tokens. */
+function formatPrice(pricing: { prompt?: string; completion?: string } | undefined): string {
+  if (!pricing || pricing.prompt == null || pricing.completion == null) return "";
+  const inM = Number(pricing.prompt) * 1_000_000;
+  const outM = Number(pricing.completion) * 1_000_000;
+  if (!Number.isFinite(inM) || !Number.isFinite(outM)) return "";
+  return `$${inM.toFixed(2)}/$${outM.toFixed(2)} per Mtok`;
 }
 
 /**
@@ -43,13 +54,13 @@ export async function listModels(): Promise<{ models: ModelOption[]; live: boole
   const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
 
   const fallback: ModelOption[] = [
-    { id: "openai/gpt-4o", name: "OpenAI GPT-4o" },
-    { id: "openai/gpt-4o-mini", name: "OpenAI GPT-4o mini" },
-    { id: "anthropic/claude-sonnet-4.5", name: "Anthropic Claude Sonnet 4.5" },
-    { id: "anthropic/claude-3.7-sonnet", name: "Anthropic Claude 3.7 Sonnet" },
-    { id: "google/gemini-2.5-pro", name: "Google Gemini 2.5 Pro" },
-    { id: "google/gemini-2.5-flash", name: "Google Gemini 2.5 Flash" },
-    { id: "meta-llama/llama-3.3-70b-instruct", name: "Meta Llama 3.3 70B" },
+    { id: "openai/gpt-4o", name: "OpenAI GPT-4o", priceLabel: "" },
+    { id: "openai/gpt-4o-mini", name: "OpenAI GPT-4o mini", priceLabel: "" },
+    { id: "anthropic/claude-sonnet-4.5", name: "Anthropic Claude Sonnet 4.5", priceLabel: "" },
+    { id: "anthropic/claude-3.7-sonnet", name: "Anthropic Claude 3.7 Sonnet", priceLabel: "" },
+    { id: "google/gemini-2.5-pro", name: "Google Gemini 2.5 Pro", priceLabel: "" },
+    { id: "google/gemini-2.5-flash", name: "Google Gemini 2.5 Flash", priceLabel: "" },
+    { id: "meta-llama/llama-3.3-70b-instruct", name: "Meta Llama 3.3 70B", priceLabel: "" },
   ];
 
   if (!apiKey) return { models: fallback, live: false };
@@ -61,10 +72,12 @@ export async function listModels(): Promise<{ models: ModelOption[]; live: boole
       next: { revalidate: 3600 },
     });
     if (!res.ok) return { models: fallback, live: false };
-    const json = (await res.json()) as { data?: { id: string; name?: string }[] };
+    const json = (await res.json()) as {
+      data?: { id: string; name?: string; pricing?: { prompt?: string; completion?: string } }[];
+    };
     const models = (json.data ?? [])
       .filter((m) => typeof m.id === "string")
-      .map((m) => ({ id: m.id, name: m.name || m.id }))
+      .map((m) => ({ id: m.id, name: m.name || m.id, priceLabel: formatPrice(m.pricing) }))
       .sort((a, b) => a.id.localeCompare(b.id));
     if (models.length === 0) return { models: fallback, live: false };
     return { models, live: true };
