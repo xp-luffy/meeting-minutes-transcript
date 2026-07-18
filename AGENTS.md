@@ -109,3 +109,4 @@
 - Per-model pricing display added to the model picker dropdown UI component
 - Latest commit adds left sidebar navigation with mobile drawer UI component
 - Latest active code change was fixing company creation; prior commits were documentation syncs with build skipping for launchpad-only changes
+- Mobile optimisation pass completed across all pages in current commit
