@@ -82,12 +82,12 @@ export default async function WorkspaceDetailPage({
                   <form action={removeInvite}>
                     <input type="hidden" name="workspace_id" value={id} />
                     <input type="hidden" name="invite_id" value={invite.id} />
-                    <button
-                      type="submit"
-                      className={`ml-3 shrink-0 rounded-sm text-xs text-neutral-400 hover:text-red-600 ${FOCUS_RING}`}
+                    <SubmitButton
+                      pendingLabel="Removing…"
+                      className={`ml-3 shrink-0 rounded-sm text-xs text-neutral-400 hover:text-red-600 disabled:opacity-50 ${FOCUS_RING}`}
                     >
                       Remove
-                    </button>
+                    </SubmitButton>
                   </form>
                 </li>
               ))}
