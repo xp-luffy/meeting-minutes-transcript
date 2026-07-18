@@ -50,6 +50,7 @@
 - Create Meeting UI was missing pending state feedback during submission, causing apparent non-responsiveness; fixed in this commit
 - Company creation was failing due to client/server constant boundary issue—now fixed
 - Engine strips topic-prefix lead-ins (e.g., 'On the launch timeline, …') from meeting minutes during processing
+- PILOT_PLAYBOOK documentation covers bug patterns and detection probes—this is a reference guide for known issues and their diagnostic signatures
 
 ## Notes
 
