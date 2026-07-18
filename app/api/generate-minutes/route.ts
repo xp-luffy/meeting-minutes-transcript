@@ -142,11 +142,13 @@ interface OpenAiChatResponse {
  *   AI_MODEL     = openai/gpt-4o   (or anthropic/claude-3.5-sonnet, etc.)
  * Defaults target OpenAI directly (base https://api.openai.com/v1, model gpt-4o).
  */
-function aiConfig(): { apiKey: string; baseUrl: string; model: string } | null {
+function aiConfig(modelOverride?: string | null): { apiKey: string; baseUrl: string; model: string } | null {
   const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
   const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = process.env.AI_MODEL || "gpt-4o";
+  // Precedence: the user's in-app choice → env AI_MODEL → default. Lets the
+  // model be switched from the Settings page without a Vercel env edit.
+  const model = (modelOverride && modelOverride.trim()) || process.env.AI_MODEL || "gpt-4o";
   return { apiKey, baseUrl, model };
 }
 
@@ -157,8 +159,9 @@ function hasAiProvider(): boolean {
 async function callOpenAiGenerator(
   meeting: Meeting,
   transcriptText: string,
+  modelOverride?: string | null,
 ): Promise<GeneratedMinutes> {
-  const cfg = aiConfig();
+  const cfg = aiConfig(modelOverride);
   if (!cfg) {
     throw new Error("No AI provider configured (set AI_API_KEY or OPENAI_API_KEY)");
   }
@@ -298,12 +301,26 @@ export async function POST(request: Request) {
 
     const meetingTyped = meeting as Meeting;
 
+    // The generating user's chosen model (Settings page), if any.
+    let userModel: string | null = null;
+    {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData?.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("ai_model")
+          .eq("id", authData.user.id)
+          .maybeSingle();
+        userModel = (prof?.ai_model as string | null) ?? null;
+      }
+    }
+
     let generated: GeneratedMinutes;
     let source: "openai_gpt4o" | "rule_based_v1";
 
     if (hasAiProvider()) {
       try {
-        generated = await callOpenAiGenerator(meetingTyped, transcriptText);
+        generated = await callOpenAiGenerator(meetingTyped, transcriptText, userModel);
         source = "openai_gpt4o";
       } catch (aiError) {
         console.error("[generate-minutes] OpenAI generation failed, falling back", aiError);

@@ -42,6 +42,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
     ...(profile ? [{ href: "/companies", label: "Companies" }] : []),
     ...(profile ? [{ href: "/people", label: "People" }] : []),
     ...(profile ? [{ href: "/workspaces", label: "Workspaces" }] : []),
+    ...(profile ? [{ href: "/settings", label: "Settings" }] : []),
   ];
 
   return (
