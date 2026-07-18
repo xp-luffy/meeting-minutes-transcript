@@ -100,3 +100,4 @@
 - Project is in maintenance mode with only documentation syncs (CLAUDE.md, agents.md) and no active feature development
 - Latest commit is chore: sync AGENTS.md—documentation maintenance only with no code changes or feature development in current cycle
 - Mobile polish and graph surface scale fixes completed in V3-2 and V3-3
+- Latest commit: OpenRouter support + QA optimizations (final screen/button pass) - indicates active feature development resuming after documentation maintenance cycles
