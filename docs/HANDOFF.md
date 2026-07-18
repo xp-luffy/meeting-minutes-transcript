@@ -36,8 +36,15 @@ Plus: full mobile pass (375px, hamburger nav, viewport meta), scale-tested to 1,
 0001–0005 (v1 + Maisca), 0006 (companies/assurance/confirmations/RPCs/indexes),
 0007 (scale: indexes + RLS initplan), 0008 (audit hardening: binding triggers, confirm cap).
 
-## Env caveats (unchanged)
-- No `OPENAI_API_KEY` in Vercel → rule-based engine (add key for GPT-4o).
+## AI provider (OpenRouter or OpenAI)
+Generation uses any OpenAI-compatible endpoint. In Vercel env set:
+- `AI_API_KEY` = OpenRouter key (`sk-or-…`) or OpenAI key
+- `AI_BASE_URL` = `https://openrouter.ai/api/v1` (omit for OpenAI default)
+- `AI_MODEL` = `openai/gpt-4o`, `anthropic/claude-sonnet-4-5`, etc. (default `gpt-4o`)
+Swap models by editing `AI_MODEL` + redeploy. Legacy `OPENAI_API_KEY` still works. With no key set, the deterministic rule-based engine runs.
+
+## Env caveats
+- No AI key in Vercel yet → rule-based engine (add `AI_API_KEY` per above for LLM generation).
 - No SMTP in Supabase Auth → real signups stall at email confirmation.
 - Enable "leaked password protection" in Supabase Auth (advisor WARN).
 
