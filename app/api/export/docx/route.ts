@@ -5,6 +5,9 @@ import { fetchExportData } from "@/lib/export/fetch-data";
 import { buildMinutesDocx } from "@/lib/export/build-docx";
 import { buildExportFilename, contentDispositionHeader } from "@/lib/export/filename";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 /**
  * GET /api/export/docx?meetingId=...
  *

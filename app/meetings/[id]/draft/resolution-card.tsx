@@ -116,7 +116,7 @@ export function ResolutionCard({
             onBlur={handleNumberBlur}
             disabled={isFinal}
             placeholder="—"
-            className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-base font-semibold text-neutral-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-16 sm:py-1 sm:text-sm"
+            className="w-full min-w-0 rounded-md border border-neutral-300 px-2 py-1.5 text-base font-semibold text-neutral-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-1 sm:text-sm"
           />
           {isFinal ? (
             <OutcomePill outcome={outcome} />

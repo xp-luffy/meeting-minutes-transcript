@@ -5,6 +5,9 @@ import { fetchExportData } from "@/lib/export/fetch-data";
 import { buildMinutesPdf } from "@/lib/export/build-pdf";
 import { buildExportFilename, contentDispositionHeader } from "@/lib/export/filename";
 
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
 /**
  * GET /api/export/pdf?meetingId=...
  *

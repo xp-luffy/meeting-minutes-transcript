@@ -217,10 +217,26 @@ export interface EntityResolutionResult {
 }
 
 /** Generic role-holder names seeded in the migration backfill — never worth a node. */
-const GENERIC_NAMES = new Set(["shareholders", "various", "members"]);
+// Role/collective words that are NOT people — action-item owners and attendee
+// entries often carry these ("Finance", "Company Secretary", "Legal Counsel",
+// "the Board"). Resolving them as person entities creates junk pseudo-people
+// that pollute the graph (QA finding). Match when the whole name is generic.
+const GENERIC_NAMES = new Set([
+  "shareholders", "various", "members", "member",
+  "finance", "finance team", "the finance team", "legal", "legal team", "legal counsel",
+  "management", "the management", "secretariat", "company secretary", "the company secretary",
+  "board", "the board", "committee", "the committee", "chairman", "the chairman",
+  "chairperson", "management team", "all", "everyone", "n/a", "tbc", "tba", "team",
+]);
 
 function isGenericName(name: string): boolean {
-  return GENERIC_NAMES.has(name.trim().toLowerCase());
+  const n = name.trim().toLowerCase().replace(/[.]/g, "");
+  if (GENERIC_NAMES.has(n)) return true;
+  // A "name" with no personal-name shape (e.g. just a department/role word, or
+  // a single generic token) — require at least two tokens OR a capitalised
+  // personal-looking single name; reject pure role phrases.
+  if (/\b(team|department|division|dept|committee|secretariat|counsel)\b/i.test(n)) return true;
+  return false;
 }
 
 function aliasesArray(aliases: unknown): string[] {

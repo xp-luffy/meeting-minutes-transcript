@@ -133,13 +133,34 @@ interface OpenAiChatResponse {
   choices?: { message?: { content?: string } }[];
 }
 
+/**
+ * AI provider config — any OpenAI-compatible chat-completions endpoint.
+ * Set AI_API_KEY (or legacy OPENAI_API_KEY). To use OpenRouter and switch
+ * models freely, set:
+ *   AI_API_KEY   = <your OpenRouter key>
+ *   AI_BASE_URL  = https://openrouter.ai/api/v1
+ *   AI_MODEL     = openai/gpt-4o   (or anthropic/claude-3.5-sonnet, etc.)
+ * Defaults target OpenAI directly (base https://api.openai.com/v1, model gpt-4o).
+ */
+function aiConfig(): { apiKey: string; baseUrl: string; model: string } | null {
+  const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  const baseUrl = (process.env.AI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+  const model = process.env.AI_MODEL || "gpt-4o";
+  return { apiKey, baseUrl, model };
+}
+
+function hasAiProvider(): boolean {
+  return aiConfig() !== null;
+}
+
 async function callOpenAiGenerator(
   meeting: Meeting,
   transcriptText: string,
 ): Promise<GeneratedMinutes> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY not set");
+  const cfg = aiConfig();
+  if (!cfg) {
+    throw new Error("No AI provider configured (set AI_API_KEY or OPENAI_API_KEY)");
   }
 
   const structuredContext = {
@@ -160,14 +181,21 @@ Transcript:
 ${transcriptText}
 """`;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${cfg.apiKey}`,
+  };
+  // OpenRouter recommends (optionally requires) these attribution headers.
+  if (cfg.baseUrl.includes("openrouter.ai")) {
+    if (process.env.NEXT_PUBLIC_APP_URL) headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_APP_URL;
+    headers["X-Title"] = "Meeting Minutes";
+  }
+
+  const response = await fetch(`${cfg.baseUrl}/chat/completions`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
-      model: "gpt-4o",
+      model: cfg.model,
       response_format: { type: "json_object" },
       temperature: 0.2,
       messages: [
@@ -179,7 +207,7 @@ ${transcriptText}
 
   if (!response.ok) {
     const errText = await response.text().catch(() => "");
-    throw new Error(`OpenAI request failed (${response.status}): ${errText}`);
+    throw new Error(`AI request failed (${response.status}): ${errText}`);
   }
 
   const data = (await response.json()) as OpenAiChatResponse;
@@ -273,7 +301,7 @@ export async function POST(request: Request) {
     let generated: GeneratedMinutes;
     let source: "openai_gpt4o" | "rule_based_v1";
 
-    if (process.env.OPENAI_API_KEY) {
+    if (hasAiProvider()) {
       try {
         generated = await callOpenAiGenerator(meetingTyped, transcriptText);
         source = "openai_gpt4o";
