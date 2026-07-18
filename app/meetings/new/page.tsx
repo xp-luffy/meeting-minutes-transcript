@@ -3,6 +3,7 @@ import { MEETING_TYPES } from "@/lib/constants";
 import { getMyWorkspaces } from "@/lib/workspace";
 import { getMyCompanies } from "@/lib/companies";
 import { CompanyPicker } from "./company-picker";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function NewMeetingPage({
   searchParams,
@@ -170,12 +171,12 @@ export default async function NewMeetingPage({
         </div>
 
         <div className="pt-2">
-          <button
-            type="submit"
-            className="focus-ring inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 sm:w-auto sm:py-2"
+          <SubmitButton
+            pendingLabel="Creating meeting…"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
           >
             Create Meeting
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>
