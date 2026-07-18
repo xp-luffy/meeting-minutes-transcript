@@ -25,6 +25,7 @@
 - V2 architecture established on three core pillars: assurance engine, company memory, and confirmation flow
 - V2 deployment complete with all audit findings resolved; project cleared for production across opus and codex implementations
 - V3 graph/obligation engine implemented with entities, obligations, conflicts, and people models as foundation for audit system
+- Pending state handling for destructive actions is a key ux pattern being refined in the codebase
 
 ## Gotchas
 
@@ -52,6 +53,7 @@
 - Engine strips topic-prefix lead-ins (e.g., 'On the launch timeline, …') from meeting minutes during processing
 - PILOT_PLAYBOOK documentation covers bug patterns and detection probes—this is a reference guide for known issues and their diagnostic signatures
 - Security headers were added and type error suppression in builds was removed—indicates stricter build/type checking is now enforced
+- fix: pending state on destructive remove-invite action - addresses ui state management for destructive operations
 
 ## Notes
 
