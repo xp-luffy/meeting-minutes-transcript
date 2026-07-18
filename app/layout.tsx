@@ -26,7 +26,9 @@ export default async function RootLayout({
     <html lang="en">
       <body className="antialiased min-h-screen bg-neutral-50 text-neutral-900">
         <SiteHeader profile={profile} />
-        <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className="md:pl-60">
+          <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+        </main>
       </body>
     </html>
   );
