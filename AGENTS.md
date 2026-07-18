@@ -47,6 +47,7 @@
 - Recent commits are purely documentation maintenance (agents.md/claude.md syncs) with no code changes or feature development
 - Launchpad bot loop recurring issue - V2 handoff required manual-deploy note to halt runaway syncs despite vercel build skipping being in place
 - Launchpad sync loop was previously broken but is now fixed (per commit msg 'Launchpad loop fixed'); vercel build skipping for claude/agents.md-only commits prevents runaway cycles
+- Create Meeting UI was missing pending state feedback during submission, causing apparent non-responsiveness; fixed in this commit
 
 ## Notes
 
