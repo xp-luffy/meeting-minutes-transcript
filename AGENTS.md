@@ -103,3 +103,4 @@
 - Mobile polish and graph surface scale fixes completed in V3-2 and V3-3
 - Latest commit: OpenRouter support + QA optimizations (final screen/button pass) - indicates active feature development resuming after documentation maintenance cycles
 - OpenRouter environment setup documented in handoff.md, part of ongoing knowledge transfer documentation
+- In-app AI model switcher implemented, eliminating need for Vercel environment variable edits to change models
