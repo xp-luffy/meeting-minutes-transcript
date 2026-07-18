@@ -65,7 +65,7 @@ export default async function DraftPage({
           action={
             <Link
               href={`/meetings/${id}/transcript`}
-              className={`inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 ${FOCUS_RING}`}
             >
               Add transcript
             </Link>

@@ -223,6 +223,18 @@ const LEADING_DISCOURSE_MARKERS: RegExp[] = [
   /^next,\s+/i,
   /^moving\s+(?:on\s+)?to\s+agenda\s+item\s*\d*\s*[-—,:]?\s*/i,
   /^agenda\s+item\s*\d*\s*[-—,:]?\s*/i,
+  // Topic prefixes: "On the launch timeline, it was resolved that…",
+  // "On marketing collateral, the meeting agreed to…". Left in place these
+  // both pollute the clause AND block the "it was resolved that" unwrap
+  // (which is anchored to the start), producing a double "RESOLVED that …
+  // it was resolved that …". Bounded to a short phrase before the comma so
+  // a genuine clause that merely starts with "on" isn't eaten.
+  /^on\s+(?:the\s+)?[^,]{2,45},\s+/i,
+  /^regarding\s+(?:the\s+)?[^,]{2,45},\s+/i,
+  /^turning\s+to\s+(?:the\s+)?[^,]{2,45},\s+/i,
+  /^as\s+(?:to|for|regards)\s+(?:the\s+)?[^,]{2,45},\s+/i,
+  /^with\s+(?:regard|respect)\s+to\s+(?:the\s+)?[^,]{2,45},\s+/i,
+  /^in\s+relation\s+to\s+(?:the\s+)?[^,]{2,45},\s+/i,
 ];
 
 function stripLeadingDiscourseMarkers(sentence: string): string {
