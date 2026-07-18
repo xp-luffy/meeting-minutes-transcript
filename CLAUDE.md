@@ -104,3 +104,4 @@
 - Latest commit: OpenRouter support + QA optimizations (final screen/button pass) - indicates active feature development resuming after documentation maintenance cycles
 - OpenRouter environment setup documented in handoff.md, part of ongoing knowledge transfer documentation
 - In-app AI model switcher implemented, eliminating need for Vercel environment variable edits to change models
+- Per-model pricing display added to the model picker dropdown UI component
