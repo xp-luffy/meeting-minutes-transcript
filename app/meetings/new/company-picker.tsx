@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { NEW_COMPANY_VALUE } from "@/lib/constants";
 
-export const NEW_COMPANY_VALUE = "__new__";
+// Re-exported for existing importers; the source of truth lives in
+// lib/constants.ts so server code gets the literal, not a client reference.
+export { NEW_COMPANY_VALUE };
 
 export interface CompanyOption {
   id: string;

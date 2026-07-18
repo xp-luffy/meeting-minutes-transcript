@@ -112,20 +112,30 @@ async function getObligationsWithMeetings(
     query = query.not("due_date", "is", null).gte("due_date", today).lte("due_date", weekFromNowIso());
   }
 
-  const openCountQuery = supabase
+  // Count chips apply the Kind filter too (but not Status/Due) so the "X
+  // open / X overdue / X done" summary always matches the register the Kind
+  // dropdown is narrowed to, instead of silently showing portfolio-wide
+  // totals that disagree with the filtered table below.
+  let openCountQuery = supabase
     .from("obligations")
     .select("id", { count: "exact", head: true })
     .eq("status", "open");
-  const doneCountQuery = supabase
+  let doneCountQuery = supabase
     .from("obligations")
     .select("id", { count: "exact", head: true })
     .eq("status", "done");
-  const overdueCountQuery = supabase
+  let overdueCountQuery = supabase
     .from("obligations")
     .select("id", { count: "exact", head: true })
     .eq("status", "open")
     .not("due_date", "is", null)
     .lt("due_date", today);
+
+  if (kindFilter !== "all") {
+    openCountQuery = openCountQuery.eq("kind", kindFilter);
+    doneCountQuery = doneCountQuery.eq("kind", kindFilter);
+    overdueCountQuery = overdueCountQuery.eq("kind", kindFilter);
+  }
 
   const [{ data: items, error: itemsError }, openRes, doneRes, overdueRes] = await Promise.all([
     query,
@@ -210,10 +220,15 @@ export default async function ObligationsPage({
             follow-ups tied back to the meeting that created them.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Badge variant="indigo">{openCount} open</Badge>
-          <Badge variant="red">{overdueCount} overdue</Badge>
-          <Badge variant="green">{doneCount} done</Badge>
+        <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Badge variant="indigo">{openCount} open</Badge>
+            <Badge variant="red">{overdueCount} overdue</Badge>
+            <Badge variant="green">{doneCount} done</Badge>
+          </div>
+          {kindFilter !== "all" ? (
+            <p className="text-[11px] text-neutral-400">Counts reflect the {KIND_LABEL[kindFilter]} filter</p>
+          ) : null}
         </div>
       </div>
 

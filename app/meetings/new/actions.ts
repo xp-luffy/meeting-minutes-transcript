@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Attendee } from "@/lib/types";
 import { MEETING_TYPES } from "@/lib/constants";
 import { getCompany, upsertCompanyDefaultsFromMeeting, type CompanyDefaults } from "@/lib/companies";
-import { NEW_COMPANY_VALUE } from "./company-picker";
+import { NEW_COMPANY_VALUE } from "@/lib/constants";
 
 /**
  * Parses a textarea of "Name — Role" (or "Name, Role") lines, one per line,
