@@ -49,6 +49,7 @@
 - Launchpad sync loop was previously broken but is now fixed (per commit msg 'Launchpad loop fixed'); vercel build skipping for claude/agents.md-only commits prevents runaway cycles
 - Create Meeting UI was missing pending state feedback during submission, causing apparent non-responsiveness; fixed in this commit
 - Company creation was failing due to client/server constant boundary issue—now fixed
+- Engine strips topic-prefix lead-ins (e.g., 'On the launch timeline, …') from meeting minutes during processing
 
 ## Notes
 
