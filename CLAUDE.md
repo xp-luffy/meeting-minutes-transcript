@@ -48,6 +48,7 @@
 - Launchpad bot loop recurring issue - V2 handoff required manual-deploy note to halt runaway syncs despite vercel build skipping being in place
 - Launchpad sync loop was previously broken but is now fixed (per commit msg 'Launchpad loop fixed'); vercel build skipping for claude/agents.md-only commits prevents runaway cycles
 - Create Meeting UI was missing pending state feedback during submission, causing apparent non-responsiveness; fixed in this commit
+- Company creation was failing due to client/server constant boundary issue—now fixed
 
 ## Notes
 
@@ -107,3 +108,4 @@
 - In-app AI model switcher implemented, eliminating need for Vercel environment variable edits to change models
 - Per-model pricing display added to the model picker dropdown UI component
 - Latest commit adds left sidebar navigation with mobile drawer UI component
+- Latest active code change was fixing company creation; prior commits were documentation syncs with build skipping for launchpad-only changes
