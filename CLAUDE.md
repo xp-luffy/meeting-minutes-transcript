@@ -23,6 +23,7 @@
 - Owner check was split into two distinct concepts: accountability vs traceability. This likely has implications for RLS policies and authentication logic.
 - Every export path now includes explicit proof (assertions/validations) to guarantee correctness before delivering output files
 - search_path is pinned on person_name_tokens function to prevent schema resolution issues
+- Codex concept review completed: two real defects found and concept doc reviewed.
 
 ## Architecture
 
