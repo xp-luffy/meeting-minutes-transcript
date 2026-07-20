@@ -16,6 +16,7 @@
 - Vercel builds are skipped for documentation-only commits (claude.md/agents.md changes) to prevent unnecessary build cycles
 - V2-2 through V2-4 sprints focused on UI/UX polish, mobile optimization (375px-desktop), performance scaling for 1k-firm simulation, and audit compliance resolution
 - V3-4 audit findings resolved with both Opus and Codex code review tools approving deployment (BLOCK -> DEPLOY OK)
+- Public demo data is now explicitly marked rather than inferred from NULL owner, making the access control boundary clearer
 
 ## Architecture
 
