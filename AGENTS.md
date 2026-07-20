@@ -65,6 +65,7 @@
 - quorum check had a bug where it was validating its own template — fix applied in recent commit
 - Assurance overhaul commit 'stop the engine marking its own homework' suggests a bug where the system was self-validating — likely an integrity fix in the minutes generation or status engine, decoupling evaluation from production.
 - Visual system applied in Sprint 4: unknown/unverified status can no longer appear verified — unknown vs verified distinction is now visually enforced at the UI level.
+- Owner picker's Save button renders below its own fold, causing UX issue where button is not immediately visible without scrolling
 
 ## Notes
 
