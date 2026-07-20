@@ -60,6 +60,7 @@
 - fix: pending state on destructive remove-invite action - addresses ui state management for destructive operations
 - Legacy NULL-owned entities were causing duplication issues; fix applied to match and handle these cases correctly
 - Migration 0012 consolidates orphan person entities and adds a unique index—part of data hygiene work for the database layer
+- quorum check had a bug where it was validating its own template — fix applied in recent commit
 
 ## Notes
 
