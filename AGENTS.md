@@ -21,6 +21,7 @@
 - App navigation is hidden from signed-out visitors (auth-gating UI elements)
 - Automated 'Verifier' or finality gate added: 'final' status now requires explicit verification step, closing 4 unearned-assurance gaps where items could reach final without proper validation.
 - Owner check was split into two distinct concepts: accountability vs traceability. This likely has implications for RLS policies and authentication logic.
+- Every export path now includes explicit proof (assertions/validations) to guarantee correctness before delivering output files
 
 ## Architecture
 
@@ -67,6 +68,8 @@
 - Visual system applied in Sprint 4: unknown/unverified status can no longer appear verified — unknown vs verified distinction is now visually enforced at the UI level.
 - Owner picker's Save button renders below its own fold, causing UX issue where button is not immediately visible without scrolling
 - company document uploads were broken for the company's own owner because RLS policy was too restrictive — fix addresses this specific edge case
+- 0-row guards protect against edge cases where operations on empty result sets could produce undefined behavior or misleading outputs
+- Fail-closed locks ensure that if lock acquisition fails, the operation does not proceed (prevents data corruption from unguarded concurrent access)
 
 ## Notes
 
