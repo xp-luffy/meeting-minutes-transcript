@@ -617,6 +617,21 @@ export function meetingTypeGuidance(meetingType: string): string {
 // Quorum detection
 // ---------------------------------------------------------------------------
 
+/**
+ * Whether the minutes may assert that a quorum was present.
+ *
+ * The fallback used to be `true`: if neither the transcript nor the cosec
+ * said anything about quorum, the engine wrote "A quorum of directors was
+ * present and confirmed at the outset" into a statutory document as fact —
+ * a legally meaningful assertion nobody had made. The assurance check then
+ * found that sentence and passed, so the app fabricated the very statement
+ * it went on to verify. Proven 2026-07-20 with a transcript that never
+ * mentioned quorum.
+ *
+ * Callers now pass `meeting.quorum_met ?? false`, so an unconfirmed quorum
+ * produces the honest sentence ("proceeded without a confirmed quorum; this
+ * should be reviewed before finalisation") instead of a comfortable lie.
+ */
 function detectQuorumMet(transcriptText: string, fallback: boolean): boolean {
   if (/quorum.{0,40}(present|confirmed|met)/i.test(transcriptText)) {
     return true;
@@ -903,7 +918,7 @@ export function generateMinutesRuleBased(
 
   const numbers = autoNumberResolutions(meeting.meeting_type, meeting.meeting_date, resolutions.length);
 
-  const quorumMet = detectQuorumMet(transcriptText, meeting.quorum_met ?? true);
+  const quorumMet = detectQuorumMet(transcriptText, meeting.quorum_met ?? false);
 
   const resolutionSections = resolutions
     .map((r, i) => {
@@ -1171,7 +1186,7 @@ export function generateMinutesMaisca(meeting: Meeting, transcriptText: string):
   const resolutions = extractResolutions(classified, consumedIndices);
   const actionItems = extractActionItems(classified, consumedIndices);
   const numbers = autoNumberResolutions(meeting.meeting_type, meeting.meeting_date, resolutions.length);
-  const quorumMet = detectQuorumMet(transcriptText, meeting.quorum_met ?? true);
+  const quorumMet = detectQuorumMet(transcriptText, meeting.quorum_met ?? false);
 
   const attendees = meeting.attendees ?? [];
   const isApology = (role: string) => /apolog/i.test(role);
