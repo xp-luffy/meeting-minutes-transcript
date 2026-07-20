@@ -114,7 +114,10 @@ export async function GovernanceRiskPanel({
 }: GovernanceRiskPanelProps) {
   const supabase = await createClient();
 
-  const conflicts = await detectConflicts(supabase, meetingId);
+  // null means the scan could not run — NOT that the record is clean.
+  const conflictResult = await detectConflicts(supabase, meetingId);
+  const scanFailed = conflictResult === null;
+  const conflicts = conflictResult ?? [];
   const consistency = checkConsistency({
     bodyHtml,
     transcriptText,
@@ -122,7 +125,9 @@ export async function GovernanceRiskPanel({
     resolutions,
   });
 
-  const allClear = conflicts.length === 0 && consistency.length === 0;
+  // An all-clear is a positive assurance and may only be shown when the scan
+  // actually completed.
+  const allClear = !scanFailed && conflicts.length === 0 && consistency.length === 0;
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
@@ -137,6 +142,22 @@ export async function GovernanceRiskPanel({
           </span>
         ) : null}
       </div>
+
+      {scanFailed ? (
+        <div className="mt-4 flex items-start gap-3 rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-2.5">
+          <span
+            className="inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold text-amber-800"
+            aria-hidden="true"
+          >
+            ?
+          </span>
+          <p className="text-sm text-amber-900">
+            The conflict scan could not be completed, so this record has{" "}
+            <strong>not</strong> been checked for related-party conflicts. This is not an
+            all-clear — re-open this draft to try again before finalising.
+          </p>
+        </div>
+      ) : null}
 
       {allClear ? (
         <div className="mt-4 flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5">

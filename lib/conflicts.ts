@@ -100,13 +100,21 @@ interface DirectorshipEdge {
 
 /**
  * Detect conflicts of interest for a meeting by traversing the directorship
- * graph. Returns `[]` on any error — never throws.
+ * graph.
+ *
+ * Returns `null` when the scan could not be completed, which the caller MUST
+ * render differently from an empty list. It previously returned `[]` on any
+ * error, and the panel renders an empty list as a green tick reading "No
+ * conflicts or contradictions detected across the record" — so a dropped
+ * connection or an RLS denial produced a positive legal assurance that nobody
+ * had actually checked anything. "We could not check" and "there is nothing to
+ * find" are opposite claims and must never share a rendering.
  */
 export async function detectConflicts(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
   meetingId: string,
-): Promise<ConflictFinding[]> {
+): Promise<ConflictFinding[] | null> {
   try {
     // --- meeting (own company is excluded as a counterparty) ---------------
     const { data: meeting } = await supabase
@@ -270,7 +278,9 @@ export async function detectConflicts(
     out.sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "flag" ? -1 : 1));
     return out;
   } catch (error) {
+    // Null, not [] — see the doc comment. An unchecked record must not be
+    // presented to a cosec as a clean one.
     console.error("detectConflicts failed:", error);
-    return [];
+    return null;
   }
 }

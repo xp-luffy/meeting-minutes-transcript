@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Profile } from "@/lib/auth";
@@ -34,6 +34,10 @@ function SidebarContent({
   pathname: string;
   onNavigate?: () => void;
 }) {
+  // Both the desktop sidebar and the mobile drawer render this content, so a
+  // hard-coded input id would be duplicated in the DOM and break the label.
+  const searchInputId = useId();
+
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <Link
@@ -55,6 +59,27 @@ function SidebarContent({
           >
             New Meeting
           </Link>
+
+          {/* Plain GET form to /search — no client state, works without JS,
+              and the drawer closes on submit like any other navigation. */}
+          <form
+            method="get"
+            action="/search"
+            role="search"
+            onSubmit={onNavigate}
+            className="flex flex-col"
+          >
+            <label htmlFor={searchInputId} className="sr-only">
+              Search
+            </label>
+            <input
+              id={searchInputId}
+              name="q"
+              type="search"
+              placeholder="Search…"
+              className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            />
+          </form>
 
           <nav aria-label="Primary" className="flex flex-col gap-0.5">
             {links.map((link) => {
