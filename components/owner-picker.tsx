@@ -391,7 +391,16 @@ function OwnerPicker({
             </p>
           ) : null}
 
-          <div className="flex items-center gap-2">
+          {/*
+            Sticky footer. The popover is capped at sm:max-h-96 and its content
+            (search, candidates, three owner options, the rename checkbox and
+            its explanation) is taller than that, so "Save owner" opened BELOW
+            the popover's own fold — measured at y=770 against a container
+            ending at y=739, and elementFromPoint returned <body>, i.e. the
+            primary action was not clickable until you scrolled inside the
+            popover. Nothing indicated there was more to scroll to.
+          */}
+          <div className="sticky bottom-0 -mx-4 -mb-4 flex items-center gap-2 border-t border-paper-200 bg-white px-4 py-3">
             <SubmitButton
               pendingLabel="Saving…"
               className={`${FOCUS_RING} inline-flex min-h-11 flex-1 items-center justify-center rounded-control bg-ink-600 px-3.5 text-body font-medium text-white hover:bg-ink-700 active:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-60`}
