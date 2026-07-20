@@ -19,6 +19,7 @@
 - Public demo data is now explicitly marked rather than inferred from NULL owner, making the access control boundary clearer
 - Remove demo mode: login is now required, users only see their own work.
 - App navigation is hidden from signed-out visitors (auth-gating UI elements)
+- Automated 'Verifier' or finality gate added: 'final' status now requires explicit verification step, closing 4 unearned-assurance gaps where items could reach final without proper validation.
 
 ## Architecture
 
