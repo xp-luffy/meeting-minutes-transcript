@@ -55,6 +55,7 @@
 - Security headers were added and type error suppression in builds was removed—indicates stricter build/type checking is now enforced
 - fix: pending state on destructive remove-invite action - addresses ui state management for destructive operations
 - Legacy NULL-owned entities were causing duplication issues; fix applied to match and handle these cases correctly
+- Migration 0012 consolidates orphan person entities and adds a unique index—part of data hygiene work for the database layer
 
 ## Notes
 
