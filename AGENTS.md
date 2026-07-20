@@ -124,3 +124,4 @@
 - Latest active code change was fixing company creation; prior commits were documentation syncs with build skipping for launchpad-only changes
 - Mobile optimisation pass completed across all pages in current commit
 - Performance optimization applied: company stats aggregation moved from wire-level to Postgres queries for improved efficiency
+- Sprints 2 + 3 introduced owners as real people in the data model and added the company document cabinet feature.
