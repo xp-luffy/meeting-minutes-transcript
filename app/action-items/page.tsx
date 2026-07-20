@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting } from "@/lib/types";
 import { Badge, ConfidenceTag, EmptyState, FOCUS_RING } from "@/components/ui";
 import { formatDate } from "@/lib/format";
+import { OwnerCell } from "@/components/owner-picker";
+import { OWNER_FILTERS, OWNER_FILTER_LABELS, parseOwnerFilter, type OwnerFilter } from "@/lib/owners";
 import { StatusToggle } from "./status-toggle";
 
 type DueFilter = "overdue" | "week" | "all";
@@ -21,7 +23,7 @@ function parseStatusFilter(value: string | string[] | undefined): StatusFilter {
   return STATUS_FILTERS.includes(v as StatusFilter) ? (v as StatusFilter) : "open";
 }
 
-function parseOwnerFilter(value: string | string[] | undefined): string {
+function parseOwnerSearch(value: string | string[] | undefined): string {
   const v = Array.isArray(value) ? value[0] : value;
   return (v ?? "").trim();
 }
@@ -40,14 +42,48 @@ function weekFromNowIso(): string {
 
 const PAGE_LIMIT = 200;
 
+/**
+ * Applies the owner-state filter IN THE QUERY. It must never be a JS filter
+ * over a LIMITed page: "needs an owner" is a worklist, and an item past the
+ * slice would silently drop out of the very queue built to stop items
+ * vanishing (docs/PILOT_PLAYBOOK.md pattern D).
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function applyOwnerFilter(query: any, filter: OwnerFilter): any {
+  switch (filter) {
+    case "needs":
+      // BOTH unassigned and text-only — a free-text owner is not chaseable.
+      return query.is("owner_entity_id", null);
+    // Migration 0017 normalises blank owner_name to NULL and the write path
+    // keeps it that way, so `owner_name IS NULL` is a sound test for
+    // "unassigned" — no JS post-filter needed, and none allowed.
+    case "text_only":
+      return query.is("owner_entity_id", null).not("owner_name", "is", null);
+    case "unassigned":
+      return query.is("owner_entity_id", null).is("owner_name", null);
+    case "linked":
+      return query.not("owner_entity_id", "is", null);
+    default:
+      return query;
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+interface OwnerRow extends ActionItem {
+  owner_entity_id: string | null;
+}
+
 async function getActionItemsWithMeetings(
   statusFilter: StatusFilter,
   dueFilter: DueFilter,
-  ownerFilter: string,
+  ownerSearch: string,
+  ownerFilter: OwnerFilter,
 ): Promise<{
-  items: ActionItem[];
+  items: OwnerRow[];
   meetingsById: Map<string, Meeting>;
-  counts: { open: number; done: number; overdue: number };
+  personNameById: Map<string, string>;
+  counts: { open: number; done: number; overdue: number; needsOwner: number };
+  countsError: boolean;
   atLimit: boolean;
   error: string | null;
 }> {
@@ -60,7 +96,7 @@ async function getActionItemsWithMeetings(
   let query = supabase
     .from("action_items")
     .select(
-      "id, meeting_id, description, description_confidence, description_review_status, owner_name, due_date, item_status, created_at",
+      "id, meeting_id, description, description_confidence, description_review_status, owner_name, owner_entity_id, due_date, item_status, created_at",
     )
     .order("due_date", { ascending: true, nullsFirst: false })
     .limit(PAGE_LIMIT);
@@ -72,15 +108,16 @@ async function getActionItemsWithMeetings(
   } else if (dueFilter === "week") {
     query = query.not("due_date", "is", null).gte("due_date", today).lte("due_date", weekFromNowIso());
   }
-  if (ownerFilter) {
+  if (ownerSearch) {
     // ilike with escaped wildcards — substring, case-insensitive
-    const needle = ownerFilter.replace(/[%_]/g, (m) => `\\${m}`);
+    const needle = ownerSearch.replace(/[%_]/g, (m) => `\\${m}`);
     query = query.ilike("owner_name", `%${needle}%`);
   }
+  query = applyOwnerFilter(query, ownerFilter);
 
   // Count chips are owner-scoped (match the visible owner filter) but span all
   // statuses/due windows. Build each with its own owner-filtered count query.
-  const ownerNeedle = ownerFilter ? `%${ownerFilter.replace(/[%_]/g, (m) => `\\${m}`)}%` : null;
+  const ownerNeedle = ownerSearch ? `%${ownerSearch.replace(/[%_]/g, (m) => `\\${m}`)}%` : null;
   const openCountQuery = supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "open");
   const doneCountQuery = supabase.from("action_items").select("id", { count: "exact", head: true }).eq("item_status", "done");
   const overdueCountQuery = supabase
@@ -88,50 +125,88 @@ async function getActionItemsWithMeetings(
     .select("id", { count: "exact", head: true })
     .eq("item_status", "open")
     .lt("due_date", today);
+  // "Needs an owner" is deliberately counted over OPEN items only and is NOT
+  // narrowed by the owner-state filter — it is the size of the gap, and it has
+  // to stay true while the user is looking at a filtered slice of it.
+  const needsOwnerCountQuery = supabase
+    .from("action_items")
+    .select("id", { count: "exact", head: true })
+    .eq("item_status", "open")
+    .is("owner_entity_id", null);
   if (ownerNeedle) {
     openCountQuery.ilike("owner_name", ownerNeedle);
     doneCountQuery.ilike("owner_name", ownerNeedle);
     overdueCountQuery.ilike("owner_name", ownerNeedle);
+    needsOwnerCountQuery.ilike("owner_name", ownerNeedle);
   }
 
-  const [{ data: items, error: itemsError }, openRes, doneRes, overdueRes] = await Promise.all([
+  const [{ data: items, error: itemsError }, openRes, doneRes, overdueRes, needsRes] = await Promise.all([
     query,
     openCountQuery,
     doneCountQuery,
     overdueCountQuery,
+    needsOwnerCountQuery,
   ]);
 
   const counts = {
     open: openRes.count ?? 0,
     done: doneRes.count ?? 0,
     overdue: overdueRes.count ?? 0,
+    needsOwner: needsRes.count ?? 0,
   };
+  // A failed count must not render as a confident "0" — that would understate
+  // the gap the user is liable for.
+  const countsError = Boolean(openRes.error || doneRes.error || overdueRes.error || needsRes.error);
 
   if (itemsError) {
-    return { items: [], meetingsById: new Map(), counts, atLimit: false, error: itemsError.message };
+    return {
+      items: [],
+      meetingsById: new Map(),
+      personNameById: new Map(),
+      counts,
+      countsError,
+      atLimit: false,
+      error: itemsError.message,
+    };
   }
 
-  const itemList = (items ?? []) as ActionItem[];
+  const itemList = (items ?? []) as OwnerRow[];
   const meetingIds = Array.from(new Set(itemList.map((item) => item.meeting_id)));
   const meetingsById = new Map<string, Meeting>();
+  const personNameById = new Map<string, string>();
 
-  if (meetingIds.length > 0) {
-    const { data: meetings, error: meetingsError } = await supabase
-      .from("meetings")
-      .select("id, company_name, meeting_type, meeting_date, status")
-      .in("id", meetingIds);
+  const ownerIds = Array.from(
+    new Set(itemList.map((i) => i.owner_entity_id).filter((v): v is string => Boolean(v))),
+  );
 
-    if (!meetingsError && meetings) {
-      for (const meeting of meetings as Meeting[]) {
-        meetingsById.set(meeting.id, meeting);
-      }
+  const [meetingsResult, peopleResult] = await Promise.all([
+    meetingIds.length > 0
+      ? supabase.from("meetings").select("id, company_name, meeting_type, meeting_date, status").in("id", meetingIds)
+      : Promise.resolve({ data: [], error: null }),
+    ownerIds.length > 0
+      ? supabase.from("entities").select("id, canonical_name").in("id", ownerIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (!meetingsResult.error && meetingsResult.data) {
+    for (const meeting of meetingsResult.data as Meeting[]) {
+      meetingsById.set(meeting.id, meeting);
+    }
+  }
+  // Ids missing from this result are people RLS hides from the caller. They
+  // render as "Owner not visible to you", never as a blank cell.
+  if (!peopleResult.error && peopleResult.data) {
+    for (const person of peopleResult.data as { id: string; canonical_name: string }[]) {
+      personNameById.set(person.id, person.canonical_name);
     }
   }
 
   return {
     items: itemList,
     meetingsById,
+    personNameById,
     counts,
+    countsError,
     atLimit: itemList.length === PAGE_LIMIT,
     error: null,
   };
@@ -143,15 +218,13 @@ export default async function ActionItemsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const ownerFilter = parseOwnerFilter(params.owner);
+  const ownerSearch = parseOwnerSearch(params.owner);
+  const ownerFilter = parseOwnerFilter(params.owner_state);
   const dueFilter = parseDueFilter(params.due);
   const statusFilter = parseStatusFilter(params.status);
 
-  const { items, meetingsById, counts, atLimit, error } = await getActionItemsWithMeetings(
-    statusFilter,
-    dueFilter,
-    ownerFilter,
-  );
+  const { items, meetingsById, personNameById, counts, countsError, atLimit, error } =
+    await getActionItemsWithMeetings(statusFilter, dueFilter, ownerSearch, ownerFilter);
 
   if (error) {
     return (
@@ -161,26 +234,49 @@ export default async function ActionItemsPage({
     );
   }
 
-  // All filters (status, due window, owner) are applied in-query before the
-  // LIMIT, so the returned items ARE the rows to render.
-  const { open: openCount, done: doneCount, overdue: overdueCount } = counts;
+  // All filters (status, due window, owner text, owner state) are applied
+  // in-query before the LIMIT, so the returned items ARE the rows to render.
+  const { open: openCount, done: doneCount, overdue: overdueCount, needsOwner } = counts;
   const rows = items;
   const today = todayIso();
+
+  function ownerCellFor(item: OwnerRow) {
+    const meeting = meetingsById.get(item.meeting_id);
+    return (
+      <OwnerCell
+        itemId={item.id}
+        meetingId={item.meeting_id}
+        ownerName={item.owner_name}
+        ownerEntityId={item.owner_entity_id}
+        ownerDisplayName={item.owner_entity_id ? (personNameById.get(item.owner_entity_id) ?? null) : null}
+        // A hint only — the server action re-checks the draft status and is
+        // the authority on whether the recorded text is locked.
+        isFinal={meeting?.status === "final"}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold text-neutral-900">Action Items</h1>
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <Badge variant="indigo">{openCount} open</Badge>
-          <Badge variant="red">{overdueCount} overdue</Badge>
-          <Badge variant="green">{doneCount} done</Badge>
+          {countsError ? (
+            <span className="text-neutral-500">Counts unavailable</span>
+          ) : (
+            <>
+              <Badge variant="indigo">{openCount} open</Badge>
+              <Badge variant="red">{overdueCount} overdue</Badge>
+              {needsOwner > 0 ? <Badge variant="amber">{needsOwner} need an owner</Badge> : null}
+              <Badge variant="green">{doneCount} done</Badge>
+            </>
+          )}
         </div>
       </div>
 
       {atLimit ? (
         <p className="text-xs text-neutral-500">
-          Showing the first {200} items by due date — narrow with the filters below.
+          Showing the first {PAGE_LIMIT} items by due date — narrow with the filters below.
         </p>
       ) : null}
 
@@ -189,16 +285,33 @@ export default async function ActionItemsPage({
         className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
       >
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="owner" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="owner_state" className="text-xs font-medium text-neutral-600">
             Owner
+          </label>
+          <select
+            id="owner_state"
+            name="owner_state"
+            defaultValue={ownerFilter}
+            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+          >
+            {OWNER_FILTERS.map((f) => (
+              <option key={f} value={f}>
+                {OWNER_FILTER_LABELS[f]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1 sm:w-auto">
+          <label htmlFor="owner" className="text-xs font-medium text-neutral-600">
+            Search owner text
           </label>
           <input
             id="owner"
             name="owner"
             type="text"
-            defaultValue={ownerFilter}
-            placeholder="Search owner…"
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-48 sm:text-sm"
+            defaultValue={ownerSearch}
+            placeholder="e.g. Finance"
+            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-40 sm:text-sm"
           />
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
@@ -247,78 +360,123 @@ export default async function ActionItemsPage({
         </div>
       </form>
 
+      {ownerFilter !== "all" ? (
+        <p className="text-sm text-neutral-600">
+          {OWNER_FILTER_LABELS[ownerFilter]} — {rows.length}
+          {atLimit ? "+" : ""} item{rows.length === 1 ? "" : "s"} shown.
+          {ownerFilter === "needs" ? (
+            <span className="text-neutral-500">
+              {" "}
+              Includes items with no owner at all and items whose owner is recorded only as text.
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+
       {rows.length === 0 ? (
         <EmptyState
           title="No action items match"
           message="Try widening your filters, or clear them to see everything."
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
-          <table className="w-full min-w-[720px] divide-y divide-neutral-200 text-sm">
-            <thead>
-              <tr className="text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
-                <th className="px-4 py-3">Description</th>
-                <th className="px-4 py-3">Owner</th>
-                <th className="px-4 py-3">Due</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Meeting</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-200">
-              {rows.map((item) => {
-                const meeting = meetingsById.get(item.meeting_id);
-                const isOverdue =
-                  item.item_status === "open" &&
-                  item.due_date !== null &&
-                  item.due_date < today;
+        <>
+          {/* Below sm: stacked cards. Scrolling a legal worklist sideways on a
+              phone is how items get missed (DESIGN_SPEC_V4 §3.7). */}
+          <ul className="space-y-3 sm:hidden">
+            {rows.map((item) => {
+              const meeting = meetingsById.get(item.meeting_id);
+              const isOverdue =
+                item.item_status === "open" && item.due_date !== null && item.due_date < today;
+              return (
+                <li key={item.id} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+                  <p className="text-sm text-neutral-800">{item.description}</p>
+                  <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {meeting ? `${meeting.company_name} · ${meeting.meeting_type}` : "Meeting unavailable"}
+                    {item.due_date ? (
+                      <>
+                        {" · "}
+                        <span className={isOverdue ? "font-medium text-red-600" : ""}>
+                          {isOverdue ? "! overdue " : "due "}
+                          {formatDate(item.due_date)}
+                        </span>
+                      </>
+                    ) : (
+                      " · no due date"
+                    )}
+                  </p>
+                  <div className="mt-3">{ownerCellFor(item)}</div>
+                  <div className="mt-3">
+                    <StatusToggle
+                      itemId={item.id}
+                      meetingId={item.meeting_id}
+                      initialStatus={item.item_status}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
 
-                return (
-                  <tr key={item.id} className="align-top">
-                    <td className="max-w-md px-4 py-3">
-                      <div className="text-neutral-800">{item.description}</div>
-                      <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {item.owner_name ? (
-                        <span className="text-neutral-700">{item.owner_name}</span>
-                      ) : (
-                        <div className="flex items-center gap-2">
+          <div className="hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm sm:block">
+            <table className="w-full min-w-[820px] divide-y divide-neutral-200 text-sm">
+              <thead>
+                <tr className="text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
+                  <th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3">Owner</th>
+                  <th className="px-4 py-3">Due</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Meeting</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200">
+                {rows.map((item) => {
+                  const meeting = meetingsById.get(item.meeting_id);
+                  const isOverdue =
+                    item.item_status === "open" &&
+                    item.due_date !== null &&
+                    item.due_date < today;
+
+                  return (
+                    <tr key={item.id} className="align-top">
+                      <td className="max-w-md px-4 py-3">
+                        <div className="text-neutral-800">{item.description}</div>
+                        <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
+                      </td>
+                      <td className="px-4 py-3">{ownerCellFor(item)}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={isOverdue ? "font-medium text-red-600" : "text-neutral-700"}>
+                          {isOverdue ? "! overdue " : ""}
+                          {formatDate(item.due_date)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <StatusToggle
+                          itemId={item.id}
+                          meetingId={item.meeting_id}
+                          initialStatus={item.item_status}
+                        />
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {meeting ? (
+                          <Link
+                            href={`/meetings/${meeting.id}/draft`}
+                            className={`rounded-sm text-indigo-600 hover:text-indigo-700 ${FOCUS_RING}`}
+                          >
+                            {meeting.company_name}
+                            <span className="text-neutral-400"> · {meeting.meeting_type}</span>
+                          </Link>
+                        ) : (
                           <span className="text-neutral-400">—</span>
-                          <Badge variant="amber">No owner</Badge>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={isOverdue ? "font-medium text-red-600" : "text-neutral-700"}>
-                        {formatDate(item.due_date)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusToggle
-                        itemId={item.id}
-                        meetingId={item.meeting_id}
-                        initialStatus={item.item_status}
-                      />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {meeting ? (
-                        <Link
-                          href={`/meetings/${meeting.id}/draft`}
-                          className={`rounded-sm text-indigo-600 hover:text-indigo-700 ${FOCUS_RING}`}
-                        >
-                          {meeting.company_name}
-                          <span className="text-neutral-400"> · {meeting.meeting_type}</span>
-                        </Link>
-                      ) : (
-                        <span className="text-neutral-400">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

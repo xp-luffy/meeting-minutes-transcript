@@ -112,6 +112,36 @@ export function ConfidenceChip({ confidence }: { confidence: number | null | und
 }
 
 /**
+ * "This statement is backed by a named document."
+ *
+ * The one new visual token in DESIGN_SPEC_V4 (§0). It carries the document's
+ * name and the date it took effect, because "Quorum threshold: 3 of 5" is worth
+ * nothing and "3 of 5 — read from Constitution, in force since 12 Jun 2026" is
+ * the product.
+ *
+ * NEVER render this chip for a value that has no document behind it, or for a
+ * document that is not in force for the date in question. A chip on an
+ * unsourced number is exactly the false comfort this app exists to prevent.
+ */
+export function EvidenceChip({
+  documentLabel,
+  inForceFrom,
+}: {
+  documentLabel: string;
+  /** Human-formatted date the document took effect. Required — an undated document is not evidence. */
+  inForceFrom: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded border border-neutral-200 bg-neutral-50 px-1.5 py-0.5 text-[11px] text-neutral-600">
+      <span aria-hidden>📄</span>
+      <span>
+        {documentLabel} · in force {inForceFrom}
+      </span>
+    </span>
+  );
+}
+
+/**
  * Shared empty-state block: a dashed card with a heading, message, and an
  * optional action. Used wherever a list/table has no rows to show.
  */

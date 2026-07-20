@@ -5,6 +5,7 @@ import { StatusBadge, OutcomePill, Badge, EmptyState, FOCUS_RING } from "@/compo
 import { formatDate } from "@/lib/format";
 import { getCompanyPeople, relationLabel } from "@/app/people/data";
 import { EgoGraph } from "@/app/people/ego-graph";
+import { CompanyDocumentsSection } from "./documents-section";
 
 function excerpt(text: string, maxLength = 140): string {
   const trimmed = text.trim();
@@ -143,6 +144,8 @@ export default async function CompanyDetailPage({
           </>
         )}
       </section>
+
+      <CompanyDocumentsSection companyId={id} />
 
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold text-neutral-900">Resolutions register</h2>

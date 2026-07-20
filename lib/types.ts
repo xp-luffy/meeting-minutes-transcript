@@ -62,7 +62,21 @@ export interface ActionItem {
   description_source: string | null;
   description_confidence: number | null;
   description_review_status: string | null;
+  /**
+   * What the minutes literally SAY the owner is. The statutory record; never
+   * rewritten by a later linking decision. May be a role ("Finance"), a
+   * partial name ("Aisyah"), or null.
+   */
   owner_name: string | null;
+  /**
+   * Overlay link to a real person (`entities.id`, kind='person'), or null.
+   * Combined with owner_name this gives the three owner states — see
+   * `ownerState()` in lib/owners.ts. Optional on the type because several
+   * legacy select lists predate migration 0017; read it only where the
+   * column is explicitly selected, and use `ownerState()` so an absent
+   * column can never be mistaken for "not linked".
+   */
+  owner_entity_id?: string | null;
   due_date: string | null;
   item_status: "open" | "done";
   created_at: string;

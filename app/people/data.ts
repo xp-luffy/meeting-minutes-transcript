@@ -376,6 +376,207 @@ export async function getPersonDetail(entity: EntityRow): Promise<PersonDetail> 
   };
 }
 
+// ---------------------------------------------------------------------------
+// "Owes, grouped by company" — the cross-company obligation view (V4 §3.5)
+// ---------------------------------------------------------------------------
+
+export interface OwedItem {
+  id: string;
+  description: string;
+  due_date: string | null;
+  meeting_id: string;
+  item_status: "open" | "done";
+  isOverdue: boolean;
+}
+
+export interface OwedCompanyGroup {
+  companyName: string;
+  items: OwedItem[];
+  openCount: number;
+  overdueCount: number;
+}
+
+export interface PersonOwes {
+  groups: OwedCompanyGroup[];
+  completed: OwedItem[];
+  /** Exact totals from COUNT queries — true even when the item list is capped. */
+  openTotal: number;
+  overdueTotal: number;
+  /** True when the item list hit its cap, so the groups below are incomplete. */
+  truncated: boolean;
+  /** True when the underlying reads failed; the page must not render "0 owed". */
+  failed: boolean;
+}
+
+/** Generous cap. The filter IS `owner_entity_id = this person`, so the limit
+ *  trims an already-correct set rather than slicing an unfiltered table — and
+ *  when it bites we say so instead of silently showing a partial account. */
+const OWES_LIMIT = 400;
+
+export async function getPersonOwes(entityId: string): Promise<PersonOwes> {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [itemsResult, openCountResult, overdueCountResult] = await Promise.all([
+    supabase
+      .from("action_items")
+      .select("id, description, due_date, meeting_id, item_status")
+      .eq("owner_entity_id", entityId)
+      .order("due_date", { ascending: true, nullsFirst: false })
+      .limit(OWES_LIMIT),
+    supabase
+      .from("action_items")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_entity_id", entityId)
+      .eq("item_status", "open"),
+    supabase
+      .from("action_items")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_entity_id", entityId)
+      .eq("item_status", "open")
+      .lt("due_date", today),
+  ]);
+
+  const empty: PersonOwes = {
+    groups: [],
+    completed: [],
+    openTotal: 0,
+    overdueTotal: 0,
+    truncated: false,
+    failed: true,
+  };
+
+  if (itemsResult.error || openCountResult.error || overdueCountResult.error) {
+    return empty;
+  }
+
+  type Row = {
+    id: string;
+    description: string;
+    due_date: string | null;
+    meeting_id: string;
+    item_status: "open" | "done";
+  };
+  const rows = (itemsResult.data ?? []) as Row[];
+
+  const meetingIds = Array.from(new Set(rows.map((r) => r.meeting_id)));
+  const companyByMeeting = new Map<string, string>();
+  if (meetingIds.length > 0) {
+    const { data: meetingRows, error: meetingError } = await supabase
+      .from("meetings")
+      .select("id, company_name")
+      .in("id", meetingIds);
+    if (meetingError) return empty;
+    for (const m of (meetingRows ?? []) as { id: string; company_name: string }[]) {
+      companyByMeeting.set(m.id, m.company_name);
+    }
+  }
+
+  const grouped = new Map<string, OwedItem[]>();
+  const completed: OwedItem[] = [];
+
+  for (const r of rows) {
+    const item: OwedItem = {
+      id: r.id,
+      description: r.description,
+      due_date: r.due_date,
+      meeting_id: r.meeting_id,
+      item_status: r.item_status,
+      isOverdue: r.item_status === "open" && r.due_date !== null && r.due_date < today,
+    };
+    if (r.item_status === "done") {
+      completed.push(item);
+      continue;
+    }
+    // A meeting the caller cannot read is named explicitly, never silently
+    // folded into another company's group.
+    const company = companyByMeeting.get(r.meeting_id) ?? "Company not visible to you";
+    const bucket = grouped.get(company);
+    if (bucket) bucket.push(item);
+    else grouped.set(company, [item]);
+  }
+
+  const groups: OwedCompanyGroup[] = Array.from(grouped.entries())
+    .map(([companyName, items]) => ({
+      companyName,
+      items,
+      openCount: items.length,
+      overdueCount: items.filter((i) => i.isOverdue).length,
+    }))
+    // Most overdue first — the point of the screen is what is late.
+    .sort((a, b) => b.overdueCount - a.overdueCount || b.openCount - a.openCount || a.companyName.localeCompare(b.companyName));
+
+  return {
+    groups,
+    completed,
+    openTotal: openCountResult.count ?? 0,
+    overdueTotal: overdueCountResult.count ?? 0,
+    truncated: rows.length === OWES_LIMIT,
+    failed: false,
+  };
+}
+
+export interface UnlinkedNameMatch {
+  id: string;
+  description: string;
+  owner_name: string;
+  meeting_id: string;
+  company_name: string | null;
+  item_status: string;
+}
+
+export interface UnlinkedMatches {
+  sample: UnlinkedNameMatch[];
+  total: number;
+  /**
+   * True when the detection could not run. The banner then says
+   * "Could not check for unlinked items naming this person" — the absence of a
+   * detected match is NOT proof there isn't one, and a person page that looks
+   * complete when it isn't is the failure this whole banner exists to prevent.
+   */
+  failed: boolean;
+}
+
+/**
+ * Action items that RECORD an owner name resembling this person but are not
+ * linked to them. Runs entirely in SQL (`unlinked_owner_matches`, migration
+ * 0017) with a window COUNT, so the number is right even when the sample is
+ * capped — doing it in JS over a LIMITed page would UNDER-report the gap.
+ */
+export async function getUnlinkedOwnerMatches(entityId: string): Promise<UnlinkedMatches> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("unlinked_owner_matches", {
+    p_entity_id: entityId,
+    p_limit: 25,
+  });
+
+  if (error) return { sample: [], total: 0, failed: true };
+
+  type Row = {
+    id: string;
+    description: string;
+    owner_name: string;
+    meeting_id: string;
+    company_name: string | null;
+    item_status: string;
+    total_count: number | string;
+  };
+  const rows = (data ?? []) as Row[];
+
+  return {
+    sample: rows.map((r) => ({
+      id: r.id,
+      description: r.description,
+      owner_name: r.owner_name,
+      meeting_id: r.meeting_id,
+      company_name: r.company_name,
+      item_status: r.item_status,
+    })),
+    total: rows.length > 0 ? Number(rows[0].total_count) || rows.length : 0,
+    failed: false,
+  };
+}
+
 export interface CompanyPersonRow {
   id: string;
   name: string;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import type { ActionItem } from "@/lib/types";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
 import { Badge, FOCUS_RING, ItemStatusPill } from "@/components/ui";
+import { OwnerCell } from "@/components/owner-picker";
 import {
   acceptActionItemDescription,
   toggleActionItemStatus,
@@ -16,10 +17,13 @@ export function ActionItemRow({
   item,
   meetingId,
   isFinal,
+  ownerDisplayName = null,
 }: {
   item: ActionItem;
   meetingId: string;
   isFinal: boolean;
+  /** Canonical name of the linked person, or null when unlinked/not visible. */
+  ownerDisplayName?: string | null;
 }) {
   const [description, setDescription] = useState(item.description);
   const [ownerName, setOwnerName] = useState(item.owner_name ?? "");
@@ -134,16 +138,31 @@ export function ActionItemRow({
           className="block w-full resize-none rounded-md border-0 p-0 text-base leading-relaxed text-neutral-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-800 sm:text-sm"
         />
         <div className="mt-2 flex flex-col gap-2 text-xs text-neutral-500 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
+          {/* Two distinct things, deliberately side by side: the RECORDED text
+              (what the minutes say — a document field) and the LINK to a real
+              person (an overlay on the record, never a rewrite of it). */}
           <div className="flex flex-wrap items-center gap-2">
+            <label className="sr-only" htmlFor={`owner-${item.id}`}>
+              Recorded owner as written in the minutes
+            </label>
             <input
+              id={`owner-${item.id}`}
               value={ownerName}
               onChange={(event) => setOwnerName(event.target.value)}
               onBlur={handleOwnerBlur}
               disabled={isFinal}
-              placeholder="Owner"
-              className="w-full rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-28 sm:py-0.5 sm:text-xs"
+              placeholder="Owner as recorded"
+              className="w-full rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-0.5 sm:text-xs"
             />
-            {!ownerName && !isFinal ? <Badge variant="amber">No owner</Badge> : null}
+            <OwnerCell
+              itemId={item.id}
+              meetingId={meetingId}
+              ownerName={ownerName || null}
+              ownerEntityId={item.owner_entity_id ?? null}
+              ownerDisplayName={ownerDisplayName}
+              isFinal={isFinal}
+              hideRecordedText
+            />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span>Due</span>

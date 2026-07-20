@@ -92,7 +92,7 @@ export default async function DraftPage({
     supabase
       .from("action_items")
       .select(
-        "id, meeting_id, description, description_source, description_confidence, description_review_status, owner_name, due_date, item_status, created_at",
+        "id, meeting_id, description, description_source, description_confidence, description_review_status, owner_name, owner_entity_id, due_date, item_status, created_at",
       )
       .eq("meeting_id", id)
       .order("created_at", { ascending: true }),
@@ -134,6 +134,25 @@ export default async function DraftPage({
   const typedResolutions = (resolutions ?? []) as Resolution[];
   const typedActionItems = (actionItems ?? []) as ActionItem[];
   const typedAuditLogs = (auditLogs ?? []) as AuditLogEntry[];
+
+  // Names for linked owners. Ids missing from this result are people RLS hides
+  // from the caller — the row then says "Owner not visible to you" rather than
+  // rendering blank, which would read as "unassigned" (a different, worse fact).
+  const ownerEntityIds = Array.from(
+    new Set(
+      typedActionItems.map((item) => item.owner_entity_id).filter((v): v is string => Boolean(v)),
+    ),
+  );
+  const ownerNameById = new Map<string, string>();
+  if (ownerEntityIds.length > 0) {
+    const { data: ownerRows } = await supabase
+      .from("entities")
+      .select("id, canonical_name")
+      .in("id", ownerEntityIds);
+    for (const row of (ownerRows ?? []) as { id: string; canonical_name: string }[]) {
+      ownerNameById.set(row.id, row.canonical_name);
+    }
+  }
 
   const isLowConfidence =
     typedDraft.body_html_confidence !== null &&
@@ -252,7 +271,15 @@ export default async function DraftPage({
         ) : (
           <ul className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
             {typedActionItems.map((item) => (
-              <ActionItemRow key={item.id} item={item} meetingId={id} isFinal={isFinal} />
+              <ActionItemRow
+                key={item.id}
+                item={item}
+                meetingId={id}
+                isFinal={isFinal}
+                ownerDisplayName={
+                  item.owner_entity_id ? (ownerNameById.get(item.owner_entity_id) ?? null) : null
+                }
+              />
             ))}
           </ul>
         )}
