@@ -104,8 +104,8 @@ export function ResolutionCard({
 
   return (
     <li
-      className={`rounded-lg border bg-white p-4 shadow-sm ${
-        showAmber ? "border-neutral-200 border-l-4 border-l-amber-400" : "border-neutral-200"
+      className={`rounded-surface border bg-white p-4 shadow-raised ${
+        showAmber ? "border-paper-200 border-l-4 border-l-status-risk-400" : "border-paper-200"
       }`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -116,7 +116,7 @@ export function ResolutionCard({
             onBlur={handleNumberBlur}
             disabled={isFinal}
             placeholder="—"
-            className="w-full min-w-0 rounded-md border border-neutral-300 px-2 py-1.5 text-base font-semibold text-neutral-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-1 sm:text-sm"
+            className="w-full min-w-0 rounded-surface border border-paper-450 px-2 py-1.5 text-base font-semibold text-paper-900 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-1 sm:text-body"
           />
           {isFinal ? (
             <OutcomePill outcome={outcome} />
@@ -125,7 +125,7 @@ export function ResolutionCard({
               value={outcome}
               onChange={(event) => handleOutcomeChange(event.target.value)}
               disabled={isFinal}
-              className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-base font-medium capitalize text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed sm:w-auto sm:py-1 sm:text-xs"
+              className="w-full rounded-surface border border-paper-450 px-2 py-1.5 text-base font-medium capitalize text-paper-700 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed sm:w-auto sm:py-1 sm:text-caption"
             >
               {OUTCOMES.map((value) => (
                 <option key={value} value={value}>
@@ -141,7 +141,7 @@ export function ResolutionCard({
             type="button"
             onClick={handleAccept}
             disabled={isAccepting}
-            className={`inline-flex min-h-11 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center justify-center rounded-surface border border-status-risk-300 bg-status-risk-50 px-3 py-1 text-caption font-medium text-status-risk-800 hover:bg-status-risk-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {isAccepting ? "Accepting…" : "Accept"}
           </button>
@@ -155,7 +155,7 @@ export function ResolutionCard({
         onBlur={handleTextBlur}
         disabled={isFinal}
         rows={2}
-        className="mt-2 block w-full resize-none rounded-md border-0 p-0 text-base leading-relaxed text-neutral-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-700 sm:text-sm"
+        className="mt-2 block w-full resize-none rounded-surface border-0 p-0 text-base leading-relaxed text-paper-700 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-paper-700 sm:text-body"
       />
 
       {!isFinal ? (

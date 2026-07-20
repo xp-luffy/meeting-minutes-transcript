@@ -41,16 +41,16 @@ export default async function SharedReviewPage({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
-      <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div className="mb-6 rounded-surface border border-status-risk-200 bg-status-risk-50 px-4 py-3 text-body text-status-risk-800">
         Shared for review — read-only. This link expires{" "}
         {formatDate(draft.expires_at)}.
       </div>
       <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold text-neutral-900 sm:text-xl">
+          <h1 className="text-page font-semibold text-balance break-words text-paper-900 [hyphens:auto]">
             {draft.company_name}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-body text-paper-500">
             {draft.meeting_type} · {formatDate(draft.meeting_date)}
             {draft.venue ? ` · ${draft.venue}` : ""}
           </p>
@@ -59,9 +59,9 @@ export default async function SharedReviewPage({
           Draft v{draft.version} · {draft.status}
         </Badge>
       </div>
-      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
         {draft.body_html_source === "legacy_md" ? (
-          <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-800">
+          <pre className="whitespace-pre-wrap font-sans text-body text-paper-800">
             {draft.body_html}
           </pre>
         ) : (
@@ -76,7 +76,7 @@ export default async function SharedReviewPage({
 
       <ConfirmDraftCard token={token} alreadyConfirmedBy={alreadyConfirmedBy} />
 
-      <p className="mt-6 text-center text-xs text-neutral-400">
+      <p className="mt-6 text-center text-caption text-paper-500">
         Generated with Meeting Minutes — statutory minutes from transcripts.
       </p>
     </main>

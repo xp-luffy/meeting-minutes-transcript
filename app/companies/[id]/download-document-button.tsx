@@ -50,12 +50,12 @@ export function DownloadDocumentButton({
         disabled={isPending}
         aria-busy={isPending}
         aria-label={`${label} ${title}`}
-        className={`inline-flex min-h-11 items-center justify-center rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
+        className={`inline-flex min-h-11 items-center justify-center rounded-surface border border-paper-450 bg-white px-2.5 py-1 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
       >
         {isPending ? "Preparing…" : label}
       </button>
       {error ? (
-        <span className="text-xs text-red-600" role="alert">
+        <span className="text-caption text-status-failed-600" role="alert">
           {error}
         </span>
       ) : null}

@@ -65,25 +65,25 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
         type="button"
         onClick={handleRegenerateClick}
         disabled={isRegenerating}
-        className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
+        className={`inline-flex min-h-11 items-center rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
       >
         {isRegenerating ? "Regenerating…" : "Regenerate"}
       </button>
 
       {confirming ? (
-        <div className="absolute right-0 top-full z-10 mt-2 max-h-[calc(100vh-2rem)] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-lg border border-neutral-200 bg-white p-4 text-left shadow-lg">
-          <p className="text-xs text-neutral-600">
+        <div className="absolute right-0 top-full z-10 mt-2 max-h-[calc(100vh-2rem)] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-surface border border-paper-200 bg-white p-4 text-left shadow-float">
+          <p className="text-caption text-paper-600">
             This will overwrite the current draft body with a fresh AI extraction and create
             version N+1. Manual body edits will be lost. Resolutions and action items will be
             re-extracted.
           </p>
-          {error ? <p className="mt-2 text-xs font-medium text-red-600">{error}</p> : null}
+          {error ? <p className="mt-2 text-caption font-medium text-status-failed-600">{error}</p> : null}
           <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={() => setConfirming(false)}
               disabled={isRegenerating}
-              className={`inline-flex min-h-11 items-center justify-center rounded-md px-2.5 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-50 disabled:cursor-not-allowed sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-surface px-2.5 py-1 text-caption font-medium text-paper-600 hover:bg-paper-50 disabled:cursor-not-allowed sm:min-h-0 ${FOCUS_RING}`}
             >
               Cancel
             </button>
@@ -91,7 +91,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
               type="button"
               onClick={handleConfirm}
               disabled={isRegenerating}
-              className={`inline-flex min-h-11 items-center justify-center rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-surface bg-status-failed-600 px-2.5 py-1 text-caption font-medium text-white hover:bg-status-failed-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
             >
               {isRegenerating ? "Regenerating…" : "Confirm regenerate"}
             </button>

@@ -228,7 +228,7 @@ export default async function ActionItemsPage({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div className="rounded-surface border border-status-failed-200 bg-status-failed-50 p-6 text-body text-status-failed-700">
         Couldn&apos;t load action items right now. Please refresh the page or try again shortly.
       </div>
     );
@@ -259,10 +259,10 @@ export default async function ActionItemsPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold text-neutral-900">Action Items</h1>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <h1 className="text-page font-semibold text-paper-900">Action Items</h1>
+        <div className="flex flex-wrap items-center gap-2 text-caption">
           {countsError ? (
-            <span className="text-neutral-500">Counts unavailable</span>
+            <span className="text-paper-500">Counts unavailable</span>
           ) : (
             <>
               <Badge variant="indigo">{openCount} open</Badge>
@@ -275,24 +275,24 @@ export default async function ActionItemsPage({
       </div>
 
       {atLimit ? (
-        <p className="text-xs text-neutral-500">
+        <p className="text-caption text-paper-500">
           Showing the first {PAGE_LIMIT} items by due date — narrow with the filters below.
         </p>
       ) : null}
 
       <form
         method="get"
-        className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
+        className="flex flex-col gap-3 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:flex-row sm:flex-wrap sm:items-end"
       >
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="owner_state" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="owner_state" className="text-caption font-medium text-paper-600">
             Owner
           </label>
           <select
             id="owner_state"
             name="owner_state"
             defaultValue={ownerFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             {OWNER_FILTERS.map((f) => (
               <option key={f} value={f}>
@@ -302,7 +302,7 @@ export default async function ActionItemsPage({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="owner" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="owner" className="text-caption font-medium text-paper-600">
             Search owner text
           </label>
           <input
@@ -311,18 +311,18 @@ export default async function ActionItemsPage({
             type="text"
             defaultValue={ownerSearch}
             placeholder="e.g. Finance"
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-40 sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-40 sm:text-body"
           />
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="due" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="due" className="text-caption font-medium text-paper-600">
             Due
           </label>
           <select
             id="due"
             name="due"
             defaultValue={dueFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             <option value="all">All</option>
             <option value="overdue">Overdue</option>
@@ -330,14 +330,14 @@ export default async function ActionItemsPage({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="status" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="status" className="text-caption font-medium text-paper-600">
             Status
           </label>
           <select
             id="status"
             name="status"
             defaultValue={statusFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             <option value="open">Open</option>
             <option value="done">Done</option>
@@ -347,13 +347,13 @@ export default async function ActionItemsPage({
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-surface bg-ink-600 px-3.5 py-2 text-body font-medium text-white transition-colors hover:bg-ink-700 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Apply
           </button>
           <Link
             href="/action-items"
-            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-surface border border-paper-450 bg-white px-3.5 py-2 text-center text-body font-medium text-paper-700 hover:bg-paper-50 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Clear
           </Link>
@@ -361,11 +361,11 @@ export default async function ActionItemsPage({
       </form>
 
       {ownerFilter !== "all" ? (
-        <p className="text-sm text-neutral-600">
+        <p className="text-body text-paper-600">
           {OWNER_FILTER_LABELS[ownerFilter]} — {rows.length}
           {atLimit ? "+" : ""} item{rows.length === 1 ? "" : "s"} shown.
           {ownerFilter === "needs" ? (
-            <span className="text-neutral-500">
+            <span className="text-paper-500">
               {" "}
               Includes items with no owner at all and items whose owner is recorded only as text.
             </span>
@@ -388,15 +388,15 @@ export default async function ActionItemsPage({
               const isOverdue =
                 item.item_status === "open" && item.due_date !== null && item.due_date < today;
               return (
-                <li key={item.id} className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
-                  <p className="text-sm text-neutral-800">{item.description}</p>
+                <li key={item.id} className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised">
+                  <p className="text-body text-paper-800">{item.description}</p>
                   <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
-                  <p className="mt-1 text-xs text-neutral-500">
+                  <p className="mt-1 text-caption text-paper-500">
                     {meeting ? `${meeting.company_name} · ${meeting.meeting_type}` : "Meeting unavailable"}
                     {item.due_date ? (
                       <>
                         {" · "}
-                        <span className={isOverdue ? "font-medium text-red-600" : ""}>
+                        <span className={isOverdue ? "font-medium text-status-failed-600" : ""}>
                           {isOverdue ? "! overdue " : "due "}
                           {formatDate(item.due_date)}
                         </span>
@@ -418,10 +418,10 @@ export default async function ActionItemsPage({
             })}
           </ul>
 
-          <div className="hidden overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm sm:block">
-            <table className="w-full min-w-[820px] divide-y divide-neutral-200 text-sm">
+          <div className="hidden overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised sm:block">
+            <table className="w-full min-w-[820px] divide-y divide-paper-200 text-body">
               <thead>
-                <tr className="text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
+                <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-500">
                   <th className="px-4 py-3">Description</th>
                   <th className="px-4 py-3">Owner</th>
                   <th className="px-4 py-3">Due</th>
@@ -429,7 +429,7 @@ export default async function ActionItemsPage({
                   <th className="px-4 py-3">Meeting</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200">
+              <tbody className="divide-y divide-paper-200">
                 {rows.map((item) => {
                   const meeting = meetingsById.get(item.meeting_id);
                   const isOverdue =
@@ -440,12 +440,12 @@ export default async function ActionItemsPage({
                   return (
                     <tr key={item.id} className="align-top">
                       <td className="max-w-md px-4 py-3">
-                        <div className="text-neutral-800">{item.description}</div>
+                        <div className="text-paper-800">{item.description}</div>
                         <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
                       </td>
                       <td className="px-4 py-3">{ownerCellFor(item)}</td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={isOverdue ? "font-medium text-red-600" : "text-neutral-700"}>
+                        <span className={isOverdue ? "font-medium text-status-failed-600" : "text-paper-700"}>
                           {isOverdue ? "! overdue " : ""}
                           {formatDate(item.due_date)}
                         </span>
@@ -461,13 +461,13 @@ export default async function ActionItemsPage({
                         {meeting ? (
                           <Link
                             href={`/meetings/${meeting.id}/draft`}
-                            className={`rounded-sm text-indigo-600 hover:text-indigo-700 ${FOCUS_RING}`}
+                            className={`rounded-control text-ink-600 hover:text-ink-700 ${FOCUS_RING}`}
                           >
                             {meeting.company_name}
-                            <span className="text-neutral-400"> · {meeting.meeting_type}</span>
+                            <span className="text-paper-500"> · {meeting.meeting_type}</span>
                           </Link>
                         ) : (
-                          <span className="text-neutral-400">—</span>
+                          <span className="text-paper-500">—</span>
                         )}
                       </td>
                     </tr>

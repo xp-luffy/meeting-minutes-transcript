@@ -200,7 +200,7 @@ export default async function ObligationsPage({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <div className="rounded-surface border border-status-failed-200 bg-status-failed-50 p-6 text-body text-status-failed-700">
         Couldn&apos;t load obligations right now. Please refresh the page or try again shortly.
       </div>
     );
@@ -214,43 +214,43 @@ export default async function ObligationsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Obligations Register</h1>
-          <p className="mt-1 text-xs text-neutral-500">
+          <h1 className="text-page font-semibold text-paper-900">Obligations Register</h1>
+          <p className="mt-1 text-caption text-paper-500">
             Statutory duties created by board decisions — filings, renewals, payments, and
             follow-ups tied back to the meeting that created them.
           </p>
         </div>
         <div className="flex flex-col items-start gap-1 sm:items-end">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-caption">
             <Badge variant="indigo">{openCount} open</Badge>
             <Badge variant="red">{overdueCount} overdue</Badge>
             <Badge variant="green">{doneCount} done</Badge>
           </div>
           {kindFilter !== "all" ? (
-            <p className="text-[11px] text-neutral-400">Counts reflect the {KIND_LABEL[kindFilter]} filter</p>
+            <p className="text-[11px] text-paper-500">Counts reflect the {KIND_LABEL[kindFilter]} filter</p>
           ) : null}
         </div>
       </div>
 
       {atLimit ? (
-        <p className="text-xs text-neutral-500">
+        <p className="text-caption text-paper-500">
           Showing the first {PAGE_LIMIT} obligations by due date — narrow with the filters below.
         </p>
       ) : null}
 
       <form
         method="get"
-        className="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end"
+        className="flex flex-col gap-3 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:flex-row sm:flex-wrap sm:items-end"
       >
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="status" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="status" className="text-caption font-medium text-paper-600">
             Status
           </label>
           <select
             id="status"
             name="status"
             defaultValue={statusFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             <option value="open">Open</option>
             <option value="done">Done</option>
@@ -259,14 +259,14 @@ export default async function ObligationsPage({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="due" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="due" className="text-caption font-medium text-paper-600">
             Due
           </label>
           <select
             id="due"
             name="due"
             defaultValue={dueFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             <option value="all">All</option>
             <option value="overdue">Overdue</option>
@@ -274,14 +274,14 @@ export default async function ObligationsPage({
           </select>
         </div>
         <div className="flex flex-col gap-1 sm:w-auto">
-          <label htmlFor="kind" className="text-xs font-medium text-neutral-600">
+          <label htmlFor="kind" className="text-caption font-medium text-paper-600">
             Kind
           </label>
           <select
             id="kind"
             name="kind"
             defaultValue={kindFilter}
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:w-auto sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:w-auto sm:text-body"
           >
             <option value="all">All</option>
             {KIND_FILTERS.filter((k): k is ObligationKind => k !== "all").map((kind) => (
@@ -294,13 +294,13 @@ export default async function ObligationsPage({
         <div className="flex items-center gap-2">
           <button
             type="submit"
-            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-surface bg-ink-600 px-3.5 py-2 text-body font-medium text-white transition-colors hover:bg-ink-700 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Apply
           </button>
           <Link
             href="/obligations"
-            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-surface border border-paper-450 bg-white px-3.5 py-2 text-center text-body font-medium text-paper-700 hover:bg-paper-50 sm:min-h-0 sm:flex-none sm:py-1.5 ${FOCUS_RING}`}
           >
             Clear
           </Link>
@@ -313,10 +313,10 @@ export default async function ObligationsPage({
           message="Try widening your filters, or clear them to see everything. Obligations are created automatically when minutes are generated."
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
-          <table className="w-full min-w-[760px] divide-y divide-neutral-200 text-sm">
+        <div className="overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised">
+          <table className="w-full min-w-[760px] divide-y divide-paper-200 text-body">
             <thead>
-              <tr className="text-left text-xs font-medium uppercase tracking-wide text-neutral-500">
+              <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-500">
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Kind</th>
                 <th className="px-4 py-3">Due</th>
@@ -324,7 +324,7 @@ export default async function ObligationsPage({
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200">
+            <tbody className="divide-y divide-paper-200">
               {rows.map((item) => {
                 const meeting = meetingsById.get(item.meeting_id);
                 const isOverdue = item.status === "open" && item.due_date !== null && item.due_date < today;
@@ -332,16 +332,16 @@ export default async function ObligationsPage({
                 return (
                   <tr key={item.id} className="align-top">
                     <td className="max-w-md px-4 py-3">
-                      <div className="text-neutral-800">{item.title}</div>
+                      <div className="text-paper-800">{item.title}</div>
                       {item.detail ? (
-                        <div className="mt-0.5 text-xs text-neutral-500">{item.detail}</div>
+                        <div className="mt-0.5 text-caption text-paper-500">{item.detail}</div>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <Badge variant={KIND_VARIANT[item.kind]}>{KIND_LABEL[item.kind]}</Badge>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={isOverdue ? "font-medium text-red-600" : "text-neutral-700"}>
+                      <span className={isOverdue ? "font-medium text-status-failed-600" : "text-paper-700"}>
                         {formatDate(item.due_date)}
                       </span>
                     </td>
@@ -349,13 +349,13 @@ export default async function ObligationsPage({
                       {meeting ? (
                         <Link
                           href={`/meetings/${meeting.id}/draft`}
-                          className={`rounded-sm text-indigo-600 hover:text-indigo-700 ${FOCUS_RING}`}
+                          className={`rounded-control text-ink-600 hover:text-ink-700 ${FOCUS_RING}`}
                         >
                           {meeting.company_name}
-                          <span className="text-neutral-400"> · {meeting.meeting_type}</span>
+                          <span className="text-paper-500"> · {meeting.meeting_type}</span>
                         </Link>
                       ) : (
-                        <span className="text-neutral-400">—</span>
+                        <span className="text-paper-500">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

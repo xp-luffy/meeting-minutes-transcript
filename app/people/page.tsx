@@ -23,12 +23,12 @@ export default async function PeoplePage({
   return (
     <div className="mx-auto max-w-5xl">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-lg font-semibold text-neutral-900">People</h1>
-        <span className="text-sm text-neutral-500">
+        <h1 className="text-page font-semibold text-paper-900">People</h1>
+        <span className="text-body text-paper-500">
           {people.length} {people.length === 1 ? "person" : "people"}
         </span>
       </div>
-      <p className="mt-1 max-w-2xl text-sm text-neutral-500">
+      <p className="mt-1 max-w-2xl text-body text-paper-500">
         Every person resolved across your meetings, with who they&apos;re entangled with — the
         meetings they&apos;ve attended and the companies they hold a role at.
       </p>
@@ -43,7 +43,7 @@ export default async function PeoplePage({
           type="text"
           defaultValue={q}
           placeholder="Search by name or alias…"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+          className="w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
         />
       </form>
 
@@ -63,12 +63,12 @@ export default async function PeoplePage({
             <li key={person.id} className="min-w-0">
               <Link
                 href={`/people/${person.id}`}
-                className={`block h-full min-w-0 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                className={`block h-full min-w-0 rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
               >
-                <h2 className="truncate text-base font-medium text-neutral-900">
+                <h2 className="truncate text-base font-medium text-paper-900">
                   {person.canonical_name}
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-body text-paper-500">
                   {person.meetingCount} {person.meetingCount === 1 ? "meeting" : "meetings"}
                   {" · "}
                   {person.companyCount} {person.companyCount === 1 ? "company" : "companies"}

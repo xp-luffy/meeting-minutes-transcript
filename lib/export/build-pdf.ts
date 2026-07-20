@@ -3,6 +3,7 @@ import { parseHtmlToBlocks, type Block, type TableBlock, type TextRun } from "./
 import type { ExportData } from "./types";
 import { formatDate } from "@/lib/format";
 import { sanitizeForPdf } from "./sanitize";
+import { assuranceSummaryLine } from "./assurance-line";
 import { columnWidthPercents } from "./table-layout";
 
 const PAGE_MARGIN = 56;
@@ -181,6 +182,49 @@ class PdfWriter {
     this.drawRuns([{ text, bold, italic: false }], size, indent, gapAfter);
   }
 
+  /**
+   * A horizontal rule. RULE WEIGHT IS THE PRIMARY SIGNAL on the export surface
+   * (VISUAL_SYSTEM_V4 §5.9 rule 1) — assume every export is printed monochrome,
+   * where the double rule on an unreviewed draft is the load-bearing difference
+   * and the colour is not.
+   */
+  drawRule(thickness: number, gapAfter: number, double = false, colour = rgb(0, 0, 0)) {
+    const gap = 2;
+    const needed = thickness + (double ? gap + thickness : 0) + gapAfter;
+    this.ensureSpace(needed);
+    const draw = (y: number) =>
+      this.page.drawRectangle({
+        x: PAGE_MARGIN,
+        y,
+        width: this.maxWidth,
+        height: thickness,
+        color: colour,
+      });
+    draw(this.y);
+    if (double) draw(this.y - gap - thickness);
+    this.y -= needed;
+  }
+
+  /**
+   * Stamps one line into the top margin of EVERY page. A stapled bundle gets
+   * separated; page 4 on its own must still say what it is.
+   */
+  stampRunningHeader(text: string, colour = rgb(0, 0, 0)) {
+    const clean = sanitizeForPdf(text);
+    const size = 8;
+    for (const page of this.doc.getPages()) {
+      const { width, height } = page.getSize();
+      const textWidth = this.boldFont.widthOfTextAtSize(clean, size);
+      page.drawText(clean, {
+        x: Math.max(PAGE_MARGIN, (width - textWidth) / 2),
+        y: height - PAGE_MARGIN / 2 - size,
+        size,
+        font: this.boldFont,
+        color: colour,
+      });
+    }
+  }
+
   /** Word-wraps one cell's blocks (paragraphs) within a column width and measures its total height. */
   private layoutCell(cellBlocks: Block[], colWidth: number, forceBold: boolean): CellLayout {
     const innerWidth = Math.max(10, colWidth - CELL_PADDING_X * 2);
@@ -319,17 +363,45 @@ export async function buildMinutesPdf(data: ExportData): Promise<Uint8Array> {
 
   const writer = await PdfWriter.create();
 
-  // Same reason as the DOCX banner: an exported file carries no app context,
-  // so an unreviewed draft must not look like approved minutes once printed.
-  if (draft.status !== "final") {
-    writer.drawCentered(
-      draft.status === "reviewed"
-        ? "DRAFT — REVIEWED, NOT YET FINAL"
-        : "DRAFT — NOT REVIEWED OR APPROVED",
-      SUBTITLE_SIZE,
-      true,
-      8,
-    );
+  // Same reason as the DOCX status block: an exported file carries no app
+  // context, so an unreviewed draft must not look like approved minutes once
+  // printed. Every state prints a block, INCLUDING final — which previously
+  // printed nothing at all, so "no banner" was ambiguous between "approved"
+  // and "this export predates the banner".
+  const isDraft = draft.status !== "final";
+  const statusLabel = isDraft
+    ? draft.status === "reviewed"
+      ? "DRAFT — REVIEWED, NOT YET FINAL"
+      : "DRAFT — NOT REVIEWED OR APPROVED"
+    : `FINAL — APPROVED ${formatDate(draft.finalised_at ?? draft.created_at)}`;
+  // failed-800 #7A2119 / risk-800 #6B4805 / paper-900 #1C1B18 — all chosen to
+  // survive greyscale photocopying.
+  const statusColour = isDraft
+    ? draft.status === "reviewed"
+      ? rgb(0x6b / 255, 0x48 / 255, 0x05 / 255)
+      : rgb(0x7a / 255, 0x21 / 255, 0x19 / 255)
+    : rgb(0x1c / 255, 0x1b / 255, 0x18 / 255);
+
+  if (draft.status === "draft") {
+    writer.drawRule(1.5, 4, true, statusColour);
+  } else if (draft.status === "reviewed") {
+    writer.drawRule(1, 4, false, statusColour);
+  }
+
+  writer.drawCentered(statusLabel, SUBTITLE_SIZE, true, isDraft ? 2 : 4);
+
+  if (draft.status === "draft") {
+    writer.drawRule(1.5, 6, true, statusColour);
+  } else if (draft.status === "reviewed") {
+    writer.drawRule(1, 6, false, statusColour);
+  } else {
+    writer.drawRule(0.5, 8, false, statusColour);
+  }
+
+  // The assurance summary — the export-side fix for "a draft with three failed
+  // statutory checks exports with the same banner as a clean one".
+  if (isDraft) {
+    writer.drawCentered(assuranceSummaryLine(data.assurance ?? null), BODY_SIZE - 1, false, 10);
   }
 
   writer.drawCentered(`MINUTES OF ${meeting.meeting_type.toUpperCase()}`, TITLE_SIZE, true, 6);
@@ -432,6 +504,11 @@ export async function buildMinutesPdf(data: ExportData): Promise<Uint8Array> {
         10,
       );
     }
+  }
+
+  // Stamped last, so it lands on every page the body actually produced.
+  if (isDraft) {
+    writer.stampRunningHeader(statusLabel, statusColour);
   }
 
   return writer.save();

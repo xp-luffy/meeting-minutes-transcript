@@ -71,7 +71,7 @@ export function StatusWorkflow({
 
   if (status === "final") {
     return (
-      <div className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-600">
+      <div className="rounded-surface border border-paper-200 bg-paper-50 px-3 py-1.5 text-caption font-medium text-paper-600">
         Finalised on {formatDate(finalisedAt)} — editing locked
       </div>
     );
@@ -79,13 +79,13 @@ export function StatusWorkflow({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
+      {error ? <span className="text-caption font-medium text-status-failed-600">{error}</span> : null}
       {status === "draft" ? (
         <button
           type="button"
           onClick={handleMarkReviewed}
           disabled={isPending}
-          className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 items-center rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING}`}
         >
           {isPending ? "Saving…" : "Mark Reviewed"}
         </button>
@@ -95,10 +95,10 @@ export function StatusWorkflow({
           type="button"
           onClick={handleMarkFinalClick}
           disabled={isPending}
-          className={`inline-flex min-h-11 items-center rounded-md px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING} ${
+          className={`inline-flex min-h-11 items-center rounded-surface px-3 py-1.5 text-caption font-medium disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 ${FOCUS_RING} ${
             confirmingFinal
-              ? "bg-red-600 text-white hover:bg-red-700"
-              : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+              ? "bg-status-failed-600 text-white hover:bg-status-failed-700"
+              : "border border-paper-450 bg-white text-paper-700 hover:bg-paper-50"
           }`}
         >
           {isPending ? "Saving…" : confirmingFinal ? "Confirm Mark Final?" : "Mark Final"}

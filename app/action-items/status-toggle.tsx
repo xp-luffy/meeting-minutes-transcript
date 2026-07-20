@@ -44,12 +44,12 @@ export function StatusToggle({
           type="button"
           onClick={handleToggle}
           disabled={isPending}
-          className={`min-h-11 rounded-md border border-neutral-300 bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+          className={`min-h-11 rounded-surface border border-paper-450 bg-white px-2.5 py-1 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
         >
           {isPending ? "Saving…" : status === "open" ? "Mark done" : "Reopen"}
         </button>
       </div>
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
+      {error ? <span className="text-caption text-status-failed-600">{error}</span> : null}
     </div>
   );
 }

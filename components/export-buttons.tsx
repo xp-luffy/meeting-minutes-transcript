@@ -93,13 +93,13 @@ export function ExportButtons({
             disabled={disabled || preparing !== null}
             title={disabled ? "Draft is empty" : undefined}
             onClick={() => handleExport(kind)}
-            className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white sm:min-h-0 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white sm:min-h-0 ${FOCUS_RING}`}
           >
             {preparing === kind ? (
               <span className="inline-flex items-center gap-1.5">
                 <span
                   aria-hidden
-                  className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500"
+                  className="h-3 w-3 animate-spin rounded-full border-2 border-paper-300 border-t-paper-500"
                 />
                 Preparing…
               </span>
@@ -109,7 +109,7 @@ export function ExportButtons({
           </button>
         ))}
       </div>
-      {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+      {error ? <p className="text-caption font-medium text-status-failed-600">{error}</p> : null}
     </div>
   );
 }

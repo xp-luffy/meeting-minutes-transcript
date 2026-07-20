@@ -44,9 +44,9 @@ export function ModelPicker({
   const effective = saved || envDefault;
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
-      <h2 className="text-sm font-semibold text-neutral-900">AI model for minutes generation</h2>
-      <p className="mt-1 text-xs text-neutral-500">
+    <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
+      <h2 className="text-body font-semibold text-paper-900">AI model for minutes generation</h2>
+      <p className="mt-1 text-caption text-paper-500">
         Pick the model used when you click Generate. Change it anytime — it applies to your next
         generation, no redeploy.{" "}
         {live ? "Live list from your provider." : "Provider list unavailable — showing common models; you can also type any slug."}{" "}
@@ -55,7 +55,7 @@ export function ModelPicker({
           href="https://openrouter.ai/models"
           target="_blank"
           rel="noreferrer"
-          className="text-indigo-600 hover:underline"
+          className="text-ink-600 hover:underline"
         >
           openrouter.ai/models
         </a>
@@ -63,14 +63,14 @@ export function ModelPicker({
       </p>
 
       <div className="mt-4 space-y-3">
-        <label htmlFor="model" className="block text-xs font-medium text-neutral-700">
+        <label htmlFor="model" className="block text-caption font-medium text-paper-700">
           Model
         </label>
         <select
           id="model"
           value={usingCustom ? "__custom__" : value}
           onChange={(e) => setValue(e.target.value)}
-          className={`block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base sm:text-sm ${FOCUS_RING}`}
+          className={`block w-full rounded-surface border border-paper-300 bg-white px-3 py-2 text-base sm:text-body ${FOCUS_RING}`}
         >
           <option value="">Use workspace default ({envDefault})</option>
           {models.map((m) => {
@@ -90,7 +90,7 @@ export function ModelPicker({
             placeholder="e.g. anthropic/claude-sonnet-4.5"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
-            className={`block w-full rounded-md border border-neutral-300 px-3 py-2 text-base sm:text-sm ${FOCUS_RING}`}
+            className={`block w-full rounded-surface border border-paper-300 px-3 py-2 text-base sm:text-body ${FOCUS_RING}`}
           />
         ) : null}
 
@@ -99,7 +99,7 @@ export function ModelPicker({
             type="button"
             disabled={pending}
             onClick={() => save(usingCustom ? custom.trim() : value)}
-            className={`inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 sm:min-h-0 sm:py-2 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center rounded-surface bg-ink-600 px-4 text-body font-medium text-white hover:bg-ink-700 disabled:opacity-50 sm:min-h-0 sm:py-2 ${FOCUS_RING}`}
           >
             {pending ? "Saving…" : "Save model"}
           </button>
@@ -112,16 +112,16 @@ export function ModelPicker({
                 setCustom("");
                 save("");
               }}
-              className={`inline-flex min-h-11 items-center text-xs text-neutral-500 hover:text-neutral-700 sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center text-caption text-paper-500 hover:text-paper-700 sm:min-h-0 ${FOCUS_RING}`}
             >
               Reset to default
             </button>
           ) : null}
         </div>
 
-        {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
-        <p className="text-xs text-neutral-500">
-          Currently generating with: <span className="font-medium text-neutral-800">{effective}</span>
+        {error ? <p className="text-caption font-medium text-status-failed-600">{error}</p> : null}
+        <p className="text-caption text-paper-500">
+          Currently generating with: <span className="font-medium text-paper-800">{effective}</span>
           {!saved ? " (workspace default)" : ""}
         </p>
       </div>

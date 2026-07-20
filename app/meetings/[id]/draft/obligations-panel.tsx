@@ -47,13 +47,13 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
   const obligations = (data ?? []) as ObligationRow[];
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+    <div className="rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
+      <h2 className="text-caption font-semibold tracking-wide text-paper-500 uppercase">
         Obligations created by this meeting
       </h2>
 
       {obligations.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">
+        <p className="mt-3 text-body text-paper-500">
           No downstream obligations were derived from this meeting.
         </p>
       ) : (
@@ -67,10 +67,10 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
             return (
               <li
                 key={obligation.id}
-                className="rounded-md border border-neutral-200 px-3 py-2 text-xs text-neutral-600"
+                className="rounded-surface border border-paper-200 px-3 py-2 text-caption text-paper-600"
               >
                 <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                  <span className="min-w-0 font-medium break-words text-neutral-700">{obligation.title}</span>
+                  <span className="min-w-0 font-medium break-words text-paper-700">{obligation.title}</span>
                   <span className="flex flex-wrap items-center gap-1.5">
                     <Badge variant={KIND_VARIANT[obligation.kind]}>{KIND_LABEL[obligation.kind]}</Badge>
                     <Badge variant={STATUS_VARIANT[obligation.status]} className="capitalize">
@@ -79,11 +79,11 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <span className={isOverdue ? "font-medium text-red-600" : "text-neutral-500"}>
+                  <span className={isOverdue ? "font-medium text-status-failed-600" : "text-paper-500"}>
                     Due {formatDate(obligation.due_date)}
                   </span>
                   {obligation.detail ? (
-                    <span className="text-neutral-400">&middot; {obligation.detail}</span>
+                    <span className="text-paper-500">&middot; {obligation.detail}</span>
                   ) : null}
                 </div>
               </li>

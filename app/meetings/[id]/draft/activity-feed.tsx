@@ -52,19 +52,19 @@ function describeEntry(entry: AuditLogEntry): string {
  */
 export function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
-      <h2 className="text-sm font-medium text-neutral-700">Activity</h2>
+    <div className="rounded-surface border border-paper-200 bg-white p-6 shadow-raised">
+      <h2 className="text-body font-medium text-paper-700">Activity</h2>
 
       {entries.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">No activity recorded yet.</p>
+        <p className="mt-3 text-body text-paper-500">No activity recorded yet.</p>
       ) : (
         <ul className="mt-4 space-y-4">
           {entries.map((entry) => (
             <li key={entry.id} className="flex gap-3">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-neutral-300" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-paper-300" />
               <div className="min-w-0">
-                <p className="text-xs text-neutral-600">{describeEntry(entry)}</p>
-                <p className="text-xs text-neutral-400">{formatDateTime(entry.created_at)}</p>
+                <p className="text-caption text-paper-600">{describeEntry(entry)}</p>
+                <p className="text-caption text-paper-500">{formatDateTime(entry.created_at)}</p>
               </div>
             </li>
           ))}

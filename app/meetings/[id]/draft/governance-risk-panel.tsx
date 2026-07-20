@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { detectConflicts, type ConflictFinding } from "@/lib/conflicts";
 import { checkConsistency, type ConsistencyFinding } from "@/lib/consistency";
+import { StatusBanner, StatusRow, type StatusState } from "@/components/status";
 
 /**
  * Server component: the "wow" governance panel. It traverses the directorship
@@ -20,83 +21,51 @@ interface GovernanceRiskPanelProps {
   resolutions: { resolution_number: string | null }[];
 }
 
-const SEVERITY_STYLES: Record<
-  "warn" | "flag",
-  { border: string; icon: string; iconClass: string; badge: string; badgeLabel: string }
-> = {
-  flag: {
-    border: "border-neutral-200 border-l-4 border-l-red-400",
-    icon: "!",
-    iconClass: "bg-red-100 text-red-700",
-    badge: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-300",
-    badgeLabel: "Flag",
-  },
-  warn: {
-    border: "border-neutral-200 border-l-4 border-l-amber-400",
-    icon: "!",
-    iconClass: "bg-amber-100 text-amber-700",
-    badge: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-300",
-    badgeLabel: "Review",
-  },
+/**
+ * `flag` and `warn` used to be two amber/red variants of the SAME "!" glyph,
+ * labelled "Flag" and "Review" — indistinguishable in greyscale and in print.
+ * They now map onto two different states of the one status language: a flag is
+ * a FAILED finding (✕, double-weight border), a warn is a RISK finding
+ * (!, solid border) that wants a human's judgement.
+ */
+const SEVERITY_STATE: Record<"warn" | "flag", StatusState> = {
+  flag: "failed",
+  warn: "risk",
 };
 
-function SeverityBadge({ severity }: { severity: "warn" | "flag" }) {
-  const s = SEVERITY_STYLES[severity];
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${s.badge}`}
-    >
-      {s.badgeLabel}
-    </span>
-  );
-}
+const SEVERITY_WORD: Record<"warn" | "flag", string> = {
+  flag: "FLAG",
+  warn: "REVIEW",
+};
 
 function ConflictRow({ finding }: { finding: ConflictFinding }) {
-  const s = SEVERITY_STYLES[finding.severity];
   return (
-    <li className={`flex items-start gap-3 rounded-md border px-3 py-2.5 ${s.border}`}>
-      <span
-        className={`mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full text-[11px] font-bold ${s.iconClass}`}
-        aria-hidden="true"
-      >
-        {s.icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-semibold text-neutral-900">{finding.title}</p>
-          <SeverityBadge severity={finding.severity} />
-        </div>
-        <p className="mt-1 text-xs leading-relaxed text-neutral-600">{finding.detail}</p>
-        {finding.relatedEntity || finding.relatedCompany ? (
-          <p className="mt-1.5 break-words text-[11px] font-medium tracking-wide text-neutral-400 uppercase">
+    <StatusRow
+      state={SEVERITY_STATE[finding.severity]}
+      stateWord={SEVERITY_WORD[finding.severity]}
+      label={finding.title}
+      detail={finding.detail}
+      footer={
+        finding.relatedEntity || finding.relatedCompany ? (
+          <p className="text-caption font-medium tracking-[0.06em] break-words text-paper-500 uppercase">
             {finding.relatedEntity}
             {finding.relatedEntity && finding.relatedCompany ? " ↔ " : ""}
             {finding.relatedCompany}
           </p>
-        ) : null}
-      </div>
-    </li>
+        ) : null
+      }
+    />
   );
 }
 
 function ConsistencyRow({ finding }: { finding: ConsistencyFinding }) {
-  const s = SEVERITY_STYLES[finding.severity];
   return (
-    <li className={`flex items-start gap-3 rounded-md border px-3 py-2.5 ${s.border}`}>
-      <span
-        className={`mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full text-[11px] font-bold ${s.iconClass}`}
-        aria-hidden="true"
-      >
-        {s.icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm font-medium text-neutral-800">{finding.title}</p>
-          <SeverityBadge severity={finding.severity} />
-        </div>
-        <p className="mt-1 text-xs leading-relaxed text-neutral-600">{finding.detail}</p>
-      </div>
-    </li>
+    <StatusRow
+      state={SEVERITY_STATE[finding.severity]}
+      stateWord={SEVERITY_WORD[finding.severity]}
+      label={finding.title}
+      detail={finding.detail}
+    />
   );
 }
 
@@ -125,14 +94,14 @@ export async function GovernanceRiskPanel({
   // actually completed.
   const allClear = !scanFailed && conflicts.length === 0 && consistency.length === 0;
 
-  return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm">
+return (
+    <div className="rounded-surface border border-paper-300 bg-white p-5 shadow-raised sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+        <h2 className="text-subhead font-semibold text-paper-700">
           Governance risk — connections &amp; contradictions
         </h2>
         {!allClear ? (
-          <span className="text-xs text-neutral-400">
+          <span className="text-meta text-paper-500">
             {conflicts.length + consistency.length} finding
             {conflicts.length + consistency.length === 1 ? "" : "s"}
           </span>
@@ -140,38 +109,36 @@ export async function GovernanceRiskPanel({
       </div>
 
       {scanFailed ? (
-        <div className="mt-4 flex items-start gap-3 rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-2.5">
-          <span
-            className="inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold text-amber-800"
-            aria-hidden="true"
-          >
-            ?
-          </span>
-          <p className="text-sm text-amber-900">
-            The conflict scan could not be completed, so this record has{" "}
-            <strong>not</strong> been checked for related-party conflicts. This is not an
-            all-clear — re-open this draft to try again before finalising.
-          </p>
-        </div>
+        /*
+         * A swallowed scan error and a genuinely clean record used to produce
+         * the identical green assertion. This is the UNKNOWN state: dashed on
+         * every side, "?" glyph, and it says in words that nothing was checked.
+         */
+        <StatusBanner
+          state="unknown"
+          className="mt-4"
+          title="Conflict scan did not complete — no connections have been checked"
+        >
+          This record has <strong>not</strong> been checked for related-party conflicts. This is
+          not an all-clear. Re-open this draft to try again before finalising.
+        </StatusBanner>
       ) : null}
 
       {allClear ? (
-        <div className="mt-4 flex items-center gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-          <span
-            className="inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-700"
-            aria-hidden="true"
-          >
-            ✓
-          </span>
-          <p className="text-sm text-emerald-800">
-            No conflicts or contradictions detected across the record.
-          </p>
-        </div>
+        /* Only reachable when the scan reported that it COMPLETED. */
+        <StatusBanner
+          state="verified"
+          className="mt-4"
+          title="No conflicts or contradictions detected across the record"
+        >
+          The directorship graph and the consistency checks both ran to completion and returned
+          nothing.
+        </StatusBanner>
       ) : (
         <div className="mt-4 space-y-5">
           {conflicts.length > 0 ? (
             <section>
-              <h3 className="text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">
+              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
                 Related-party &amp; interest conflicts
               </h3>
               <ul className="mt-2 space-y-2">
@@ -184,7 +151,7 @@ export async function GovernanceRiskPanel({
 
           {consistency.length > 0 ? (
             <section>
-              <h3 className="text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">
+              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
                 Consistency &amp; contradictions
               </h3>
               <ul className="mt-2 space-y-2">

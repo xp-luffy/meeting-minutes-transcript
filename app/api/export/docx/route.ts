@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
     const { meeting, draft } = result.data;
     const buffer = await buildMinutesDocx(result.data);
-    const filename = buildExportFilename(meeting.company_name, meeting.meeting_date, "docx");
+    const filename = buildExportFilename(meeting.company_name, meeting.meeting_date, "docx", draft.status);
 
     await logAudit(supabase, {
       meetingId,

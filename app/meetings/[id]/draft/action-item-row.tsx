@@ -125,7 +125,7 @@ export function ActionItemRow({
 
   return (
     <li
-      className={`flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between ${showAmber ? "bg-amber-50/50" : ""}`}
+      className={`flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between ${showAmber ? "bg-status-risk-50/50" : ""}`}
     >
       <div className="min-w-0 flex-1">
         <textarea
@@ -135,9 +135,9 @@ export function ActionItemRow({
           onBlur={handleDescriptionBlur}
           disabled={isFinal}
           rows={1}
-          className="block w-full resize-none rounded-md border-0 p-0 text-base leading-relaxed text-neutral-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-neutral-800 sm:text-sm"
+          className="block w-full resize-none rounded-surface border-0 p-0 text-base leading-relaxed text-paper-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-paper-800 sm:text-body"
         />
-        <div className="mt-2 flex flex-col gap-2 text-xs text-neutral-500 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="mt-2 flex flex-col gap-2 text-caption text-paper-500 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
           {/* Two distinct things, deliberately side by side: the RECORDED text
               (what the minutes say — a document field) and the LINK to a real
               person (an overlay on the record, never a rewrite of it). */}
@@ -152,7 +152,7 @@ export function ActionItemRow({
               onBlur={handleOwnerBlur}
               disabled={isFinal}
               placeholder="Owner as recorded"
-              className="w-full rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-0.5 sm:text-xs"
+              className="w-full rounded-surface border border-paper-450 px-2 py-1 text-base text-paper-700 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:w-32 sm:py-0.5 sm:text-caption"
             />
             <OwnerCell
               itemId={item.id}
@@ -171,7 +171,7 @@ export function ActionItemRow({
               value={dueDate}
               onChange={(event) => handleDueDateChange(event.target.value)}
               disabled={isFinal}
-              className="rounded-md border border-neutral-300 px-2 py-1 text-base text-neutral-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:py-0.5 sm:text-xs"
+              className="rounded-surface border border-paper-450 px-2 py-1 text-base text-paper-700 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed disabled:border-transparent disabled:bg-transparent disabled:px-0 sm:py-0.5 sm:text-caption"
             />
             {showAmber ? <Badge variant="amber">Low confidence</Badge> : null}
           </div>
@@ -184,7 +184,7 @@ export function ActionItemRow({
             type="button"
             onClick={handleAccept}
             disabled={isAccepting}
-            className={`inline-flex min-h-11 items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center justify-center rounded-surface border border-status-risk-300 bg-status-risk-50 px-3 py-1 text-caption font-medium text-status-risk-800 hover:bg-status-risk-100 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             {isAccepting ? "Accepting…" : "Accept"}
           </button>
@@ -196,7 +196,7 @@ export function ActionItemRow({
             type="button"
             onClick={handleToggle}
             disabled={isToggling}
-            className={`inline-flex min-h-11 items-center rounded-md px-1 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
+            className={`inline-flex min-h-11 items-center rounded-surface px-1 disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
             <ItemStatusPill status={itemStatus} />
           </button>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionItem, Meeting, MinutesDraft, Resolution } from "@/lib/types";
 import { MeetingHeader } from "@/components/meeting-header";
-import { ConfidenceChip, ConfidenceTag, EmptyState, FOCUS_RING } from "@/components/ui";
+import { ConfidenceChip, EmptyState, FOCUS_RING } from "@/components/ui";
 import { ExportButtons } from "@/components/export-buttons";
 import { CONFIDENCE_REVIEW_THRESHOLD } from "@/lib/types";
 import { DraftBodyEditor } from "./draft-body-editor";
@@ -65,7 +65,7 @@ export default async function DraftPage({
           action={
             <Link
               href={`/meetings/${id}/transcript`}
-              className={`inline-flex min-h-11 items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center rounded-surface bg-ink-600 px-4 py-2 text-body font-medium text-white hover:bg-ink-700 sm:min-h-0 ${FOCUS_RING}`}
             >
               Add transcript
             </Link>
@@ -168,16 +168,21 @@ export default async function DraftPage({
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-lg font-semibold text-neutral-900">
+            <h1 className="text-page font-semibold text-paper-900">
               Minutes Draft v{typedDraft.version}
             </h1>
+            {/*
+              ConfidenceChip now covers all three cases on its own — measured
+              and fine, measured and low, and NEVER MEASURED. Rendering
+              ConfidenceTag beside it would print the same "not measured" chip
+              twice.
+            */}
             <ConfidenceChip confidence={typedDraft.body_html_confidence} />
-            <ConfidenceTag confidence={typedDraft.body_html_confidence} label="Needs review" />
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <Link
               href={`/meetings/${id}/transcript`}
-              className={`text-xs font-medium text-indigo-600 hover:text-indigo-700 ${FOCUS_RING} rounded-sm`}
+              className={`text-caption font-medium text-ink-600 hover:text-ink-700 ${FOCUS_RING} rounded-control`}
             >
               View transcript →
             </Link>
@@ -211,18 +216,18 @@ export default async function DraftPage({
         </div>
 
         <div
-          className={`mt-4 rounded-lg border bg-white p-6 shadow-sm ${
-            isLowConfidence ? "border-amber-300 ring-1 ring-amber-200" : "border-neutral-200"
+          className={`mt-4 rounded-surface border bg-white p-6 shadow-raised ${
+            isLowConfidence ? "border-status-risk-300 ring-1 ring-status-risk-200" : "border-paper-200"
           }`}
         >
           {!typedDraft.body_html ? (
-            <p className="text-sm text-neutral-500">This draft has no content yet.</p>
+            <p className="text-body text-paper-500">This draft has no content yet.</p>
           ) : typedDraft.body_html_source === "legacy_md" ? (
             <>
-              <pre className="whitespace-pre-wrap font-sans text-sm text-neutral-700">
+              <pre className="whitespace-pre-wrap font-sans text-body text-paper-700">
                 {typedDraft.body_html}
               </pre>
-              <p className="mt-4 text-xs font-medium text-neutral-500">
+              <p className="mt-4 text-caption font-medium text-paper-500">
                 Legacy draft — regenerate to edit.
               </p>
             </>
@@ -245,9 +250,9 @@ export default async function DraftPage({
       />
 
       <div>
-        <h2 className="text-sm font-medium text-neutral-700">Resolutions</h2>
+        <h2 className="text-body font-medium text-paper-700">Resolutions</h2>
         {typedResolutions.length === 0 ? (
-          <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mt-3 rounded-surface border border-status-risk-200 bg-status-risk-50 px-4 py-3 text-body text-status-risk-800">
             No resolutions extracted — please review transcript.
           </div>
         ) : (
@@ -265,11 +270,11 @@ export default async function DraftPage({
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-neutral-700">Action Items</h2>
+        <h2 className="text-body font-medium text-paper-700">Action Items</h2>
         {typedActionItems.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">No action items extracted.</p>
+          <p className="mt-3 text-body text-paper-500">No action items extracted.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <ul className="mt-3 divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
             {typedActionItems.map((item) => (
               <ActionItemRow
                 key={item.id}

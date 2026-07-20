@@ -59,20 +59,20 @@ export default function SignupPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-1">
-      <div className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-        <h1 className="text-lg font-semibold text-neutral-900">Sign up</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+      <div className="rounded-surface border border-paper-200 bg-white p-6 shadow-raised sm:p-8">
+        <h1 className="text-page font-semibold text-paper-900">Sign up</h1>
+        <p className="mt-1 text-body text-paper-500">
           Create an account to save and manage meetings.
         </p>
 
         {error ? (
-          <div className="mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-5 rounded-surface border border-status-failed-200 bg-status-failed-50 px-4 py-3 text-body text-status-failed-700">
             {error}
           </div>
         ) : null}
 
         {infoMessage ? (
-          <div className="mt-5 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+          <div className="mt-5 rounded-surface border border-ink-200 bg-ink-50 px-4 py-3 text-body text-ink-700">
             {infoMessage}
           </div>
         ) : null}
@@ -80,7 +80,7 @@ export default function SignupPage() {
         {!infoMessage ? (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-neutral-700">
+              <label htmlFor="email" className="block text-body font-medium text-paper-700">
                 Email
               </label>
               <input
@@ -91,13 +91,13 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-neutral-700">
+              <label htmlFor="password" className="block text-body font-medium text-paper-700">
                 Password
               </label>
               <input
@@ -109,7 +109,7 @@ export default function SignupPage() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
                 placeholder="At least 6 characters"
               />
             </div>
@@ -117,7 +117,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:py-2"
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-surface bg-ink-600 px-4 py-2.5 text-body font-medium text-white hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:py-2"
             >
               {isSubmitting ? (
                 <>
@@ -134,9 +134,9 @@ export default function SignupPage() {
           </form>
         ) : null}
 
-        <p className="mt-6 text-center text-sm text-neutral-500">
+        <p className="mt-6 text-center text-body text-paper-500">
           Already have an account?{" "}
-          <Link href="/login" className="focus-ring rounded font-medium text-indigo-600 hover:text-indigo-700">
+          <Link href="/login" className="focus-ring rounded font-medium text-ink-600 hover:text-ink-700">
             Log in
           </Link>
         </p>

@@ -36,15 +36,15 @@ export function CompanyPicker({
 
   return (
     <div>
-      <label htmlFor="company_id" className="block text-sm font-medium text-neutral-700">
-        Company <span className="text-red-600">*</span>
+      <label htmlFor="company_id" className="block text-body font-medium text-paper-700">
+        Company <span className="text-status-failed-600">*</span>
       </label>
       <select
         id="company_id"
         name="company_id"
         value={companyId}
         onChange={(e) => setCompanyId(e.target.value)}
-        className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+        className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
       >
         {companies.map((company) => (
           <option key={company.id} value={company.id}>
@@ -53,15 +53,15 @@ export function CompanyPicker({
         ))}
         <option value={NEW_COMPANY_VALUE}>— New company —</option>
       </select>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-caption text-paper-500">
         Picking a company autofills venue, chairperson, attendees, and minutes format from its
         last meeting — you can still edit any field before saving.
       </p>
 
       {isNew ? (
         <div className="mt-3">
-          <label htmlFor="company_name" className="block text-sm font-medium text-neutral-700">
-            New company name <span className="text-red-600">*</span>
+          <label htmlFor="company_name" className="block text-body font-medium text-paper-700">
+            New company name <span className="text-status-failed-600">*</span>
           </label>
           <input
             id="company_name"
@@ -69,7 +69,7 @@ export function CompanyPicker({
             type="text"
             required
             defaultValue={initialCompanyName}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder="e.g. Arca Holdings Sdn Bhd"
           />
         </div>

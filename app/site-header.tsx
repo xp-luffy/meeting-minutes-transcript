@@ -43,7 +43,7 @@ function SidebarContent({
       <Link
         href="/"
         onClick={onNavigate}
-        className={`${FOCUS_RING} truncate rounded-md text-base font-semibold tracking-tight text-neutral-900`}
+        className={`${FOCUS_RING} truncate rounded-surface text-base font-semibold tracking-tight text-paper-900`}
       >
         Meeting Minutes
       </Link>
@@ -55,7 +55,7 @@ function SidebarContent({
           <Link
             href="/meetings/new"
             onClick={onNavigate}
-            className={`${FOCUS_RING} tap-target flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700`}
+            className={`${FOCUS_RING} tap-target flex w-full items-center justify-center gap-1.5 rounded-surface bg-ink-600 px-3 text-body font-medium text-white transition-colors hover:bg-ink-700`}
           >
             New Meeting
           </Link>
@@ -77,7 +77,7 @@ function SidebarContent({
               name="q"
               type="search"
               placeholder="Search…"
-              className="w-full rounded-md border border-neutral-300 px-3 py-1.5 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+              className="w-full rounded-surface border border-paper-450 px-3 py-1.5 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             />
           </form>
 
@@ -90,10 +90,10 @@ function SidebarContent({
                   href={link.href}
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
-                  className={`${FOCUS_RING} tap-target flex items-center rounded-md px-3 text-sm transition-colors ${
+                  className={`${FOCUS_RING} tap-target flex items-center rounded-surface px-3 text-body transition-colors ${
                     active
-                      ? "bg-indigo-50 font-medium text-indigo-700"
-                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                      ? "bg-ink-50 font-medium text-ink-700"
+                      : "text-paper-600 hover:bg-paper-100 hover:text-paper-900"
                   }`}
                 >
                   {link.label}
@@ -104,24 +104,24 @@ function SidebarContent({
         </>
       ) : null}
 
-      <div className="mt-auto border-t border-neutral-200 pt-3">
+      <div className="mt-auto border-t border-paper-200 pt-3">
         {profile ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <span
-                className="min-w-0 flex-1 truncate text-sm text-neutral-600"
+                className="min-w-0 flex-1 truncate text-body text-paper-600"
                 title={profile.email ?? undefined}
               >
                 {profile.email}
               </span>
-              <span className="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-indigo-700 ring-1 ring-inset ring-indigo-200">
+              <span className="inline-flex shrink-0 items-center rounded-full bg-ink-50 px-2 py-0.5 text-caption font-medium whitespace-nowrap text-ink-700 ring-1 ring-inset ring-ink-200">
                 {profile.role}
               </span>
             </div>
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className={`${FOCUS_RING} tap-target text-sm text-neutral-500 hover:text-neutral-900`}
+                className={`${FOCUS_RING} tap-target text-body text-paper-500 hover:text-paper-900`}
               >
                 Sign out
               </button>
@@ -131,7 +131,7 @@ function SidebarContent({
           <Link
             href="/login"
             onClick={onNavigate}
-            className={`${FOCUS_RING} tap-target flex items-center text-sm text-neutral-500 hover:text-neutral-900`}
+            className={`${FOCUS_RING} tap-target flex items-center text-body text-paper-500 hover:text-paper-900`}
           >
             Log in
           </Link>
@@ -188,12 +188,12 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
   return (
     <>
       {/* Desktop: fixed left sidebar */}
-      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-20 md:flex md:w-60 md:flex-col md:overflow-y-auto md:border-r md:border-neutral-200 md:bg-white">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-20 md:flex md:w-60 md:flex-col md:overflow-y-auto md:border-r md:border-paper-200 md:bg-white">
         <SidebarContent profile={profile} links={links} pathname={pathname} />
       </aside>
 
       {/* Mobile: sticky top bar */}
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-neutral-200 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:hidden">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-paper-200 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:hidden">
         <div className="flex min-w-0 items-center gap-1">
           <button
             type="button"
@@ -201,7 +201,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
             aria-controls="mobile-nav-drawer"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => setMenuOpen((open) => !open)}
-            className={`${FOCUS_RING} tap-target -ml-2 inline-flex items-center justify-center rounded-md text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900`}
+            className={`${FOCUS_RING} tap-target -ml-2 inline-flex items-center justify-center rounded-surface text-paper-600 hover:bg-paper-100 hover:text-paper-900`}
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden className="h-5 w-5">
               {menuOpen ? (
@@ -223,7 +223,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
           </button>
           <Link
             href="/"
-            className={`${FOCUS_RING} truncate rounded-md text-base font-semibold tracking-tight text-neutral-900`}
+            className={`${FOCUS_RING} truncate rounded-surface text-base font-semibold tracking-tight text-paper-900`}
           >
             Meeting Minutes
           </Link>
@@ -232,7 +232,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
         <Link
           href="/meetings/new"
           aria-label="New Meeting"
-          className={`${FOCUS_RING} tap-target inline-flex items-center justify-center rounded-md bg-indigo-600 px-3.5 text-base font-medium text-white transition-colors hover:bg-indigo-700`}
+          className={`${FOCUS_RING} tap-target inline-flex items-center justify-center rounded-surface bg-ink-600 px-3.5 text-base font-medium text-white transition-colors hover:bg-ink-700`}
         >
           <span aria-hidden className="leading-none">
             +
@@ -244,7 +244,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
       <div
         aria-hidden="true"
         onClick={() => setMenuOpen(false)}
-        className={`fixed inset-0 z-30 bg-neutral-900/40 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-30 bg-paper-900/40 transition-opacity md:hidden ${
           menuOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -255,7 +255,7 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
         aria-label="Primary navigation"
         aria-hidden={!menuOpen}
         inert={!menuOpen}
-        className="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[80vw] flex-col overflow-y-auto bg-white shadow-xl transition-transform duration-200 ease-in-out md:hidden"
+        className="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[80vw] flex-col overflow-y-auto bg-white shadow-float transition-transform duration-200 ease-in-out md:hidden"
         // Explicit inline transform rather than toggling Tailwind translate
         // utilities: v4 emits those via the CSS `translate` property, and the
         // off-canvas rule kept winning so the drawer never slid in (verified:

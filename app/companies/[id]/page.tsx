@@ -24,7 +24,7 @@ function DefaultsChips({ company }: { company: NonNullable<Awaited<ReturnType<ty
 
   if (chips.length === 0) {
     return (
-      <p className="mt-2 text-xs text-neutral-400">
+      <p className="mt-2 text-caption text-paper-500">
         No usual defaults yet — they fill in automatically after your first meeting for this
         company.
       </p>
@@ -61,30 +61,30 @@ export default async function CompanyDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="text-sm">
-        <Link href="/companies" className={`rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
+      <p className="text-body">
+        <Link href="/companies" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
           &larr; Companies
         </Link>
       </p>
 
       <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold text-neutral-900">{company.name}</h1>
+          <h1 className="text-page font-semibold text-balance break-words text-paper-900 [hyphens:auto]">{company.name}</h1>
           {company.reg_no ? (
-            <p className="mt-0.5 text-sm text-neutral-500">{company.reg_no}</p>
+            <p className="mt-0.5 text-body text-paper-500">{company.reg_no}</p>
           ) : null}
           <DefaultsChips company={company} />
         </div>
         <Link
           href={`/meetings/new?company=${company.id}`}
-          className={`inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:w-auto sm:py-1.5 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-surface bg-ink-600 px-3.5 py-2 text-body font-medium text-white hover:bg-ink-700 sm:min-h-0 sm:w-auto sm:py-1.5 ${FOCUS_RING}`}
         >
           New meeting for this company
         </Link>
       </div>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Meetings</h2>
+        <h2 className="mb-3 text-body font-semibold text-paper-900">Meetings</h2>
         {meetings.length === 0 ? (
           <EmptyState compact message="No meetings recorded for this company yet." />
         ) : (
@@ -93,15 +93,15 @@ export default async function CompanyDetailPage({
               <li key={meeting.id}>
                 <Link
                   href={`/meetings/${meeting.id}`}
-                  className={`block h-full rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                  className={`block h-full rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-sm font-medium text-neutral-900">
+                    <h3 className="truncate text-body font-medium text-paper-900">
                       {meeting.meeting_type}
                     </h3>
                     <StatusBadge status={meeting.status} />
                   </div>
-                  <p className="mt-1 text-xs text-neutral-500">
+                  <p className="mt-1 text-caption text-paper-500">
                     {formatDate(meeting.meeting_date)}
                     {meeting.venue ? <> &middot; {meeting.venue}</> : null}
                     {meeting.latestDraft ? (
@@ -116,7 +116,7 @@ export default async function CompanyDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">People &amp; directors</h2>
+        <h2 className="mb-3 text-body font-semibold text-paper-900">People &amp; directors</h2>
         {people.length === 0 ? (
           <EmptyState compact message="No people linked to this company yet." />
         ) : (
@@ -126,9 +126,9 @@ export default async function CompanyDetailPage({
                 <li key={person.id}>
                   <Link
                     href={`/people/${person.id}`}
-                    className={`flex items-center justify-between gap-2 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                    className={`flex items-center justify-between gap-2 rounded-surface border border-paper-200 bg-white p-3 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
                   >
-                    <span className="min-w-0 truncate text-sm font-medium text-neutral-900">{person.name}</span>
+                    <span className="min-w-0 truncate text-body font-medium text-paper-900">{person.name}</span>
                     <Badge variant="indigo">{relationLabel(person.relation)}</Badge>
                   </Link>
                 </li>
@@ -148,34 +148,34 @@ export default async function CompanyDetailPage({
       <CompanyDocumentsSection companyId={id} />
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Resolutions register</h2>
-        <p className="mb-3 text-xs text-neutral-500">
+        <h2 className="mb-3 text-body font-semibold text-paper-900">Resolutions register</h2>
+        <p className="mb-3 text-caption text-paper-500">
           The firm&apos;s institutional memory for this company — every resolution passed, and how
           it was resolved.
         </p>
         {resolutions.length === 0 ? (
           <EmptyState compact message="No resolutions recorded yet." />
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-sm">
-            <table className="w-full min-w-[560px] text-left text-sm">
+          <div className="overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised">
+            <table className="w-full min-w-[560px] text-left text-body">
               <thead>
-                <tr className="border-b border-neutral-200 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+                <tr className="border-b border-paper-200 text-caption font-semibold tracking-wide text-paper-500 uppercase">
                   <th className="px-4 py-2">Number</th>
                   <th className="px-4 py-2">Date</th>
                   <th className="px-4 py-2">Resolution</th>
                   <th className="px-4 py-2">Outcome</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-paper-100">
                 {resolutions.map((resolution) => (
                   <tr key={resolution.id}>
-                    <td className="px-4 py-2 whitespace-nowrap text-neutral-700">
+                    <td className="px-4 py-2 whitespace-nowrap text-paper-700">
                       {resolution.resolution_number ?? "—"}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-neutral-500">
+                    <td className="px-4 py-2 whitespace-nowrap text-paper-500">
                       {formatDate(resolution.meeting_date)}
                     </td>
-                    <td className="px-4 py-2 text-neutral-700">
+                    <td className="px-4 py-2 text-paper-700">
                       {excerpt(resolution.resolution_text)}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap">
@@ -190,16 +190,16 @@ export default async function CompanyDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Open action items</h2>
+        <h2 className="mb-3 text-body font-semibold text-paper-900">Open action items</h2>
         {openActions.length === 0 ? (
           <EmptyState compact message="No open action items for this company." />
         ) : (
-          <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
             {openActions.map((item) => (
               <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-neutral-800">{item.description}</p>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+                  <p className="truncate text-body text-paper-800">{item.description}</p>
+                  <p className="mt-0.5 text-caption text-paper-500">
                     {item.owner_name ?? "Unassigned"}
                     {item.due_date ? <> &middot; due {formatDate(item.due_date)}</> : null}
                     {" · "}
@@ -208,7 +208,7 @@ export default async function CompanyDetailPage({
                 </div>
                 <Link
                   href={`/meetings/${item.meeting_id}/draft`}
-                  className={`shrink-0 rounded-sm text-xs text-indigo-600 hover:underline ${FOCUS_RING}`}
+                  className={`shrink-0 rounded-control text-caption text-ink-600 hover:underline ${FOCUS_RING}`}
                 >
                   View in draft →
                 </Link>

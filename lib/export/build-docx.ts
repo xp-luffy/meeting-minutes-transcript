@@ -3,6 +3,7 @@ import {
   BorderStyle,
   Document,
   HeadingLevel,
+  Header,
   Packer,
   Paragraph,
   ShadingType,
@@ -14,6 +15,7 @@ import {
   type ITableCellBorders,
 } from "docx";
 import { parseHtmlToBlocks, type Block, type TableBlock, type TextBlock } from "./html-parse";
+import { assuranceSummaryLine } from "./assurance-line";
 import type { ExportData } from "./types";
 import { formatDate } from "@/lib/format";
 import { columnWidthPercents } from "./table-layout";
@@ -131,20 +133,65 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
 
   const children: (Paragraph | Table)[] = [];
 
-  // Draft banner. An exported file leaves the app and gets emailed, printed
+  // Status block. An exported file leaves the app and gets emailed, printed
   // and filed with nothing to say whether anyone approved it — an unreviewed
-  // first pass looked identical to signed-off minutes. Anything not final
-  // says so on its face.
-  if (draft.status !== "final") {
-    const label =
-      draft.status === "reviewed"
-        ? "DRAFT — REVIEWED, NOT YET FINAL"
-        : "DRAFT — NOT REVIEWED OR APPROVED";
+  // first pass looked identical to signed-off minutes.
+  //
+  // ASSUME EVERY EXPORT IS PRINTED MONOCHROME. Rule weight, not colour, is the
+  // primary signal: `draft` gets a DOUBLE rule above and below, `reviewed` a
+  // single rule, `final` a thin rule below only. The colours below are the
+  // -800 steps (#7A2119 / #6B4805), which hold up in greyscale — the previous
+  // B45309 was a mid-amber that photocopies to near-invisible.
+  const isDraft = draft.status !== "final";
+  const statusLabel = isDraft
+    ? draft.status === "reviewed"
+      ? "DRAFT — REVIEWED, NOT YET FINAL"
+      : "DRAFT — NOT REVIEWED OR APPROVED"
+    : `FINAL — APPROVED ${formatDate(draft.finalised_at ?? draft.created_at)}`;
+  const statusColor = isDraft
+    ? draft.status === "reviewed"
+      ? "6B4805" // risk-800
+      : "7A2119" // failed-800
+    : "1C1B18"; // paper-900
+
+  const statusRule =
+    draft.status === "final"
+      ? { bottom: { style: BorderStyle.SINGLE, size: 4, color: "1C1B18", space: 4 } }
+      : draft.status === "reviewed"
+        ? {
+            top: { style: BorderStyle.SINGLE, size: 8, color: statusColor, space: 4 },
+            bottom: { style: BorderStyle.SINGLE, size: 8, color: statusColor, space: 4 },
+          }
+        : {
+            top: { style: BorderStyle.DOUBLE, size: 12, color: statusColor, space: 4 },
+            bottom: { style: BorderStyle.DOUBLE, size: 12, color: statusColor, space: 4 },
+          };
+
+  children.push(
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      spacing: { after: isDraft ? 60 : 160 },
+      border: statusRule,
+      children: [new TextRun({ text: statusLabel, bold: true, size: 22, color: statusColor })],
+    }),
+  );
+
+  // The assurance summary. Without this the proof stays trapped in the app: a
+  // draft with three failed statutory checks otherwise exports with exactly
+  // the same banner as a clean one.
+  if (isDraft) {
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
         spacing: { after: 160 },
-        children: [new TextRun({ text: label, bold: true, size: 22, color: "B45309" })],
+        children: [
+          new TextRun({
+            text: assuranceSummaryLine(data.assurance ?? null),
+            bold: false,
+            size: 18,
+            color: "45443E",
+          }),
+        ],
       }),
     );
   }
@@ -289,8 +336,28 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
     }
   }
 
+  // The word DRAFT appears on EVERY page, not only page one: a stapled bundle
+  // gets separated, and page 4 on its own must still say what it is.
   const doc = new Document({
-    sections: [{ children }],
+    sections: [
+      {
+        headers: isDraft
+          ? {
+              default: new Header({
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                      new TextRun({ text: statusLabel, bold: true, size: 16, color: statusColor }),
+                    ],
+                  }),
+                ],
+              }),
+            }
+          : undefined,
+        children,
+      },
+    ],
   });
 
   return Packer.toBuffer(doc);

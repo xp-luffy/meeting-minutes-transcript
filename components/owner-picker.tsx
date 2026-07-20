@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 import { Badge, FOCUS_RING } from "@/components/ui";
+import { StatusChip } from "@/components/status";
 import { SubmitButton } from "@/components/submit-button";
 import {
   CLEAR_OWNER,
@@ -94,7 +95,7 @@ export function OwnerCell({
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-haspopup="dialog"
-          className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-2.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:py-1 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 items-center rounded-control border border-paper-450 bg-white px-2.5 text-caption font-medium text-paper-700 hover:border-paper-500 hover:bg-paper-50 sm:min-h-0 sm:py-1 ${FOCUS_RING}`}
         >
           {state === "unassigned" ? "Assign" : state === "text_only" ? "Link" : "Change"}
         </button>
@@ -129,12 +130,12 @@ function OwnerDisplay({
   if (state === "linked") {
     if (!ownerDisplayName) {
       // Linked, but the person row is hidden from this user by RLS. Say so.
-      return <span className="text-sm text-neutral-500">Owner not visible to you</span>;
+      return <StatusChip state="unknown">Owner not visible to you</StatusChip>;
     }
     return (
       <Link
         href={`/people/${ownerEntityId}`}
-        className={`inline-flex items-center gap-1 rounded-sm text-sm text-neutral-800 hover:text-indigo-700 ${FOCUS_RING}`}
+        className={`inline-flex items-center gap-1 rounded-control text-body text-ink-600 underline decoration-ink-200 underline-offset-2 hover:text-ink-700 hover:decoration-ink-600 ${FOCUS_RING}`}
       >
         <span aria-hidden>&#128100;</span>
         {ownerDisplayName}
@@ -146,17 +147,17 @@ function OwnerDisplay({
     return (
       <span className="flex flex-wrap items-center gap-2">
         {hideRecordedText ? null : (
-          <span className="text-sm text-neutral-700">&ldquo;{ownerName}&rdquo;</span>
+          <span className="text-body text-paper-700">&ldquo;{ownerName}&rdquo;</span>
         )}
-        <Badge variant="amber">Not linked</Badge>
+        <StatusChip state="risk">Not linked</StatusChip>
       </span>
     );
   }
 
   return (
     <span className="flex flex-wrap items-center gap-2">
-      {hideRecordedText ? null : <span className="text-neutral-400">&mdash;</span>}
-      <Badge variant="amber">No owner</Badge>
+      {hideRecordedText ? null : <span className="text-paper-500">&mdash;</span>}
+      <StatusChip state="failed">No owner</StatusChip>
     </span>
   );
 }
@@ -255,11 +256,11 @@ function OwnerPicker({
   return (
     <>
       {/* Backdrop: below sm the panel is a bottom sheet, so it needs one. */}
-      <div className="fixed inset-0 z-30 bg-neutral-900/20 sm:hidden" onClick={onClose} aria-hidden />
+      <div className="fixed inset-0 z-30 bg-paper-900/20 sm:hidden" onClick={onClose} aria-hidden />
       <div
         role="dialog"
         aria-label="Assign owner"
-        className="fixed inset-x-0 bottom-0 z-40 max-h-[80vh] overflow-y-auto rounded-t-xl border border-neutral-200 bg-white p-4 shadow-xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-full sm:mt-1 sm:max-h-96 sm:w-96 sm:rounded-lg"
+        className="fixed inset-x-0 bottom-0 z-40 max-h-[80vh] w-full overflow-y-auto rounded-t-surface border border-paper-300 bg-white p-4 shadow-float sm:absolute sm:inset-x-auto sm:top-full sm:bottom-auto sm:left-0 sm:mt-1 sm:max-h-96 sm:w-96 sm:rounded-surface"
       >
         <form action={formAction} className="space-y-3">
           <input type="hidden" name="itemId" value={itemId} />
@@ -268,7 +269,7 @@ function OwnerPicker({
           <input type="hidden" name="candidateName" value={selected?.canonical_name ?? ""} />
           <input type="hidden" name="suggested" value={selected?.exact_match ? "1" : "0"} />
 
-          <label htmlFor={`${panelId}-q`} className="block text-xs font-medium text-neutral-600">
+          <label htmlFor={`${panelId}-q`} className="block text-caption font-medium text-paper-600">
             Owner
           </label>
           <input
@@ -286,29 +287,29 @@ function OwnerPicker({
             }}
             onKeyDown={handleKeyDown}
             placeholder="Search people…"
-            className="w-full rounded-md border border-neutral-300 px-2.5 py-2 text-base text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="w-full rounded-surface border border-paper-450 px-2.5 py-2 text-base text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
 
           <div id={listId} role="listbox" aria-label="Matching people" className="space-y-2">
             {candidates === null ? (
               <div className="space-y-2" aria-hidden>
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-9 animate-pulse rounded-md bg-neutral-100" />
+                  <div key={i} className="h-9 animate-pulse rounded-surface bg-paper-100" />
                 ))}
               </div>
             ) : loadError ? (
-              <div className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+              <div className="rounded-surface border border-status-failed-600/30 border-l-[3px] border-l-status-failed-600 bg-status-failed-50 p-2 text-caption text-status-failed-800">
                 Couldn&apos;t load people.{" "}
                 <button
                   type="button"
                   onClick={() => setReloadKey((k) => k + 1)}
-                  className={`rounded-sm font-medium underline ${FOCUS_RING}`}
+                  className={`rounded-control font-medium underline ${FOCUS_RING}`}
                 >
                   Retry
                 </button>
               </div>
             ) : ordered.length === 0 ? (
-              <p className="text-xs text-neutral-500">
+              <p className="text-caption text-paper-500">
                 No one matching &ldquo;{query}&rdquo; at this company or in your workspace.
               </p>
             ) : (
@@ -334,13 +335,13 @@ function OwnerPicker({
               </>
             )}
             {isSearching ? (
-              <p className="text-xs text-neutral-400" aria-live="polite">
+              <p className="text-caption text-paper-500" aria-live="polite">
                 Searching…
               </p>
             ) : null}
           </div>
 
-          <div className="space-y-1 border-t border-neutral-200 pt-2">
+          <div className="space-y-1 border-t border-paper-200 pt-2">
             <ChoiceRow
               active={choice === KEEP_TEXT_ONLY}
               onClick={() => setChoice(KEEP_TEXT_ONLY)}
@@ -359,7 +360,7 @@ function OwnerPicker({
           </div>
 
           {selected ? (
-            <label className="flex items-start gap-2 text-xs text-neutral-600">
+            <label className="flex items-start gap-2 text-caption text-paper-600">
               <input
                 type="checkbox"
                 name="alsoUpdateName"
@@ -370,7 +371,7 @@ function OwnerPicker({
               />
               <span>
                 Also update the recorded name to &ldquo;{selected.canonical_name}&rdquo;
-                <span className="block text-neutral-400">
+                <span className="block text-paper-500">
                   Editing what the minutes say is a document edit — off by default.
                 </span>
               </span>
@@ -378,14 +379,14 @@ function OwnerPicker({
           ) : null}
 
           {isFinal ? (
-            <p className="rounded-md bg-neutral-50 p-2 text-xs text-neutral-600">
+            <p className="rounded-surface bg-paper-50 p-2 text-caption text-paper-600">
               These minutes are final. The recorded owner text is locked. You can still link it to a
               person for tracking.
             </p>
           ) : null}
 
           {state.error ? (
-            <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+            <p role="alert" className="rounded-surface border border-status-failed-200 bg-status-failed-50 p-2 text-caption text-status-failed-700">
               {state.error}
             </p>
           ) : null}
@@ -393,14 +394,14 @@ function OwnerPicker({
           <div className="flex items-center gap-2">
             <SubmitButton
               pendingLabel="Saving…"
-              className={`${FOCUS_RING} inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-indigo-600 px-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:py-2`}
+              className={`${FOCUS_RING} inline-flex min-h-11 flex-1 items-center justify-center rounded-control bg-ink-600 px-3.5 text-body font-medium text-white hover:bg-ink-700 active:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-60`}
             >
               Save owner
             </SubmitButton>
             <button
               type="button"
               onClick={onClose}
-              className={`inline-flex min-h-11 items-center justify-center rounded-md border border-neutral-300 bg-white px-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:py-2 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-control border border-paper-450 bg-white px-3.5 text-body font-medium text-paper-700 hover:border-paper-500 hover:bg-paper-50 ${FOCUS_RING}`}
             >
               Cancel
             </button>
@@ -430,7 +431,7 @@ function CandidateGroup({
   const headingId = `${panelId}-grp-${label.replace(/\W+/g, "-")}`;
   return (
     <div role="group" aria-labelledby={headingId}>
-      <p id={headingId} className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+      <p id={headingId} className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-paper-500">
         {label}
       </p>
       {/* presentation roles keep the listbox → group → option chain intact;
@@ -445,15 +446,15 @@ function CandidateGroup({
               aria-selected={choice === c.id}
               aria-label={candidateAccessibleName(c)}
               onClick={() => onChoose(c.id)}
-              className={`flex min-h-11 w-full flex-col items-start rounded-md px-2 py-1.5 text-left ${FOCUS_RING} ${
-                choice === c.id ? "bg-indigo-50 ring-1 ring-indigo-300" : "hover:bg-neutral-50"
+              className={`flex min-h-11 w-full flex-col items-start rounded-surface px-2 py-1.5 text-left ${FOCUS_RING} ${
+                choice === c.id ? "bg-ink-50 ring-1 ring-ink-300" : "hover:bg-paper-50"
               }`}
             >
               <span className="flex w-full flex-wrap items-center gap-2">
-                <span className="text-sm text-neutral-900">{c.canonical_name}</span>
-                {c.exact_match ? <Badge variant="indigo">suggested — exact name match</Badge> : null}
+                <span className="text-body text-paper-900">{c.canonical_name}</span>
+                {c.exact_match ? <Badge variant="ink">suggested — exact name match</Badge> : null}
               </span>
-              <span className="text-[11px] text-neutral-500">
+              <span className="text-[11px] text-paper-500">
                 {candidateEvidence(c)}
                 {c.aliases.length > 0 ? ` · also: ${c.aliases.join(", ")}` : ""}
               </span>
@@ -482,8 +483,8 @@ function ChoiceRow({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={active}
-      className={`flex min-h-11 w-full items-center rounded-md px-2 text-left text-xs sm:min-h-0 sm:py-1.5 ${FOCUS_RING} ${
-        active ? "bg-indigo-50 font-medium text-indigo-800 ring-1 ring-indigo-300" : "text-neutral-700 hover:bg-neutral-50"
+      className={`flex min-h-11 w-full items-center rounded-surface px-2 text-left text-caption sm:min-h-0 sm:py-1.5 ${FOCUS_RING} ${
+        active ? "bg-ink-50 font-medium text-ink-800 ring-1 ring-ink-300" : "text-paper-700 hover:bg-paper-50"
       } disabled:cursor-not-allowed disabled:opacity-50`}
     >
       {label}

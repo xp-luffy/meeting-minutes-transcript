@@ -45,32 +45,32 @@ export function ConfirmDraftCard({
 
   if (confirmed) {
     return (
-      <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-sm shadow-sm">
-        <p className="font-medium text-emerald-800">
+      <div className="mt-6 rounded-surface border border-status-verified-200 bg-status-verified-50 p-6 text-body shadow-raised">
+        <p className="font-medium text-status-verified-800">
           Confirmed by {confirmed.name} on {formatDate(confirmed.at)}.
         </p>
-        <p className="mt-1 text-emerald-700">Thank you — your confirmation has been recorded.</p>
+        <p className="mt-1 text-status-verified-700">Thank you — your confirmation has been recorded.</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
-      <h2 className="text-sm font-semibold text-neutral-900">
+    <div className="mt-6 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
+      <h2 className="text-body font-semibold text-paper-900">
         {alreadyConfirmedBy.length > 0 ? "Add your confirmation" : "Confirm these minutes"}
       </h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-body text-paper-500">
         If you attended this meeting, you can confirm this record is accurate.
       </p>
       {alreadyConfirmedBy.length > 0 ? (
-        <p className="mt-2 text-xs text-neutral-500">
+        <p className="mt-2 text-caption text-paper-500">
           Already confirmed: {alreadyConfirmedBy.join(", ")}
         </p>
       ) : null}
 
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
-          <label htmlFor="confirm-name" className="block text-xs font-medium text-neutral-700">
+          <label htmlFor="confirm-name" className="block text-caption font-medium text-paper-700">
             Full name*
           </label>
           <input
@@ -79,12 +79,12 @@ export function ConfirmDraftCard({
             onChange={(event) => setName(event.target.value)}
             disabled={pending}
             placeholder="Jane Tan"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base sm:text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-surface border border-paper-450 px-3 py-2 text-base sm:text-body text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed disabled:bg-paper-50"
           />
         </div>
         <div>
-          <label htmlFor="confirm-role" className="block text-xs font-medium text-neutral-700">
-            Role <span className="font-normal text-neutral-400">(optional, e.g. Chairman)</span>
+          <label htmlFor="confirm-role" className="block text-caption font-medium text-paper-700">
+            Role <span className="font-normal text-paper-500">(optional, e.g. Chairman)</span>
           </label>
           <input
             id="confirm-role"
@@ -92,14 +92,14 @@ export function ConfirmDraftCard({
             onChange={(event) => setRole(event.target.value)}
             disabled={pending}
             placeholder="Chairman"
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-base sm:text-sm text-neutral-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-50"
+            className="mt-1 w-full rounded-surface border border-paper-450 px-3 py-2 text-base sm:text-body text-paper-800 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 disabled:cursor-not-allowed disabled:bg-paper-50"
           />
         </div>
-        {error ? <p className="text-xs text-red-600">{error}</p> : null}
+        {error ? <p className="text-caption text-status-failed-600">{error}</p> : null}
         <button
           type="submit"
           disabled={pending}
-          className={`inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 w-full items-center justify-center rounded-surface bg-ink-600 px-4 py-2.5 text-body font-medium text-white hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2 ${FOCUS_RING}`}
         >
           {pending ? "Confirming…" : "I confirm these minutes are accurate"}
         </button>

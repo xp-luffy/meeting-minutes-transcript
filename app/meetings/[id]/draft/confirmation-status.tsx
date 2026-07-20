@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
+import { StatusBanner } from "@/components/status";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -41,17 +42,19 @@ export async function ConfirmationStatus({
     const names = confirmedRows.map((row) => row.confirmed_name);
     const latestConfirmedAt = confirmedRows[confirmedRows.length - 1].confirmed_at;
     return (
-      <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
-        Confirmed by {names.join(", ")} · {formatDate(latestConfirmedAt)}
-      </div>
+      <StatusBanner state="verified" title="Confirmed">
+        {names.join(", ")} · {formatDate(latestConfirmedAt)}
+      </StatusBanner>
     );
   }
 
   if (draftStatus === "final") {
+    // Final, but nobody in the room ever confirmed it. That is an absence, not
+    // an achievement, and it may not render as a neutral aside.
     return (
-      <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-600">
-        Finalised without recorded confirmations
-      </div>
+      <StatusBanner state="unknown" title="Finalised without recorded confirmations">
+        No attendee has confirmed these minutes as a correct record.
+      </StatusBanner>
     );
   }
 
@@ -62,23 +65,29 @@ export async function ConfirmationStatus({
   const isMemoryRisk = daysUnconfirmed > 14;
   const shareCount = activeShareCount ?? 0;
 
+  /*
+   * These two used to differ by COLOUR ALONE — red-50 vs amber-50, same shape,
+   * same glyph (none), same title. For a deuteranopic reader, and in any
+   * greyscale print, "memory risk" and "ordinary unconfirmed" were the same
+   * banner. They are now two different STATES: a different glyph, a different
+   * border weight, and a different title word each.
+   */
   return (
-    <div
-      className={`rounded-md border px-4 py-2 text-sm ${
+    <StatusBanner
+      state={isMemoryRisk ? "failed" : "risk"}
+      title={
         isMemoryRisk
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-amber-200 bg-amber-50 text-amber-800"
-      }`}
+          ? `Unconfirmed — memory risk (${daysUnconfirmed} days)`
+          : `Awaiting confirmation (${daysUnconfirmed} ${daysUnconfirmed === 1 ? "day" : "days"})`
+      }
     >
-      <p className="font-medium">
-        Unconfirmed for {daysUnconfirmed} {daysUnconfirmed === 1 ? "day" : "days"}
-        {isMemoryRisk ? " — memory risk" : ""}
-      </p>
-      <p className="mt-0.5 text-xs opacity-80">
-        {shareCount > 0
-          ? `${shareCount} review link${shareCount === 1 ? "" : "s"} active — awaiting confirmation`
-          : "Circulate for confirmation with the button above"}
-      </p>
-    </div>
+      {isMemoryRisk
+        ? "More than 14 days have passed since the meeting. Recollection of what was decided degrades, and an unconfirmed record is materially harder to defend."
+        : null}
+      {isMemoryRisk ? <br /> : null}
+      {shareCount > 0
+        ? `${shareCount} review link${shareCount === 1 ? "" : "s"} active — awaiting confirmation`
+        : "Circulate for confirmation with the button above"}
+    </StatusBanner>
   );
 }

@@ -21,13 +21,13 @@ export default async function NewMeetingPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-lg font-semibold text-neutral-900">New Meeting</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className="text-page font-semibold text-paper-900">New Meeting</h1>
+      <p className="mt-1 text-body text-paper-500">
         Create a meeting record, then add a transcript to generate statutory minutes.
       </p>
 
       {error ? (
-        <div className="mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-5 rounded-surface border border-status-failed-200 bg-status-failed-50 px-4 py-3 text-body text-status-failed-700">
           {error}
         </div>
       ) : null}
@@ -40,15 +40,15 @@ export default async function NewMeetingPage({
         />
 
         <div>
-          <label htmlFor="meeting_type" className="block text-sm font-medium text-neutral-700">
-            Meeting type <span className="text-red-600">*</span>
+          <label htmlFor="meeting_type" className="block text-body font-medium text-paper-700">
+            Meeting type <span className="text-status-failed-600">*</span>
           </label>
           <select
             id="meeting_type"
             name="meeting_type"
             required
             defaultValue={getParam("meeting_type")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="" disabled>
               Select a meeting type
@@ -62,14 +62,14 @@ export default async function NewMeetingPage({
         </div>
 
         <div>
-          <label htmlFor="workspace_id" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="workspace_id" className="block text-body font-medium text-paper-700">
             Workspace
           </label>
           <select
             id="workspace_id"
             name="workspace_id"
             defaultValue={selectedWorkspace}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="">Personal (no workspace)</option>
             {workspaces.map((ws) => (
@@ -78,26 +78,26 @@ export default async function NewMeetingPage({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-caption text-paper-500">
             Workspace meetings are visible and editable by every member. Personal meetings stay
             visible to only you.
           </p>
         </div>
 
         <div>
-          <label htmlFor="minutes_format" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="minutes_format" className="block text-body font-medium text-paper-700">
             Minutes format
           </label>
           <select
             id="minutes_format"
             name="minutes_format"
             defaultValue={getParam("minutes_format") || "standard"}
-            className="mt-1 block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="standard">Standard statutory</option>
             <option value="maisca">Maisca committee style</option>
           </select>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-caption text-paper-500">
             Maisca style: header &amp; attendance tables, quorum per Terms of Reference,
             Chairman&rsquo;s confidentiality address, numbered agenda-item table. Format defaults
             to this company&rsquo;s usual style if you leave this as Standard.
@@ -105,8 +105,8 @@ export default async function NewMeetingPage({
         </div>
 
         <div>
-          <label htmlFor="meeting_date" className="block text-sm font-medium text-neutral-700">
-            Meeting date <span className="text-red-600">*</span>
+          <label htmlFor="meeting_date" className="block text-body font-medium text-paper-700">
+            Meeting date <span className="text-status-failed-600">*</span>
           </label>
           <input
             id="meeting_date"
@@ -114,12 +114,12 @@ export default async function NewMeetingPage({
             type="date"
             required
             defaultValue={getParam("meeting_date")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
         </div>
 
         <div>
-          <label htmlFor="venue" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="venue" className="block text-body font-medium text-paper-700">
             Venue
           </label>
           <input
@@ -127,16 +127,16 @@ export default async function NewMeetingPage({
             name="venue"
             type="text"
             defaultValue={getParam("venue")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder="e.g. Level 12, Menara Arca, Kuala Lumpur"
           />
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-caption text-paper-500">
             Leave blank to use this company&rsquo;s usual venue, if it has one on record.
           </p>
         </div>
 
         <div>
-          <label htmlFor="chairperson" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="chairperson" className="block text-body font-medium text-paper-700">
             Chairperson
           </label>
           <input
@@ -144,16 +144,16 @@ export default async function NewMeetingPage({
             name="chairperson"
             type="text"
             defaultValue={getParam("chairperson")}
-            className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder="e.g. Dato' Ahmad Fauzi bin Ismail"
           />
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-caption text-paper-500">
             Leave blank to use this company&rsquo;s usual chairperson, if it has one on record.
           </p>
         </div>
 
         <div>
-          <label htmlFor="attendees" className="block text-sm font-medium text-neutral-700">
+          <label htmlFor="attendees" className="block text-body font-medium text-paper-700">
             Attendees
           </label>
           <textarea
@@ -161,10 +161,10 @@ export default async function NewMeetingPage({
             name="attendees"
             rows={5}
             defaultValue={getParam("attendees")}
-            className="mt-1 block min-h-[120px] w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block min-h-[120px] w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder={"One per line as Name — Role\ne.g. Ms Sarah Tan — Company Secretary"}
           />
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-caption text-paper-500">
             One per line, as &ldquo;Name — Role&rdquo; (a comma also works as the separator).
             Leave blank to use this company&rsquo;s usual attendee list, if it has one on record.
           </p>
@@ -173,7 +173,7 @@ export default async function NewMeetingPage({
         <div className="pt-2">
           <SubmitButton
             pendingLabel="Creating meeting…"
-            className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-surface bg-ink-600 px-4 py-2.5 text-body font-medium text-white hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
           >
             Create Meeting
           </SubmitButton>

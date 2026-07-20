@@ -14,9 +14,9 @@ import {
 import { uploadCompanyDocument, type UploadState } from "./documents-actions";
 
 const INPUT_CLASS =
-  "block w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400";
+  "block w-full rounded-surface border border-paper-300 bg-white px-3 py-2 text-body text-paper-900 placeholder:text-paper-500";
 
-const LABEL_CLASS = "block text-xs font-semibold tracking-wide text-neutral-500 uppercase";
+const LABEL_CLASS = "block text-caption font-semibold tracking-wide text-paper-500 uppercase";
 
 /**
  * Upload / replace form for the company document cabinet.
@@ -73,12 +73,12 @@ export function UploadDocumentForm({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className={`inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-indigo-700 sm:min-h-0 sm:py-1.5 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 items-center justify-center rounded-surface bg-ink-600 px-3.5 py-2 text-body font-medium text-white hover:bg-ink-700 sm:min-h-0 sm:py-1.5 ${FOCUS_RING}`}
         >
           Upload document
         </button>
         {state.success ? (
-          <p className="mt-2 text-xs text-emerald-700" role="status">
+          <p className="mt-2 text-caption text-status-verified-700" role="status">
             {state.success}
           </p>
         ) : null}
@@ -89,13 +89,13 @@ export function UploadDocumentForm({
   return (
     <form
       action={formAction}
-      className="rounded-lg border border-neutral-200 bg-white p-5 shadow-sm"
+      className="rounded-surface border border-paper-200 bg-white p-5 shadow-raised"
       aria-labelledby={`${formId}-heading`}
     >
-      <h3 id={`${formId}-heading`} className="text-sm font-semibold text-neutral-900">
+      <h3 id={`${formId}-heading`} className="text-body font-semibold text-paper-900">
         Upload a document
       </h3>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-caption text-paper-500">
         PDF or DOCX, up to {formatFileSize(MAX_UPLOAD_BYTES)}. Nothing here is ever deleted —
         replacing a document marks the old one superseded and keeps it on file.
       </p>
@@ -123,9 +123,9 @@ export function UploadDocumentForm({
             ))}
           </select>
           {selectedSlot ? (
-            <p className="mt-1 text-xs text-neutral-500">Backs: {selectedSlot.backs}</p>
+            <p className="mt-1 text-caption text-paper-500">Backs: {selectedSlot.backs}</p>
           ) : (
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="mt-1 text-caption text-paper-500">
               We never guess the type from the filename — a document filed as the wrong type would
               back the wrong check.
             </p>
@@ -133,7 +133,7 @@ export function UploadDocumentForm({
         </div>
 
         {replacing ? (
-          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <p className="rounded-surface border border-status-risk-300 bg-status-risk-50 px-3 py-2 text-caption text-status-risk-800">
             <span aria-hidden>! </span>
             <span className="font-medium">{replacing.title}</span> is currently in force (since{" "}
             {replacing.inForceFrom}). It will be marked superseded from the new document&apos;s
@@ -168,20 +168,20 @@ export function UploadDocumentForm({
             className={`mt-1 ${INPUT_CLASS} ${FOCUS_RING}`}
             aria-describedby={`${formId}-date-help`}
           />
-          <p id={`${formId}-date-help`} className="mt-1 text-xs text-neutral-500">
+          <p id={`${formId}-date-help`} className="mt-1 text-caption text-paper-500">
             The date this version took effect — usually the date it was adopted, not the date you
-            received it. <span className="text-amber-700">Leave blank if you do not know:</span> the
+            received it. <span className="text-status-risk-700">Leave blank if you do not know:</span> the
             document will be filed, but with no effective date it cannot be used to verify any
             check.
           </p>
         </div>
 
         {docType === "constitution" ? (
-          <fieldset className="rounded-md border border-neutral-200 p-3">
-            <legend className="px-1 text-xs font-semibold tracking-wide text-neutral-500 uppercase">
+          <fieldset className="rounded-surface border border-paper-200 p-3">
+            <legend className="px-1 text-caption font-semibold tracking-wide text-paper-500 uppercase">
               Quorum, as stated in this document
             </legend>
-            <p className="text-xs text-neutral-500">
+            <p className="text-caption text-paper-500">
               Optional. The app does not read the file&apos;s contents, so a quorum threshold is
               only ever known because a person read it off this document. Leave blank if you are not
               sure — an unknown threshold is reported as{" "}
@@ -230,24 +230,24 @@ export function UploadDocumentForm({
             required
             accept={ACCEPT_ATTRIBUTE}
             onChange={handleFileChange}
-            className={`mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:min-h-11 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 ${FOCUS_RING}`}
+            className={`mt-1 block w-full text-body text-paper-700 file:mr-3 file:min-h-11 file:rounded-surface file:border-0 file:bg-paper-100 file:px-3 file:text-body file:font-medium file:text-paper-700 ${FOCUS_RING}`}
           />
-          {fileNote ? <p className="mt-1 text-xs text-neutral-500">{fileNote}</p> : null}
+          {fileNote ? <p className="mt-1 text-caption text-paper-500">{fileNote}</p> : null}
         </div>
       </div>
 
       {clientError ? (
-        <p className="mt-3 text-sm text-red-600" role="alert">
+        <p className="mt-3 text-body text-status-failed-600" role="alert">
           {clientError}
         </p>
       ) : null}
       {state.error ? (
-        <p className="mt-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+        <p className="mt-3 rounded-surface border border-status-failed-300 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700" role="alert">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="mt-3 text-sm text-emerald-700" role="status">
+        <p className="mt-3 text-body text-status-verified-700" role="status">
           {state.success}
         </p>
       ) : null}
@@ -257,7 +257,7 @@ export function UploadDocumentForm({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className={`inline-flex min-h-11 w-full items-center justify-center rounded-md border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-700 hover:bg-neutral-50 sm:min-h-0 sm:w-auto sm:py-2 ${FOCUS_RING}`}
+          className={`inline-flex min-h-11 w-full items-center justify-center rounded-surface border border-paper-450 bg-white px-4 text-body font-medium text-paper-700 hover:bg-paper-50 sm:min-h-0 sm:w-auto sm:py-2 ${FOCUS_RING}`}
         >
           Cancel
         </button>

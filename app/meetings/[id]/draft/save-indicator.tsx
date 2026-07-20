@@ -16,16 +16,16 @@ export function SaveIndicator({
   if (status === "idle") return null;
 
   if (status === "saving") {
-    return <span className="text-xs text-neutral-400">Saving…</span>;
+    return <span className="text-caption text-paper-500">Saving…</span>;
   }
 
   if (status === "error") {
     return (
-      <span className="text-xs font-medium text-red-600">
+      <span className="text-caption font-medium text-status-failed-600">
         {errorMessage || "Save failed — your changes were not stored"}
       </span>
     );
   }
 
-  return <span className="text-xs text-emerald-600">Saved</span>;
+  return <span className="text-caption text-status-verified-600">Saved</span>;
 }

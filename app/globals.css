@@ -207,6 +207,23 @@
   @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-500 focus-visible:ring-offset-2;
 }
 
+/*
+ * Touch targets on small screens (VISUAL_SYSTEM_V4 §7.3).
+ *
+ * A field styled `px-3 py-2 text-base` measures 42px tall — close, but under
+ * the 44px guideline, and measured rather than assumed. Buttons already get
+ * there via `tap-target` / `min-h-11`; this covers every input, select and
+ * textarea in one place instead of 40 call sites. Checkboxes and radios are
+ * excluded: their hit area comes from the label they sit inside.
+ */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
+    min-height: 2.75rem;
+  }
+}
+
 /* Small-screen table handling for AI-generated minutes bodies: wide Maisca
    tables (many columns) scroll horizontally instead of breaking the layout,
    at phone/small-tablet widths only. */

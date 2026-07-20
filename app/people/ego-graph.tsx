@@ -201,13 +201,13 @@ function NodeListItems({ nodes, className = "" }: { nodes: EgoGraphNode[]; class
         return (
           <li key={node.id}>
             {href ? (
-              <Link href={href} className={`rounded-sm text-indigo-600 hover:underline ${FOCUS_RING}`}>
+              <Link href={href} className={`rounded-control text-ink-600 hover:underline ${FOCUS_RING}`}>
                 {node.label}
               </Link>
             ) : (
               <span>{node.label}</span>
             )}
-            {node.relation ? <span className="text-neutral-400"> — {node.relation}</span> : null}
+            {node.relation ? <span className="text-paper-500"> — {node.relation}</span> : null}
           </li>
         );
       })}
@@ -231,7 +231,7 @@ export function EgoGraph({
   const ringPositions = positioned.filter((p) => p.id !== center.id);
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm">
+    <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised">
       <div className="mx-auto w-full max-w-[520px]">
         <svg
           viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
@@ -249,7 +249,7 @@ export function EgoGraph({
         </svg>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-neutral-500">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-caption text-paper-500">
         {LEGEND_ITEMS.map((item) => (
           <span key={item.kind} className="inline-flex items-center gap-1.5">
             <span
@@ -262,7 +262,7 @@ export function EgoGraph({
       </div>
 
       {overflow > 0 ? (
-        <p className="mt-2 text-center text-xs text-neutral-400">and {overflow} more not shown</p>
+        <p className="mt-2 text-center text-caption text-paper-500">and {overflow} more not shown</p>
       ) : null}
 
       {/*
@@ -272,13 +272,13 @@ export function EgoGraph({
         the graph has enough room, so the list goes back to a collapsed
         <details> to avoid duplicating content.
       */}
-      <div className="mt-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-500 sm:hidden">
-        <p className="font-medium text-neutral-600">List view</p>
+      <div className="mt-3 rounded-surface border border-paper-200 bg-paper-50 p-3 text-caption text-paper-500 sm:hidden">
+        <p className="font-medium text-paper-600">List view</p>
         <NodeListItems nodes={cappedNodes} className="mt-2" />
       </div>
 
-      <details className="mt-3 hidden text-xs text-neutral-500 sm:block">
-        <summary className={`cursor-pointer select-none rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
+      <details className="mt-3 hidden text-caption text-paper-500 sm:block">
+        <summary className={`cursor-pointer select-none rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
           View as list
         </summary>
         <NodeListItems nodes={cappedNodes} className="mt-2" />

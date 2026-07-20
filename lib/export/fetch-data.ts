@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActionItem, Meeting, MinutesDraft, Resolution } from "@/lib/types";
+import type { AssuranceStatus } from "@/lib/assurance";
 import type { ExportFetchResult } from "./types";
 
 /**
@@ -38,7 +39,7 @@ export async function fetchExportData(
     return { ok: false, status: 400, error: "Draft is empty" };
   }
 
-  const [{ data: resolutions }, { data: actionItems }] = await Promise.all([
+  const [{ data: resolutions }, { data: actionItems }, { data: assuranceRow }] = await Promise.all([
     supabase
       .from("resolutions")
       .select(
@@ -53,7 +54,21 @@ export async function fetchExportData(
       )
       .eq("meeting_id", meetingId)
       .order("created_at", { ascending: true }),
+    // Latest assurance report for THIS draft. A query failure and a genuinely
+    // absent report both resolve to null — and null prints "Assurance: NOT RUN",
+    // which is the honest statement in either case.
+    supabase
+      .from("assurance_reports")
+      .select("results")
+      .eq("draft_id", draft.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
+
+  const assuranceResults = (assuranceRow?.results ?? null) as
+    | { status: AssuranceStatus }[]
+    | null;
 
   return {
     ok: true,
@@ -62,6 +77,10 @@ export async function fetchExportData(
       draft: draft as MinutesDraft,
       resolutions: (resolutions ?? []) as Resolution[],
       actionItems: (actionItems ?? []) as ActionItem[],
+      assurance:
+        assuranceResults && assuranceResults.length > 0
+          ? { statuses: assuranceResults.map((r) => r.status) }
+          : null,
     },
   };
 }

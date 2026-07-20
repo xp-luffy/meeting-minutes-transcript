@@ -39,13 +39,13 @@ export default async function EntityDetailPage({
 
     return (
       <div className="mx-auto max-w-3xl">
-        <p className="text-sm">
-          <Link href="/people" className={`rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
+        <p className="text-body">
+          <Link href="/people" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
             &larr; People
           </Link>
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <h1 className="text-lg font-semibold text-neutral-900">{entity.canonical_name}</h1>
+          <h1 className="text-page font-semibold text-paper-900">{entity.canonical_name}</h1>
           <Badge variant="indigo">Organisation</Badge>
         </div>
         <div className="mt-6">
@@ -63,14 +63,14 @@ export default async function EntityDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="text-sm">
-        <Link href="/people" className={`rounded-sm text-neutral-500 hover:text-neutral-700 ${FOCUS_RING}`}>
+      <p className="text-body">
+        <Link href="/people" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
           &larr; People
         </Link>
       </p>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-semibold text-neutral-900">{entity.canonical_name}</h1>
+        <h1 className="text-page font-semibold text-paper-900">{entity.canonical_name}</h1>
         <Badge variant="indigo">Person</Badge>
       </div>
       {entity.aliases.length > 0 ? (
@@ -88,9 +88,9 @@ export default async function EntityDetailPage({
           every company in the portfolio. */}
       <section className="mt-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-neutral-900">Owes</h2>
+          <h2 className="text-body font-semibold text-paper-900">Owes</h2>
           {owes.failed ? null : (
-            <div className="flex flex-wrap items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-caption">
               <Badge variant="indigo">{owes.openTotal} open</Badge>
               {owes.overdueTotal > 0 ? <Badge variant="red">{owes.overdueTotal} overdue</Badge> : null}
             </div>
@@ -98,7 +98,7 @@ export default async function EntityDetailPage({
         </div>
 
         {owes.failed ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-surface border border-status-failed-200 bg-status-failed-50 p-4 text-body text-status-failed-700">
             Couldn&apos;t load what this person owes. This is not the same as owing nothing — refresh
             to try again.
           </div>
@@ -107,7 +107,7 @@ export default async function EntityDetailPage({
         ) : (
           <div className="space-y-4">
             {owes.truncated ? (
-              <p className="text-xs text-neutral-500">
+              <p className="text-caption text-paper-500">
                 Showing the first 400 linked items — this list is incomplete.
               </p>
             ) : null}
@@ -115,37 +115,37 @@ export default async function EntityDetailPage({
               <details
                 key={group.companyName}
                 open={group.overdueCount > 0}
-                className="rounded-lg border border-neutral-200 bg-white shadow-sm"
+                className="rounded-surface border border-paper-200 bg-white shadow-raised"
               >
                 <summary
                   className={`flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 ${FOCUS_RING}`}
                 >
-                  <span className="text-xs font-semibold uppercase tracking-wide text-neutral-700">
+                  <span className="text-caption font-semibold uppercase tracking-wide text-paper-700">
                     {group.companyName}
                   </span>
-                  <span className="text-xs text-neutral-500">
+                  <span className="text-caption text-paper-500">
                     {group.openCount} open
                     {group.overdueCount > 0 ? (
-                      <span className="font-medium text-red-600"> · {group.overdueCount} overdue</span>
+                      <span className="font-medium text-status-failed-600"> · {group.overdueCount} overdue</span>
                     ) : null}
                   </span>
                 </summary>
-                <ul className="divide-y divide-neutral-200 border-t border-neutral-200">
+                <ul className="divide-y divide-paper-200 border-t border-paper-200">
                   {group.items.map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-                      <p className="min-w-0 flex-1 text-sm text-neutral-800">
+                      <p className="min-w-0 flex-1 text-body text-paper-800">
                         {/* Overdue is never colour-only: glyph + the word + red. */}
-                        {a.isOverdue ? <span aria-hidden className="font-bold text-red-600">! </span> : null}
+                        {a.isOverdue ? <span aria-hidden className="font-bold text-status-failed-600">! </span> : null}
                         {a.description}
                       </p>
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className={`text-xs ${a.isOverdue ? "font-medium text-red-600" : "text-neutral-500"}`}>
+                        <span className={`text-caption ${a.isOverdue ? "font-medium text-status-failed-600" : "text-paper-500"}`}>
                           {a.isOverdue ? "overdue · " : ""}
                           {a.due_date ? `due ${formatDate(a.due_date)}` : "no due date"}
                         </span>
                         <Link
                           href={`/meetings/${a.meeting_id}/draft`}
-                          className={`rounded-sm text-xs text-indigo-600 hover:underline ${FOCUS_RING}`}
+                          className={`rounded-control text-caption text-ink-600 hover:underline ${FOCUS_RING}`}
                         >
                           open →
                         </Link>
@@ -157,18 +157,18 @@ export default async function EntityDetailPage({
             ))}
 
             {owes.completed.length > 0 ? (
-              <details className="rounded-lg border border-neutral-200 bg-white shadow-sm">
-                <summary className={`cursor-pointer px-4 py-3 text-xs text-neutral-600 ${FOCUS_RING}`}>
+              <details className="rounded-surface border border-paper-200 bg-white shadow-raised">
+                <summary className={`cursor-pointer px-4 py-3 text-caption text-paper-600 ${FOCUS_RING}`}>
                   Show {owes.completed.length} completed item
                   {owes.completed.length === 1 ? "" : "s"}
                 </summary>
-                <ul className="divide-y divide-neutral-200 border-t border-neutral-200">
+                <ul className="divide-y divide-paper-200 border-t border-paper-200">
                   {owes.completed.map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-                      <p className="min-w-0 flex-1 text-sm text-neutral-500 line-through">{a.description}</p>
+                      <p className="min-w-0 flex-1 text-body text-paper-500 line-through">{a.description}</p>
                       <Link
                         href={`/meetings/${a.meeting_id}/draft`}
-                        className={`rounded-sm text-xs text-indigo-600 hover:underline ${FOCUS_RING}`}
+                        className={`rounded-control text-caption text-ink-600 hover:underline ${FOCUS_RING}`}
                       >
                         open →
                       </Link>
@@ -184,11 +184,11 @@ export default async function EntityDetailPage({
             COMPLETE account of what this person owes, while items naming them
             in free text float outside it entirely. */}
         {unlinked.failed ? (
-          <p className="mt-3 rounded-md border border-neutral-300 bg-neutral-50 p-3 text-xs text-neutral-700">
+          <p className="mt-3 rounded-surface border border-paper-300 bg-paper-50 p-3 text-caption text-paper-700">
             Could not check for unlinked items naming this person. The list above may be incomplete.
           </p>
         ) : unlinked.total > 0 ? (
-          <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="mt-3 rounded-surface border border-status-risk-300 bg-status-risk-50 p-3 text-caption text-status-risk-900">
             <p>
               <span aria-hidden>⚠ </span>
               {unlinked.total} further action item{unlinked.total === 1 ? "" : "s"} record an owner
@@ -201,7 +201,7 @@ export default async function EntityDetailPage({
                 <li key={m.id}>
                   <Link
                     href={`/meetings/${m.meeting_id}/draft`}
-                    className={`rounded-sm hover:underline ${FOCUS_RING}`}
+                    className={`rounded-control hover:underline ${FOCUS_RING}`}
                   >
                     &ldquo;{m.owner_name}&rdquo; — {m.description}
                   </Link>
@@ -211,7 +211,7 @@ export default async function EntityDetailPage({
             <p className="mt-2">
               <Link
                 href="/action-items?owner_state=text_only&status=all"
-                className={`rounded-sm font-medium underline ${FOCUS_RING}`}
+                className={`rounded-control font-medium underline ${FOCUS_RING}`}
               >
                 Review unlinked owners →
               </Link>
@@ -221,22 +221,22 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Appears across</h2>
+        <h2 className="mb-3 text-body font-semibold text-paper-900">Appears across</h2>
         {detail.meetings.length === 0 ? (
           <EmptyState compact message="No meetings recorded for this person yet." />
         ) : (
-          <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
             {detail.meetings.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">
                   <Link
                     href={`/meetings/${m.id}/draft`}
-                    className={`truncate text-sm font-medium text-neutral-900 hover:text-indigo-600 ${FOCUS_RING}`}
+                    className={`truncate text-body font-medium text-paper-900 hover:text-ink-600 ${FOCUS_RING}`}
                   >
                     {m.company_name}
-                    <span className="font-normal text-neutral-400"> · {m.meeting_type}</span>
+                    <span className="font-normal text-paper-500"> · {m.meeting_type}</span>
                   </Link>
-                  <p className="mt-0.5 text-xs text-neutral-500">{formatDate(m.meeting_date)}</p>
+                  <p className="mt-0.5 text-caption text-paper-500">{formatDate(m.meeting_date)}</p>
                 </div>
                 <Badge variant={m.relation === "chaired" ? "indigo" : "neutral"} className="capitalize">
                   {relationLabel(m.relation)}
@@ -248,16 +248,16 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold text-neutral-900">Company roles</h2>
+        <h2 className="mb-3 text-body font-semibold text-paper-900">Company roles</h2>
         {detail.companyRoles.length === 0 ? (
           <EmptyState compact message="No company roles recorded yet." />
         ) : (
-          <ul className="divide-y divide-neutral-200 rounded-lg border border-neutral-200 bg-white shadow-sm">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
             {detail.companyRoles.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <Link
                   href={`/companies/${c.id}`}
-                  className={`min-w-0 truncate text-sm font-medium text-neutral-900 hover:text-indigo-600 ${FOCUS_RING}`}
+                  className={`min-w-0 truncate text-body font-medium text-paper-900 hover:text-ink-600 ${FOCUS_RING}`}
                 >
                   {c.name}
                 </Link>
@@ -269,8 +269,8 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-1 text-sm font-semibold text-neutral-900">Ego graph</h2>
-        <p className="mb-3 text-xs text-neutral-500">
+        <h2 className="mb-1 text-body font-semibold text-paper-900">Ego graph</h2>
+        <p className="mb-3 text-caption text-paper-500">
           Who {entity.canonical_name} is entangled with — meetings attended and company roles held.
         </p>
         {detail.egoNodes.length === 0 ? (
@@ -283,7 +283,7 @@ export default async function EntityDetailPage({
           />
         )}
         {detail.overflowCount > 0 ? (
-          <p className="mt-2 text-xs text-neutral-400">
+          <p className="mt-2 text-caption text-paper-500">
             and {detail.overflowCount} more connection{detail.overflowCount === 1 ? "" : "s"} not shown
           </p>
         ) : null}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { EmptyState, FOCUS_RING } from "@/components/ui";
+import { StatusBanner } from "@/components/status";
 import { search, type SnippetSegment } from "@/lib/search";
 
 function parseQuery(value: string | string[] | undefined): string {
@@ -13,14 +14,17 @@ function parseQuery(value: string | string[] | undefined): string {
  * Renders a ts_headline snippet. The segments arrive as plain text — the
  * highlight is applied by wrapping React nodes, never by injecting markup,
  * so stored content is escaped by React like any other string.
+ *
+ * `<mark>` carries semantics that a styled <span> does not; the tint is
+ * risk-100 rather than a raw amber so highlighting stays inside the token set.
  */
 function Snippet({ segments }: { segments: SnippetSegment[] }) {
   if (segments.length === 0) return null;
   return (
-    <p className="mt-1 text-sm text-neutral-600">
+    <p className="mt-1 text-meta text-paper-600">
       {segments.map((segment, index) =>
         segment.match ? (
-          <mark key={index} className="rounded-sm bg-amber-100 px-0.5 text-neutral-900">
+          <mark key={index} className="rounded-control bg-status-risk-100 px-0.5 text-paper-900">
             {segment.text}
           </mark>
         ) : (
@@ -45,40 +49,53 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-lg font-semibold text-neutral-900">Search</h1>
-      <p className="mt-1 max-w-2xl text-sm text-neutral-500">
+      <h1 className="text-page font-semibold text-paper-900">Search</h1>
+      <p className="mt-1 max-w-prose text-meta text-paper-600">
         Across minutes, resolutions, action items, obligations, companies and people.
       </p>
 
-      <form method="get" action="/search" className="mt-6 max-w-md">
+      <form method="get" action="/search" className="mt-6">
         <label htmlFor="q" className="sr-only">
           Search
         </label>
+        {/* text-base at mobile is deliberate — 14px triggers iOS Safari's focus zoom. */}
         <input
           id="q"
           name="q"
           type="search"
           defaultValue={q}
           placeholder="Search everything…"
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+          className={`block w-full rounded-control border border-paper-450 bg-white px-3 py-2 text-base text-paper-900 placeholder:text-paper-500 focus:border-ink-600 focus:ring-1 focus:ring-ink-500 focus:outline-none sm:max-w-md sm:text-body ${FOCUS_RING}`}
         />
       </form>
 
       {error ? (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {error} Please refresh the page or try again shortly.
-        </div>
+        /*
+         * "Nothing has been searched" is load-bearing. A search that failed and
+         * a search that found nothing are different facts, and a user who
+         * conflates them concludes the clause does not exist.
+         */
+        <StatusBanner state="unknown" className="mt-6" title="Search is unavailable right now">
+          {error} <strong>Nothing has been searched</strong> — this is not a finding that there are
+          no matches. Please retry.
+        </StatusBanner>
       ) : q.length === 0 ? (
         <EmptyState
           compact
           className="mt-6"
-          message="Type a word or phrase to search everything you have access to."
+          title="Search everything"
+          message="Minutes, resolutions, obligations, action items, companies and people. Try a resolution number, a company, or a phrase from a decision."
         />
       ) : total === 0 ? (
-        <EmptyState compact className="mt-6" message={`No results for “${q}”.`} />
+        <EmptyState
+          compact
+          className="mt-6"
+          title={`No matches for “${q}”`}
+          message="Search covers record fields — titles, names, resolution text, descriptions and minutes body text. Uploaded document files are matched on filename, type and label only; their contents are not searched."
+        />
       ) : (
         <>
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-meta text-paper-600" aria-live="polite">
             {total} {total === 1 ? "result" : "results"}
             {truncated ? " (showing the best matches — narrow your search for more)" : ""}
           </p>
@@ -86,9 +103,11 @@ export default async function SearchPage({
           <div className="mt-4 space-y-8">
             {groups.map((group) => (
               <section key={group.kind}>
-                <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+                {/* An eyebrow-cap label above a list — the one place the
+                    system permits caps smaller than body text. */}
+                <h2 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
                   {group.label}
-                  <span className="ml-2 font-normal normal-case tracking-normal text-neutral-400">
+                  <span className="ml-2 font-normal tracking-normal text-paper-500 normal-case">
                     {group.results.length}
                   </span>
                 </h2>
@@ -97,14 +116,17 @@ export default async function SearchPage({
                     <li key={`${result.kind}:${result.id}`} className="min-w-0">
                       <Link
                         href={result.href}
-                        className={`block rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${FOCUS_RING}`}
+                        className={`block rounded-surface border border-paper-300 bg-white p-4 shadow-raised hover:border-paper-450 hover:bg-paper-50 sm:p-5 ${FOCUS_RING}`}
                       >
-                        <h3 className="truncate text-base font-medium text-neutral-900">
+                        {/* Long Malaysian company names WRAP. They are legally
+                            exact and must never lose a character to truncation
+                            on the surface that identifies the record. */}
+                        <h3 className="text-title font-semibold text-balance break-words text-paper-900 [hyphens:auto]">
                           {result.title}
                         </h3>
                         <Snippet segments={result.snippet} />
                         {result.companyName || result.date ? (
-                          <p className="mt-2 text-xs text-neutral-500">
+                          <p className="mt-2 text-meta text-paper-500">
                             {result.companyName}
                             {result.companyName && result.date ? " · " : ""}
                             {result.date ? formatDate(result.date) : ""}
@@ -119,6 +141,20 @@ export default async function SearchPage({
           </div>
         </>
       )}
+
+      {/*
+        Permanent, and deliberately not dismissible. A cosec who believes the
+        constitution was full-text searched and got no hits will conclude the
+        clause does not exist — the exact failure this product prevents.
+      */}
+      <p className="mt-10 border-t border-paper-200 pt-4 text-meta text-paper-600">
+        Search covers record fields — titles, names, resolution text, descriptions and minutes body
+        text.{" "}
+        <strong className="font-semibold">
+          Uploaded document files are matched on filename, type and label only; their contents are
+          not searched.
+        </strong>
+      </p>
     </div>
   );
 }

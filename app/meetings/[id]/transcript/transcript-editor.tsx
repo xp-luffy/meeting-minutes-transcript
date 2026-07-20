@@ -166,9 +166,9 @@ export function TranscriptEditor({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-5">
         {!transcriptId ? (
-          <p className="mb-3 text-sm text-neutral-600">
+          <p className="mb-3 text-body text-paper-600">
             Paste the meeting transcript below to get started.
           </p>
         ) : null}
@@ -181,24 +181,24 @@ export function TranscriptEditor({
           }}
           rows={14}
           placeholder="Paste the raw meeting transcript here…"
-          className="block min-h-[220px] w-full rounded-md border border-neutral-300 px-3 py-2 font-mono text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:min-h-[320px] sm:text-sm"
+          className="block min-h-[220px] w-full rounded-surface border border-paper-450 px-3 py-2 font-mono text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:min-h-[320px] sm:text-body"
         />
 
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-caption text-paper-500">
           <span>{wordCount} words</span>
           <label
             className={
               "inline-flex min-h-11 items-center rounded px-1 -mx-1 sm:min-h-0 " +
               (isParsingDocx
-                ? "cursor-wait text-neutral-400"
-                : "cursor-pointer text-indigo-600 hover:text-indigo-700 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2")
+                ? "cursor-wait text-paper-500"
+                : "cursor-pointer text-ink-600 hover:text-ink-700 peer-focus-visible:ring-2 peer-focus-visible:ring-ink-500 peer-focus-visible:ring-offset-2")
             }
           >
             {isParsingDocx ? (
               <span className="inline-flex items-center gap-1.5">
                 <span
                   aria-hidden
-                  className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-500"
+                  className="h-3 w-3 animate-spin rounded-full border-2 border-paper-300 border-t-paper-500"
                 />
                 Extracting text from DOCX…
               </span>
@@ -217,17 +217,17 @@ export function TranscriptEditor({
         </div>
 
         {sourceNote ? (
-          <p className="mt-2 text-xs text-amber-700">{sourceNote}</p>
+          <p className="mt-2 text-caption text-status-risk-700">{sourceNote}</p>
         ) : null}
 
         {docxError ? (
-          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
             {docxError}
           </div>
         ) : null}
 
         {docxWarnings.length > 0 ? (
-          <ul className="mt-3 space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <ul className="mt-3 space-y-1 rounded-surface border border-status-risk-200 bg-status-risk-50 px-3 py-2 text-body text-status-risk-800">
             {docxWarnings.map((warning, index) => (
               <li key={index}>{warning}</li>
             ))}
@@ -235,13 +235,13 @@ export function TranscriptEditor({
         ) : null}
 
         {saveError ? (
-          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
             {saveError}
           </div>
         ) : null}
 
         {saveSuccess && !saveError ? (
-          <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          <div className="mt-3 rounded-surface border border-status-verified-200 bg-status-verified-50 px-3 py-2 text-body text-status-verified-700">
             Transcript saved.
           </div>
         ) : null}
@@ -251,7 +251,7 @@ export function TranscriptEditor({
             type="button"
             onClick={() => handleSave()}
             disabled={isSaving || text.trim().length === 0}
-            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:py-2"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-surface bg-ink-600 px-4 py-2.5 text-body font-medium text-white hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:w-auto sm:py-2"
           >
             {isSaving ? (
               <>
@@ -269,12 +269,12 @@ export function TranscriptEditor({
       </div>
 
       {transcriptId ? (
-        <div className="rounded-lg border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-5">
           <button
             type="button"
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
+            className="focus-ring inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-surface bg-ink-600 px-4 py-2.5 text-body font-medium text-white hover:bg-ink-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-0 sm:w-auto sm:py-2"
           >
             {isGenerating ? (
               <>
@@ -290,13 +290,13 @@ export function TranscriptEditor({
           </button>
 
           {generateError ? (
-            <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
               {generateError}
             </div>
           ) : null}
 
           {generateWarnings.length > 0 ? (
-            <ul className="mt-3 space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <ul className="mt-3 space-y-1 rounded-surface border border-status-risk-200 bg-status-risk-50 px-3 py-2 text-body text-status-risk-800">
               {generateWarnings.map((warning, index) => (
                 <li key={index}>{warning}</li>
               ))}

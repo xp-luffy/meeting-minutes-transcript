@@ -47,39 +47,39 @@ export function SendForReview({
         onClick={handleShare}
         disabled={disabled || pending}
         title={disabled ? "Draft is empty" : undefined}
-        className={`inline-flex min-h-11 items-center rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 ${FOCUS_RING}`}
+        className={`inline-flex min-h-11 items-center rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption font-medium text-paper-700 hover:bg-paper-50 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 ${FOCUS_RING}`}
       >
         {pending ? "Creating link…" : "Circulate for confirmation"}
       </button>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-caption text-status-failed-600">{error}</p>}
       {url && (
-        <div className="absolute right-0 z-10 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-lg border border-neutral-200 bg-white p-3 shadow-lg">
-          <p className="text-xs font-medium text-neutral-800">
+        <div className="absolute right-0 z-10 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-surface border border-paper-200 bg-white p-3 shadow-float">
+          <p className="text-caption font-medium text-paper-800">
             Confirmation &amp; review link
           </p>
-          <p className="mt-1 text-[11px] text-neutral-500">
+          <p className="mt-1 text-[11px] text-paper-500">
             Recipients can read AND formally confirm the minutes from this link.
           </p>
-          <p className="mt-2 break-all rounded bg-neutral-50 p-2 text-[11px] text-neutral-600">
+          <p className="mt-2 break-all rounded bg-paper-50 p-2 text-[11px] text-paper-600">
             {url}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleCopy}
-              className={`inline-flex min-h-11 items-center justify-center rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500 sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center justify-center rounded-surface bg-ink-600 px-2.5 py-1 text-caption font-medium text-white hover:bg-ink-500 sm:min-h-0 ${FOCUS_RING}`}
             >
               {copied ? "Copied!" : "Copy link"}
             </button>
             <a
-              className={`rounded-sm text-xs text-indigo-600 hover:underline ${FOCUS_RING}`}
+              className={`rounded-control text-caption text-ink-600 hover:underline ${FOCUS_RING}`}
               href={`mailto:?subject=${encodeURIComponent("Draft minutes for your review")}&body=${encodeURIComponent(`Please review the draft minutes:\n\n${url}\n\nThis link is read-only${expiresAt ? ` and expires on ${formatDate(expiresAt)}` : ""}.`)}`}
             >
               Email it
             </a>
           </div>
           {expiresAt && (
-            <p className="mt-2 text-[11px] text-neutral-400">
+            <p className="mt-2 text-[11px] text-paper-500">
               Expires {formatDate(expiresAt)} · anyone
               with the link can view this version
             </p>
@@ -87,7 +87,7 @@ export function SendForReview({
           <button
             type="button"
             onClick={() => setUrl(null)}
-            className={`mt-2 rounded-sm text-[11px] text-neutral-400 hover:text-neutral-600 ${FOCUS_RING}`}
+            className={`mt-2 rounded-control text-[11px] text-paper-500 hover:text-paper-600 ${FOCUS_RING}`}
           >
             Close
           </button>
