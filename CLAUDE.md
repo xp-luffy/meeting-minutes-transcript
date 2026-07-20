@@ -22,6 +22,7 @@
 - Automated 'Verifier' or finality gate added: 'final' status now requires explicit verification step, closing 4 unearned-assurance gaps where items could reach final without proper validation.
 - Owner check was split into two distinct concepts: accountability vs traceability. This likely has implications for RLS policies and authentication logic.
 - Every export path now includes explicit proof (assertions/validations) to guarantee correctness before delivering output files
+- search_path is pinned on person_name_tokens function to prevent schema resolution issues
 
 ## Architecture
 
