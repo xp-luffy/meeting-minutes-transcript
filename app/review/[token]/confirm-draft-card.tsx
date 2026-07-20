@@ -56,7 +56,7 @@ export function ConfirmDraftCard({
 
   return (
     <div className="mt-6 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
-      <h2 className="text-body font-semibold text-paper-900">
+      <h2 className="text-subhead font-semibold text-paper-900">
         {alreadyConfirmedBy.length > 0 ? "Add your confirmation" : "Confirm these minutes"}
       </h2>
       <p className="mt-1 text-body text-paper-500">

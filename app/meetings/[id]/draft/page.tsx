@@ -257,7 +257,7 @@ export default async function DraftPage({
       />
 
       <div>
-        <h2 className="text-body font-medium text-paper-700">Resolutions</h2>
+        <h2 className="text-subhead font-medium text-paper-700">Resolutions</h2>
         {resolutionsError ? (
           // "No resolutions extracted" is a claim about the record. If the read
           // failed we do not know what is in it, and must not say we do.
@@ -284,7 +284,7 @@ export default async function DraftPage({
       </div>
 
       <div>
-        <h2 className="text-body font-medium text-paper-700">Action Items</h2>
+        <h2 className="text-subhead font-medium text-paper-700">Action Items</h2>
         {actionItemsError ? (
           // Same class as the resolutions claim directly above: "No action
           // items extracted" is a statement about the record. The error was

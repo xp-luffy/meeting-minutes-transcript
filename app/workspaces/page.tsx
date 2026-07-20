@@ -66,7 +66,7 @@ export default async function WorkspacesPage({
       )}
 
       <div className="mt-8 max-w-2xl rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
-        <h2 className="text-body font-semibold text-paper-900">New workspace</h2>
+        <h2 className="text-subhead font-semibold text-paper-900">New workspace</h2>
         {wsError ? (
           <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
             {wsError}
@@ -91,7 +91,7 @@ export default async function WorkspacesPage({
       </div>
 
       <div className="mt-6 max-w-2xl rounded-surface border border-paper-200 bg-paper-50 p-5">
-        <h2 className="text-body font-semibold text-paper-700">Have an invite?</h2>
+        <h2 className="text-subhead font-semibold text-paper-700">Have an invite?</h2>
         <p className="mt-1 text-caption text-paper-500">
           If someone invited your email address, you&apos;ll join that workspace automatically the
           next time you sign up. If your account already existed when the invite was sent, that

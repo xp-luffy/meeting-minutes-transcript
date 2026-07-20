@@ -74,7 +74,7 @@ export function AttendanceEditor({
         onClick={() => setOpen((prev) => !prev)}
         className={`flex w-full items-center justify-between rounded-t-lg px-6 py-4 text-left ${FOCUS_RING}`}
       >
-        <h2 className="text-body font-medium text-paper-700">Attendance &amp; Quorum</h2>
+        <h2 className="text-subhead font-medium text-paper-700">Attendance &amp; Quorum</h2>
         <span className="text-caption text-paper-500">{open ? "Hide" : "Show"}</span>
       </button>
 

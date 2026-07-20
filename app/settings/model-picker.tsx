@@ -45,7 +45,7 @@ export function ModelPicker({
 
   return (
     <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
-      <h2 className="text-body font-semibold text-paper-900">AI model for minutes generation</h2>
+      <h2 className="text-subhead font-semibold text-paper-900">AI model for minutes generation</h2>
       <p className="mt-1 text-caption text-paper-500">
         Pick the model used when you click Generate. Change it anytime — it applies to your next
         generation, no redeploy.{" "}

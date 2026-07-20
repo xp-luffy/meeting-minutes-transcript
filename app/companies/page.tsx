@@ -79,7 +79,7 @@ export default async function CompaniesPage({
       )}
 
       <div className="mt-8 max-w-2xl rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
-        <h2 className="text-body font-semibold text-paper-900">Add a company</h2>
+        <h2 className="text-subhead font-semibold text-paper-900">Add a company</h2>
         {error ? (
           <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
             {error}

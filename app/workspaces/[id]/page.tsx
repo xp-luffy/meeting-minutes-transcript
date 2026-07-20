@@ -54,7 +54,7 @@ export default async function WorkspaceDetailPage({
       <h1 className="mt-2 text-page font-semibold text-paper-900">{workspace.name}</h1>
 
       <section className="mt-6 rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
-        <h2 className="text-body font-semibold text-paper-900">Members</h2>
+        <h2 className="text-subhead font-semibold text-paper-900">Members</h2>
         <p className="mt-1 text-body text-paper-600">
           {members.memberCount} {members.memberCount === 1 ? "member" : "members"}
           {members.selfRole ? (
@@ -150,7 +150,7 @@ export default async function WorkspaceDetailPage({
 
       <section className="mt-6">
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-body font-semibold text-paper-900">Meetings</h2>
+          <h2 className="text-subhead font-semibold text-paper-900">Meetings</h2>
           <Link
             href={`/meetings/new?workspace=${workspace.id}`}
             className={`inline-flex min-h-11 items-center justify-center rounded-surface bg-ink-600 px-3 py-2 text-caption font-medium text-white hover:bg-ink-700 sm:min-h-0 sm:py-1.5 ${FOCUS_RING}`}

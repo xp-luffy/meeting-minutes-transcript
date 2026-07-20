@@ -98,7 +98,12 @@
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     sans-serif;
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  /* `--font-serif-loaded` is supplied by next/font in app/layout.tsx. The
+   * literal name and the local fallbacks stay so the stack still resolves if
+   * the webfont fails — a document that renders in Georgia is fine; a document
+   * that renders in the interface's own face is not. */
+  --font-serif:
+    var(--font-serif-loaded), "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
 
   --text-caption: 0.75rem; /* 12px */
@@ -133,7 +138,20 @@
 
 @layer components {
   /* Hand-rolled "prose" styling for AI-generated minutes body_html, since the
-     typography plugin isn't installed. Scope any generated HTML in this class. */
+     typography plugin isn't installed. Scope any generated HTML in this class.
+
+     The record is set in serif and the interface in sans, so a reader can tell
+     the statutory document from the software before reading a word. Previously
+     both rendered in the same face and the minutes outranked nothing on screen.
+
+     `max-width: 68ch` fixes the real reading problem: the body ran to ~125
+     characters per line inside a max-w-5xl card, roughly double the comfortable
+     measure. That was fatigue, not flatness — and it is the thing a cosec
+     actually spends an hour inside. */
+  .minutes-body {
+    font-family: var(--font-serif);
+    max-width: 68ch;
+  }
   .minutes-body h2 {
     @apply mt-6 mb-2 text-title font-semibold text-paper-900 first:mt-0;
   }

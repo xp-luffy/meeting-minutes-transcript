@@ -53,7 +53,7 @@ function describeEntry(entry: AuditLogEntry): string {
 export function ActivityFeed({ entries }: { entries: AuditLogEntry[] }) {
   return (
     <div className="rounded-surface border border-paper-200 bg-white p-6 shadow-raised">
-      <h2 className="text-body font-medium text-paper-700">Activity</h2>
+      <h2 className="text-subhead font-medium text-paper-700">Activity</h2>
 
       {entries.length === 0 ? (
         <p className="mt-3 text-body text-paper-500">No activity recorded yet.</p>

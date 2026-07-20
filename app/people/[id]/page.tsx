@@ -88,7 +88,7 @@ export default async function EntityDetailPage({
           every company in the portfolio. */}
       <section className="mt-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-body font-semibold text-paper-900">Owes</h2>
+          <h2 className="text-subhead font-semibold text-paper-900">Owes</h2>
           {owes.failed ? null : (
             <div className="flex flex-wrap items-center gap-2 text-caption">
               <Badge variant="indigo">{owes.openTotal} open</Badge>
@@ -221,7 +221,7 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">Appears across</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">Appears across</h2>
         {detail.meetings.length === 0 ? (
           <EmptyState compact message="No meetings recorded for this person yet." />
         ) : (
@@ -248,7 +248,7 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">Company roles</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">Company roles</h2>
         {detail.companyRoles.length === 0 ? (
           <EmptyState compact message="No company roles recorded yet." />
         ) : (
@@ -269,7 +269,7 @@ export default async function EntityDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-1 text-body font-semibold text-paper-900">Ego graph</h2>
+        <h2 className="mb-1 text-subhead font-semibold text-paper-900">Ego graph</h2>
         <p className="mb-3 text-caption text-paper-500">
           Who {entity.canonical_name} is entangled with — meetings attended and company roles held.
         </p>

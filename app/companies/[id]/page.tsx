@@ -84,7 +84,7 @@ export default async function CompanyDetailPage({
       </div>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">Meetings</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">Meetings</h2>
         {meetings.length === 0 ? (
           <EmptyState compact message="No meetings recorded for this company yet." />
         ) : (
@@ -116,7 +116,7 @@ export default async function CompanyDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">People &amp; directors</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">People &amp; directors</h2>
         {people.length === 0 ? (
           <EmptyState compact message="No people linked to this company yet." />
         ) : (
@@ -148,7 +148,7 @@ export default async function CompanyDetailPage({
       <CompanyDocumentsSection companyId={id} />
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">Resolutions register</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">Resolutions register</h2>
         <p className="mb-3 text-caption text-paper-500">
           The firm&apos;s institutional memory for this company — every resolution passed, and how
           it was resolved.
@@ -190,7 +190,7 @@ export default async function CompanyDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-body font-semibold text-paper-900">Open action items</h2>
+        <h2 className="mb-3 text-subhead font-semibold text-paper-900">Open action items</h2>
         {openActions.length === 0 ? (
           <EmptyState compact message="No open action items for this company." />
         ) : (
