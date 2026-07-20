@@ -436,8 +436,13 @@ export async function resolveEntitiesForMeeting(
       candidateQuery = candidateQuery.eq("workspace_id", meetingRow.workspace_id);
     } else {
       candidateQuery = candidateQuery.is("workspace_id", null);
+      // Legacy rows from the 0009 backfill carry user_id = NULL. Scoping
+      // strictly to the acting user made them unmatchable, so every meeting
+      // re-created a person who already existed — one director ended up as two
+      // records in the same company, silently splitting their directorship
+      // history and hiding cross-company conflicts. Match those too.
       candidateQuery = meetingRow.user_id
-        ? candidateQuery.eq("user_id", meetingRow.user_id)
+        ? candidateQuery.or(`user_id.eq.${meetingRow.user_id},user_id.is.null`)
         : candidateQuery.is("user_id", null);
     }
 
