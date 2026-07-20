@@ -208,19 +208,25 @@ export async function detectConflicts(
     if (!resolutions || resolutions.length === 0) return [];
 
     // --- interest-declaration presence ------------------------------------
-    const { data: draft } = await supabase
+    // These two reads are EVIDENCE for the finding "no interest declaration was
+    // found". If either fails, the haystack is empty and every conflict is
+    // reported as undeclared — a failed lookup dressed up as an evidentiary
+    // conclusion about a director's conduct. Bail instead.
+    const { data: draft, error: draftError } = await supabase
       .from("minutes_drafts")
       .select("body_html, version")
       .eq("meeting_id", meetingId)
       .order("version", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const { data: transcript } = await supabase
+    if (draftError) return null;
+    const { data: transcript, error: transcriptError } = await supabase
       .from("transcripts")
       .select("raw_text")
       .eq("meeting_id", meetingId)
       .limit(1)
       .maybeSingle();
+    if (transcriptError) return null;
     const declarationHaystack = `${stripHtml((draft?.body_html as string) ?? "")} ${
       (transcript?.raw_text as string) ?? ""
     }`;

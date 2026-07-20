@@ -437,7 +437,11 @@ async function computeAssurance(
 
   if (!meeting || !draft || draft.meeting_id !== meetingId) return null;
 
-  const [{ data: resolutions }, { data: actionItems }, { data: transcript }] = await Promise.all([
+  const [
+    { data: resolutions, error: resolutionsError },
+    { data: actionItems, error: actionItemsError },
+    { data: transcript, error: transcriptError },
+  ] = await Promise.all([
     supabase
       .from("resolutions")
       .select("resolution_number, resolution_text, outcome")
@@ -454,6 +458,14 @@ async function computeAssurance(
       .limit(1)
       .maybeSingle(),
   ]);
+
+  // postgrest-js RESOLVES { data: null, error } — it does not throw. Coercing a
+  // failed read to `[]` or `""` here would feed the engine an empty record, and
+  // the checks would then pass vacuously ("no action items" scores
+  // not_applicable, an empty transcript covers all undertakings). Finalisation
+  // would proceed on inputs nobody actually read. A failed read is "cannot
+  // verify", never "verified clean".
+  if (resolutionsError || actionItemsError || transcriptError) return null;
 
   const result = runAssurance({
     meeting: {
@@ -580,22 +592,38 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
 
   const nowIso = new Date().toISOString();
 
-  const { error: draftError } = await supabase
+  // `.select("id")` + a 0-row guard, not just an error check: an RLS refusal
+  // updates zero rows and still resolves without an error. Without this the
+  // status write can silently not happen while the audit trail below records
+  // the transition as fact — a false history entry in the one document written
+  // for a hostile reader.
+  const { data: draftUpdated, error: draftError } = await supabase
     .from("minutes_drafts")
     .update({ status: "final", finalised_at: nowIso })
-    .eq("id", draftId);
+    .eq("id", draftId)
+    .select("id");
 
   if (draftError) {
     return { error: friendlyRlsMessage(draftError) };
   }
+  if (!draftUpdated || draftUpdated.length === 0) {
+    return { error: "The minutes could not be finalised — you may not have permission." };
+  }
 
-  const { error: meetingError } = await supabase
+  const { data: meetingUpdated, error: meetingError } = await supabase
     .from("meetings")
     .update({ status: "final" })
-    .eq("id", verifiedMeetingId);
+    .eq("id", verifiedMeetingId)
+    .select("id");
 
   if (meetingError) {
     return { error: friendlyRlsMessage(meetingError) };
+  }
+  if (!meetingUpdated || meetingUpdated.length === 0) {
+    return {
+      error:
+        "The draft was finalised but the meeting status could not be updated — reload before relying on this record.",
+    };
   }
 
   await logAudit(supabase, {
