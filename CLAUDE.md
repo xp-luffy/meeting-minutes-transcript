@@ -61,6 +61,7 @@
 - Legacy NULL-owned entities were causing duplication issues; fix applied to match and handle these cases correctly
 - Migration 0012 consolidates orphan person entities and adds a unique index—part of data hygiene work for the database layer
 - quorum check had a bug where it was validating its own template — fix applied in recent commit
+- Assurance overhaul commit 'stop the engine marking its own homework' suggests a bug where the system was self-validating — likely an integrity fix in the minutes generation or status engine, decoupling evaluation from production.
 
 ## Notes
 
