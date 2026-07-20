@@ -171,9 +171,13 @@ export interface CompanyStats {
 
 /**
  * Meeting count, open action-item count, and last meeting date for a batch
- * of companies — one `meetings` select (grouped in JS) plus one
- * `action_items` select for those meetings' ids, so the /companies list
- * page never does one query per company.
+ * of companies — a single read of the `company_stats` view (migration 0013).
+ *
+ * This previously issued two sequential round trips and pulled EVERY meeting
+ * row and EVERY open action row across all companies over the wire, only to
+ * count them in JS — the counts being all the page renders. Postgres now does
+ * the aggregation and returns one row per company. The view is
+ * security_invoker, so the caller's RLS still applies.
  */
 export async function getCompanyStatsMap(companyIds: string[]): Promise<Map<string, CompanyStats>> {
   const stats = new Map<string, CompanyStats>();
@@ -183,41 +187,24 @@ export async function getCompanyStatsMap(companyIds: string[]): Promise<Map<stri
   if (companyIds.length === 0) return stats;
 
   const supabase = await createClient();
-  const { data: meetings, error } = await supabase
-    .from("meetings")
-    .select("id, company_id, meeting_date")
+  const { data, error } = await supabase
+    .from("company_stats")
+    .select("company_id, meeting_count, open_action_count, last_meeting_date")
     .in("company_id", companyIds);
 
-  if (error || !meetings) return stats;
+  if (error || !data) return stats;
 
-  const meetingRows = meetings as { id: string; company_id: string | null; meeting_date: string }[];
-  const meetingCompanyById = new Map<string, string>();
-
-  for (const m of meetingRows) {
-    if (!m.company_id) continue;
-    meetingCompanyById.set(m.id, m.company_id);
-    const entry = stats.get(m.company_id) ?? { meetingCount: 0, openActionCount: 0, lastMeetingDate: null };
-    entry.meetingCount += 1;
-    if (!entry.lastMeetingDate || m.meeting_date > entry.lastMeetingDate) {
-      entry.lastMeetingDate = m.meeting_date;
-    }
-    stats.set(m.company_id, entry);
-  }
-
-  const allMeetingIds = [...meetingCompanyById.keys()];
-  if (allMeetingIds.length > 0) {
-    const { data: actions } = await supabase
-      .from("action_items")
-      .select("meeting_id")
-      .in("meeting_id", allMeetingIds)
-      .eq("item_status", "open");
-
-    for (const a of (actions ?? []) as { meeting_id: string }[]) {
-      const companyId = meetingCompanyById.get(a.meeting_id);
-      if (!companyId) continue;
-      const entry = stats.get(companyId);
-      if (entry) entry.openActionCount += 1;
-    }
+  for (const row of data as {
+    company_id: string;
+    meeting_count: number | null;
+    open_action_count: number | null;
+    last_meeting_date: string | null;
+  }[]) {
+    stats.set(row.company_id, {
+      meetingCount: Number(row.meeting_count ?? 0),
+      openActionCount: Number(row.open_action_count ?? 0),
+      lastMeetingDate: row.last_meeting_date,
+    });
   }
 
   return stats;
