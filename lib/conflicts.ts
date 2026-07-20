@@ -12,8 +12,13 @@ import { nameSimilarity } from "./entities";
  *
  * This module talks to Supabase, so it is NOT framework-free — it is verified
  * by typecheck + live pilot, not the scratchpad unit tests. It never throws:
- * any failure resolves to an empty finding list so the draft page still
- * renders.
+ * any failure resolves to NULL, meaning "the scan did not run".
+ *
+ * Do not "simplify" a failure back to `[]`. An empty array is rendered as a
+ * green all-clear asserting no conflicts exist; returning it on error means a
+ * database problem produces a positive legal assurance. That bug shipped, and
+ * the first attempt to fix it only handled the catch block — postgrest-js
+ * resolves errors instead of throwing, so every query must check `error`.
  */
 
 export type ConflictSeverity = "warn" | "flag";
@@ -117,42 +122,57 @@ export async function detectConflicts(
 ): Promise<ConflictFinding[] | null> {
   try {
     // --- meeting (own company is excluded as a counterparty) ---------------
-    const { data: meeting } = await supabase
+    // Every query below destructures `error` and returns null on it.
+    //
+    // Returning null from the catch block alone was NOT enough: postgrest-js
+    // does not throw on a query error, it resolves to { data: null, error }.
+    // So an RLS denial or a dropped connection fell through to a `return []`,
+    // which the panel renders as a green "No conflicts or contradictions
+    // detected across the record" — a positive legal assurance produced by a
+    // failure. The catch only ever caught genuine JS exceptions.
+    //
+    // `[]` from here on means "the scan ran and found nothing". Null means
+    // "the scan did not run". They must never be conflated again.
+    const { data: meeting, error: meetingError } = await supabase
       .from("meetings")
       .select("id, company_id, company_name")
       .eq("id", meetingId)
       .maybeSingle();
+    if (meetingError) return null;
     if (!meeting) return [];
 
     const ownCompanyId: string | null = meeting.company_id ?? null;
     const ownCompanyNorm = normalize(meeting.company_name ?? "");
 
     // --- attendee entities (nodes present in this meeting) -----------------
-    const { data: attLinks } = await supabase
+    const { data: attLinks, error: attLinksError } = await supabase
       .from("entity_links")
       .select("entity_id")
       .eq("target_type", "meeting")
       .eq("target_id", meetingId);
+    if (attLinksError) return null;
 
     const attendeeEntityIds = [...new Set((attLinks ?? []).map((l) => l.entity_id as string))];
     if (attendeeEntityIds.length === 0) return [];
 
     // attendee display names
-    const { data: attEntities } = await supabase
+    const { data: attEntities, error: attEntitiesError } = await supabase
       .from("entities")
       .select("id, canonical_name")
       .in("id", attendeeEntityIds);
+    if (attEntitiesError) return null;
     const nameByEntityId = new Map<string, string>(
       (attEntities ?? []).map((e) => [e.id as string, (e.canonical_name as string) ?? "An attendee"]),
     );
 
     // --- directorship edges for those attendees ----------------------------
-    const { data: dirLinksRaw } = await supabase
+    const { data: dirLinksRaw, error: dirLinksError } = await supabase
       .from("entity_links")
       .select("entity_id, target_id, relation")
       .eq("target_type", "company")
       .in("entity_id", attendeeEntityIds)
       .in("relation", INTEREST_RELATIONS as unknown as string[]);
+    if (dirLinksError) return null;
     const dirLinks = (dirLinksRaw ?? []) as DirectorshipEdge[];
     if (dirLinks.length === 0) return [];
 
@@ -165,10 +185,11 @@ export async function detectConflicts(
     // a firm, the implicated counterparty could fall outside the slice and the
     // conflict would silently go undetected (docs/SIM_REPORT_V3.md).
     const interestCompanyIdList = Array.from(interestCompanyIds).slice(0, MAX_COMPANIES);
-    const { data: companies } =
+    const { data: companies, error: companiesError } =
       interestCompanyIdList.length > 0
         ? await supabase.from("companies").select("id, name").in("id", interestCompanyIdList)
-        : { data: [] as { id: string; name: string }[] };
+        : { data: [] as { id: string; name: string }[], error: null };
+    if (companiesError) return null;
     // Never flag the meeting's own company.
     const counterpartyCompanies = (companies ?? []).filter(
       (c) =>
@@ -178,11 +199,12 @@ export async function detectConflicts(
     if (counterpartyCompanies.length === 0) return [];
 
     // --- resolutions -------------------------------------------------------
-    const { data: resolutions } = await supabase
+    const { data: resolutions, error: resolutionsError } = await supabase
       .from("resolutions")
       .select("id, resolution_number, resolution_text")
       .eq("meeting_id", meetingId)
       .limit(MAX_RESOLUTIONS);
+    if (resolutionsError) return null;
     if (!resolutions || resolutions.length === 0) return [];
 
     // --- interest-declaration presence ------------------------------------

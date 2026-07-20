@@ -523,12 +523,23 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   }
 
   // Store the run so the proof is dated to the finalisation itself.
-  await supabase.from("assurance_reports").insert({
+  //
+  // This insert IS the proof. If it fails silently, the draft still goes final
+  // while the dated artefact that substantiates "here is the proof" does not
+  // exist — the exact claim-without-evidence this product exists to prevent.
+  // So a failure to record the proof refuses the finalisation.
+  const { error: proofError } = await supabase.from("assurance_reports").insert({
     draft_id: draftId,
     meeting_id: verifiedMeetingId,
     results: assurance.checks,
     score: assurance.score,
   });
+  if (proofError) {
+    return {
+      error:
+        "The completeness check ran, but its result could not be recorded — minutes not finalised. Try again.",
+    };
+  }
 
   const failKeys = assurance.checks.filter((c) => c.status === "fail").map((c) => c.key).sort();
 
@@ -672,69 +683,15 @@ export async function rerunAssurance(draftId: string, meetingId: string): Promis
 
   const supabase = await createClient();
 
-  const { data: meeting, error: meetingError } = await supabase
-    .from("meetings")
-    .select("id, meeting_type, minutes_format, chairperson, attendees, quorum_met")
-    .eq("id", meetingId)
-    .maybeSingle();
-
-  if (meetingError || !meeting) {
-    return { error: "Meeting not found." };
+  // Calls the SAME helper the finalisation gate uses. It previously duplicated
+  // the whole query-and-run block, so the two agreed only for as long as
+  // someone remembered to update both — which is not a guarantee, it is luck.
+  // The number shown on screen and the number that blocks sign-off must come
+  // from one code path.
+  const result = await computeAssurance(supabase, draftId, meetingId);
+  if (!result) {
+    return { error: "Could not run the completeness check — nothing was recorded." };
   }
-
-  const { data: draft, error: draftError } = await supabase
-    .from("minutes_drafts")
-    .select("id, meeting_id, body_html")
-    .eq("id", draftId)
-    .maybeSingle();
-
-  if (draftError || !draft) {
-    return { error: "Draft not found." };
-  }
-  if (draft.meeting_id !== meetingId) {
-    return { error: "Draft does not belong to this meeting." };
-  }
-
-  const [{ data: resolutions }, { data: actionItems }, { data: transcript }] = await Promise.all([
-    supabase
-      .from("resolutions")
-      .select("resolution_number, resolution_text, outcome")
-      .eq("meeting_id", meetingId),
-    supabase
-      .from("action_items")
-      .select("description, owner_name, owner_entity_id, due_date")
-      .eq("meeting_id", meetingId),
-    supabase
-      .from("transcripts")
-      .select("raw_text")
-      .eq("meeting_id", meetingId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-
-  const result = runAssurance({
-    meeting: {
-      meeting_type: meeting.meeting_type,
-      minutes_format: meeting.minutes_format ?? undefined,
-      chairperson: meeting.chairperson,
-      attendees: meeting.attendees,
-      quorum_met: meeting.quorum_met,
-    },
-    bodyHtml: draft.body_html ?? "",
-    resolutions: (resolutions ?? []) as {
-      resolution_number: string | null;
-      resolution_text: string;
-      outcome: string;
-    }[],
-    actionItems: (actionItems ?? []) as {
-      description: string;
-      owner_name: string | null;
-      owner_entity_id: string | null;
-      due_date: string | null;
-    }[],
-    transcriptText: transcript?.raw_text ?? "",
-  });
 
   const { error: insertError } = await supabase.from("assurance_reports").insert({
     draft_id: draftId,
