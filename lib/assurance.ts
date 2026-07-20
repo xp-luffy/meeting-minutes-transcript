@@ -150,8 +150,34 @@ function tokenOverlap(a: Set<string>, b: Set<string>): number {
 // meeting/context (so it is omitted from both the checklist and the score).
 // ---------------------------------------------------------------------------
 
-function checkQuorumStated(bodyText: string): AssuranceCheck {
-  const stated = /quorum/i.test(bodyText);
+/**
+ * A quorum STATEMENT, not merely the word.
+ *
+ * This check used to be `/quorum/i.test(bodyText)`. The engine emits a section
+ * headed "Attendance & Quorum" in every document, so the word was always
+ * present and the check could essentially never fail — it validated its own
+ * template. Proven on 2026-07-20: a draft with the quorum sentence deleted
+ * still scored quorum = pass and finalised.
+ *
+ * A real statement asserts a position: that a quorum was present/met, or
+ * expressly that it was not. Headings are excluded so a section title can
+ * never satisfy it.
+ */
+function hasQuorumStatement(bodyHtml: string, bodyText: string): boolean {
+  const withoutHeadings = bodyHtml.replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, " ");
+  const prose = stripHtml(withoutHeadings) || bodyText;
+  const sentences = prose.split(/(?<=[.!?])\s+/);
+  return sentences.some(
+    (s) =>
+      /quorum/i.test(s) &&
+      /\b(present|met|constituted|satisfied|achieved|form(ed|ing)?|lacking|absent|not\s+(present|met)|no\s+quorum|inquorate)\b/i.test(
+        s,
+      ),
+  );
+}
+
+function checkQuorumStated(bodyText: string, bodyHtml: string): AssuranceCheck {
+  const stated = hasQuorumStatement(bodyHtml, bodyText);
   return {
     key: "quorum_stated",
     label: "Quorum stated",
@@ -368,7 +394,7 @@ export function runAssurance(input: RunAssuranceInput): AssuranceResult {
 
   const checks: AssuranceCheck[] = [];
 
-  checks.push(checkQuorumStated(bodyText));
+  checks.push(checkQuorumStated(bodyText, bodyHtml));
   checks.push(checkAttendanceRecorded(bodyText, meeting.attendees));
   checks.push(checkChairpersonNamed(bodyText, meeting.chairperson));
 
