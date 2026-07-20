@@ -15,7 +15,7 @@ function buildQuery(params: Record<string, string>): string {
 function friendlyError(error: { code?: string; message: string } | null, fallback: string): string {
   if (!error) return fallback;
   if (error.code === "42501" || error.message.toLowerCase().includes("row-level security")) {
-    return "Sign in to save changes — browsing the demo is read-only.";
+    return "Your session has expired — sign in again to save changes.";
   }
   return `${fallback}: ${error.message}`;
 }

@@ -122,12 +122,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-
-      <p className="mt-4 text-center text-sm">
-        <Link href="/" className="focus-ring rounded text-neutral-500 hover:text-neutral-700">
-          Continue browsing the demo without an account →
-        </Link>
-      </p>
     </div>
   );
 }

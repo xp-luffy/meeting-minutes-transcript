@@ -43,7 +43,7 @@ function buildRedirectQuery(params: Record<string, string>): string {
 function friendlyInsertError(error: { code?: string; message: string } | null): string {
   if (!error) return "Could not create meeting: unknown error.";
   if (error.code === "42501" || error.message.toLowerCase().includes("row-level security")) {
-    return "Sign in to save changes — browsing the demo is read-only.";
+    return "Your session has expired — sign in again to save changes.";
   }
   return `Could not create meeting: ${error.message}`;
 }

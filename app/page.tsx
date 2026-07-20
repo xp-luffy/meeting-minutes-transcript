@@ -232,16 +232,13 @@ export default async function Home() {
 
   const byWorkspace = new Map<string, MeetingRow[]>();
   const personal: MeetingRow[] = [];
-  const demo: MeetingRow[] = [];
   for (const meeting of meetings) {
     if (meeting.workspace_id) {
       const arr = byWorkspace.get(meeting.workspace_id) ?? [];
       arr.push(meeting);
       byWorkspace.set(meeting.workspace_id, arr);
-    } else if (meeting.user_id) {
-      personal.push(meeting);
     } else {
-      demo.push(meeting);
+      personal.push(meeting);
     }
   }
 
@@ -284,14 +281,6 @@ export default async function Home() {
         />
       ) : null}
 
-      {demo.length > 0 ? (
-        <MeetingGroup
-          title="Demo library"
-          meetings={demo}
-          latestDraftByMeeting={latestDraftByMeeting}
-          confirmationCountByMeeting={confirmationCountByMeeting}
-        />
-      ) : null}
     </div>
   );
 }

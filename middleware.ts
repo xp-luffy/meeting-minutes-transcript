@@ -7,9 +7,17 @@ type CookieToSet = { name: string; value: string; options?: CookieOptions };
 export async function middleware(request: NextRequest) {
   const response = await updateSession(request);
 
-  // Gate the "new meeting" form behind auth — everything else (demo browse)
-  // stays public; write actions are RLS-protected regardless.
-  if (request.nextUrl.pathname.startsWith("/meetings/new")) {
+  // Everything requires sign-in. The only public surfaces are the auth pages
+  // themselves and /review/[token] — the anonymous confirmation link a
+  // director opens from an email, which by design has no account.
+  const path = request.nextUrl.pathname;
+  const isPublic =
+    path.startsWith("/login") ||
+    path.startsWith("/signup") ||
+    path.startsWith("/review") ||
+    path.startsWith("/auth");
+
+  if (!isPublic) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
