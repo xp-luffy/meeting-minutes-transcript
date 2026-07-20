@@ -73,6 +73,7 @@
 - 0-row guards protect against edge cases where operations on empty result sets could produce undefined behavior or misleading outputs
 - Fail-closed locks ensure that if lock acquisition fails, the operation does not proceed (prevents data corruption from unguarded concurrent access)
 - chore: remove ZZ-PILOT test data (migrations 0021, 0022) — test data cleanup migrations were committed, indicating housekeeping rather than feature work.
+- The type system was designed/written in a prior design pass but was never integrated into the codebase — the recent commit finally applied it.
 
 ## Notes
 
