@@ -1,28 +1,159 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+ * VISUAL SYSTEM V4 — design tokens.
+ *
+ * Source: docs/VISUAL_SYSTEM_V4.md §2.2. Every value is an explicit sRGB hex
+ * so the DOCX/PDF builders (which cannot resolve CSS variables) can use the
+ * same literals — see lib/export/build-docx.ts.
+ *
+ * The four semantic families are RESERVED for claims about correctness.
+ * `ink-*` means "you can act here". `paper-*` means "this is the record".
+ * Nothing decorative, categorical or navigational may use the semantic ones.
+ * ======================================================================== */
+@theme {
+  /* ---------------------------------------------------------------------
+   * PAPER — warm neutral. Surfaces, borders, and body ink.
+   * ------------------------------------------------------------------- */
+  --color-paper-50: #fafaf8; /* page ground */
+  --color-paper-100: #f4f4f1; /* subtle fill, disabled ground */
+  --color-paper-200: #e6e5e0; /* hairline / divider (decorative only) */
+  --color-paper-300: #d3d2cb; /* card border, dashed empty-state border */
+  --color-paper-400: #9a988e; /* DECORATIVE ONLY — 2.89:1, never text, never a boundary */
+  --color-paper-450: #8a887e; /* form-field border — 3.56:1, meets SC 1.4.11 */
+  --color-paper-500: #74736a; /* muted / secondary text — 4.77:1 on white */
+  --color-paper-600: #5c5a53; /* tertiary body text */
+  --color-paper-700: #45443e; /* body text */
+  --color-paper-800: #2e2d29; /* strong body text */
+  --color-paper-900: #1c1b18; /* headings, primary ink */
+
+  /* ---------------------------------------------------------------------
+   * INK — brand navy. Primary actions, links, focus. Carries NO status meaning.
+   * ------------------------------------------------------------------- */
+  --color-ink-50: #eff3f8;
+  --color-ink-100: #dce4ef;
+  --color-ink-200: #bccadd;
+  --color-ink-300: #93a9c4; /* derived: decorative edge only */
+  --color-ink-400: #5c7899; /* derived */
+  --color-ink-500: #3d5a80; /* focus ring */
+  --color-ink-600: #2c4568; /* primary button ground, link text */
+  --color-ink-700: #22364f; /* primary button hover */
+  --color-ink-800: #1a2a3d; /* primary button active */
+  --color-ink-900: #121d2b; /* derived */
+
+  /* ---------------------------------------------------------------------
+   * SEMANTIC — status. Reserved. The -50/-100/-600/-700/-800 steps are the
+   * measured ones from VISUAL_SYSTEM_V4 §7.1; -200/-300/-400/-900 are derived
+   * tints that exist ONLY so no call site silently resolves to no colour.
+   * They are decorative: never text, never a meaning-bearing boundary.
+   * ------------------------------------------------------------------- */
+
+  /* VERIFIED — a check ran and it passed. */
+  --color-status-verified-50: #ecf5ee;
+  --color-status-verified-100: #d5e9da;
+  --color-status-verified-200: #bfdcc6; /* derived, decorative */
+  --color-status-verified-300: #9ac7a6; /* derived, decorative */
+  --color-status-verified-400: #5fa274; /* derived, decorative */
+  --color-status-verified-600: #2e7d46; /* icon, rail, solid ground */
+  --color-status-verified-700: #236336;
+  --color-status-verified-800: #1b4d2a; /* text on -50 / -100 tints */
+  --color-status-verified-900: #143a20; /* derived */
+
+  /* UNKNOWN — no check has run, or a check could not complete. */
+  --color-status-unknown-50: #f2f4f6;
+  --color-status-unknown-100: #e3e7eb;
+  --color-status-unknown-200: #cfd5da; /* derived, decorative */
+  --color-status-unknown-300: #b4bcc4; /* derived, decorative */
+  --color-status-unknown-400: #8b95a0; /* derived, decorative */
+  --color-status-unknown-600: #5a6672;
+  --color-status-unknown-700: #47515b;
+  --color-status-unknown-800: #363e46;
+  --color-status-unknown-900: #262c32; /* derived */
+
+  /* FAILED — a check ran and found a gap. */
+  --color-status-failed-50: #fdedec;
+  --color-status-failed-100: #fadcd9;
+  --color-status-failed-200: #f5c6c1; /* derived, decorative */
+  --color-status-failed-300: #eda79f; /* derived, decorative */
+  --color-status-failed-400: #d9695b; /* derived, decorative */
+  --color-status-failed-600: #c0392b;
+  --color-status-failed-700: #9c2b20;
+  --color-status-failed-800: #7a2119;
+  --color-status-failed-900: #5c1912; /* derived */
+
+  /* RISK — a check ran, passed, but flagged something for judgement. */
+  --color-status-risk-50: #fdf4e3;
+  --color-status-risk-100: #f9e6bf;
+  --color-status-risk-200: #f2d79a; /* derived, decorative */
+  --color-status-risk-300: #e4c173; /* derived, decorative */
+  --color-status-risk-400: #c08d1e; /* derived, decorative */
+  --color-status-risk-600: #9a6a08;
+  --color-status-risk-700: #7e5606;
+  --color-status-risk-800: #6b4805; /* text on -50 / -100 tints */
+  --color-status-risk-900: #503604; /* derived */
+
+  /* ---------------------------------------------------------------------
+   * TYPE
+   * ------------------------------------------------------------------- */
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  --text-caption: 0.75rem; /* 12px */
+  --text-caption--line-height: 1.125rem;
+  --text-meta: 0.8125rem; /* 13px */
+  --text-meta--line-height: 1.25rem;
+  --text-body: 0.875rem; /* 14px */
+  --text-body--line-height: 1.5rem;
+  --text-document: 0.9375rem; /* 15px */
+  --text-document--line-height: 1.65rem;
+  --text-subhead: 1rem; /* 16px */
+  --text-subhead--line-height: 1.5rem;
+  --text-title: 1.125rem; /* 18px */
+  --text-title--line-height: 1.625rem;
+  --text-page: 1.375rem; /* 22px */
+  --text-page--line-height: 1.875rem;
+
+  /* ---------------------------------------------------------------------
+   * RADIUS — three steps, no more.
+   * ------------------------------------------------------------------- */
+  --radius-control: 0.25rem; /* 4px — inputs, buttons, chips-with-corners */
+  --radius-surface: 0.375rem; /* 6px — cards, panels, banners, table shells */
+  --radius-pill: 9999px; /* status chips only */
+
+  /* ---------------------------------------------------------------------
+   * ELEVATION — two steps. Documents do not float.
+   * ------------------------------------------------------------------- */
+  --shadow-raised: 0 1px 2px 0 rgb(28 27 24 / 0.05);
+  --shadow-float:
+    0 4px 12px -2px rgb(28 27 24 / 0.1), 0 2px 4px -2px rgb(28 27 24 / 0.06);
+}
+
 @layer components {
   /* Hand-rolled "prose" styling for AI-generated minutes body_html, since the
      typography plugin isn't installed. Scope any generated HTML in this class. */
   .minutes-body h2 {
-    @apply mt-6 mb-2 text-lg font-semibold text-neutral-900 first:mt-0;
+    @apply mt-6 mb-2 text-title font-semibold text-paper-900 first:mt-0;
   }
   .minutes-body h3 {
-    @apply mt-5 mb-2 text-base font-semibold text-neutral-900 first:mt-0;
+    @apply mt-5 mb-2 text-subhead font-semibold text-paper-900 first:mt-0;
   }
   .minutes-body p {
-    @apply mb-3 text-sm leading-relaxed text-neutral-700;
+    @apply mb-3 text-document text-paper-700;
   }
   .minutes-body ul {
-    @apply mb-3 list-disc space-y-1 pl-5 text-sm text-neutral-700;
+    @apply mb-3 list-disc space-y-1 pl-5 text-document text-paper-700;
   }
   .minutes-body ol {
-    @apply mb-3 list-decimal space-y-1 pl-5 text-sm text-neutral-700;
+    @apply mb-3 list-decimal space-y-1 pl-5 text-document text-paper-700;
   }
   .minutes-body li {
-    @apply text-sm text-neutral-700;
+    @apply text-document text-paper-700;
   }
   .minutes-body strong {
-    @apply font-semibold text-neutral-900;
+    @apply font-semibold text-paper-900;
   }
 
   /* Tiptap/ProseMirror content root: kill the native contenteditable outline
@@ -38,14 +169,14 @@
   /* Maisca (and any other) table-based house-format sections: modest,
      print-friendly borders — no inline styles needed in the generated HTML. */
   .minutes-body table {
-    @apply mb-4 w-full border-collapse text-sm;
+    @apply mb-4 w-full border-collapse text-body;
   }
   .minutes-body th,
   .minutes-body td {
-    @apply border border-neutral-300 px-3 py-2 align-top text-sm text-neutral-700;
+    @apply border border-paper-300 px-3 py-2 align-top text-body text-paper-700;
   }
   .minutes-body th {
-    @apply text-left align-top text-xs font-semibold text-neutral-900;
+    @apply text-left align-top text-caption font-semibold text-paper-900;
   }
   .minutes-body table th:first-child,
   .minutes-body table td:first-child {
@@ -54,32 +185,97 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Mobile & interaction polish utilities (Sprint V2-2, group 1)
+ * Mobile & interaction polish utilities.
  * Keep this block minimal — additions here are shared across every route.
  * ------------------------------------------------------------------------- */
-@layer utilities {
-  /* Meets the ~44px touch-target guideline for small icon/text buttons on
-     touch devices, without forcing a fixed size on their content. */
-  .tap-target {
-    min-height: 2.75rem;
-    min-width: 2.75rem;
-  }
 
-  /* Consistent keyboard-focus ring for buttons/links; only shows for
-     keyboard/assistive-tech focus, not mouse clicks. */
-  .focus-ring {
-    @apply outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2;
-  }
+/* Meets the ~44px touch-target guideline for small icon/text buttons on
+   touch devices, without forcing a fixed size on their content. */
+@utility tap-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+/*
+ * THE focus ring — one implementation (VISUAL_SYSTEM_V4 §5.5, defect E).
+ *
+ * `outline-none` is deliberately scoped to `focus-visible`. The previous
+ * version killed the outline unconditionally, which removes the only focus
+ * indicator Windows High Contrast mode draws.
+ */
+@utility focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-500 focus-visible:ring-offset-2;
 }
 
 /* Small-screen table handling for AI-generated minutes bodies: wide Maisca
    tables (many columns) scroll horizontally instead of breaking the layout,
-   at phone/small-tablet widths only. Desktop rendering (>640px) is
-   unaffected — .minutes-body table keeps its normal width/border rules from
-   the @layer components block above. */
+   at phone/small-tablet widths only. */
 @media (max-width: 640px) {
   .minutes-body table {
     display: block;
     overflow-x: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced motion (VISUAL_SYSTEM_V4 §7.3). The mobile drawer transform and
+ * every transition-* utility must stop moving for users who asked them to.
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * PRINT (VISUAL_SYSTEM_V4 §7.3). This app produces evidence; the printout is
+ * the artifact that survives. White ground, no shadows, every status border
+ * kept at >=1pt, and nothing collapsed behind a <details> the reader cannot
+ * open on paper.
+ * ------------------------------------------------------------------------- */
+@media print {
+  body {
+    background: #fff !important;
+    color: #1c1b18 !important;
+  }
+
+  /* Chrome / drawer / sticky nav have no meaning on paper. */
+  header nav,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  main {
+    padding-left: 0 !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+
+  /* A status rail is meaning, not decoration — keep it, and keep it inked. */
+  [class*="border-l-status-"],
+  [class*="border-status-"] {
+    border-left-width: 3pt !important;
+  }
+
+  /* Every collapsed section is expanded: a reader on paper cannot click. */
+  details {
+    display: block !important;
+  }
+  details > *:not(summary) {
+    display: revert !important;
+  }
+  details:not([open]) > *:not(summary) {
+    display: block !important;
+  }
+
+  a[href]::after {
+    content: "";
   }
 }

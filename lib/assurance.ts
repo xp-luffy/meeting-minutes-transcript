@@ -46,7 +46,14 @@ export interface AssuranceResolutionInput {
 
 export interface AssuranceActionItemInput {
   description: string;
+  /** What the minutes literally say. Never rewritten by a later linking decision. */
   owner_name: string | null;
+  /**
+   * Set once a human has linked the recorded name to a known person.
+   * Absent/undefined is treated as UNLINKED — the safe direction: a caller that
+   * forgets to select the column gets a warning, not a false clean bill.
+   */
+  owner_entity_id?: string | null;
   due_date: string | null;
 }
 
@@ -380,20 +387,59 @@ function checkActionsHaveOwners(actionItems: AssuranceActionItemInput[]): Assura
       detail: "No action items were recorded, so there is nothing to check.",
     };
   }
+  // Nobody accountable at all. A linked person counts even if the recorded
+  // text is a placeholder — a human has since said who it is.
   const missing = actionItems.filter(
     (a) =>
-      !a.owner_name ||
-      a.owner_name.trim().length === 0 ||
-      PLACEHOLDER_OWNER_RE.test(a.owner_name.trim()),
+      !a.owner_entity_id &&
+      (!a.owner_name ||
+        a.owner_name.trim().length === 0 ||
+        PLACEHOLDER_OWNER_RE.test(a.owner_name.trim())),
   );
   return {
     key: "actions_have_owners",
     label: "Action items have owners",
-    status: missing.length > 0 ? "warn" : "pass",
+    // Raised from warn to fail: an undertaking with nobody accountable is a
+    // standard audit finding, and warns do not block finalisation.
+    status: missing.length > 0 ? "fail" : "pass",
     detail:
       missing.length > 0
-        ? `Action item(s) missing an owner: ${missing.map((a) => `"${a.description}"`).join("; ")}`
-        : "All action items have an owner assigned.",
+        ? `Action item(s) with nobody accountable: ${missing.map((a) => `"${a.description}"`).join("; ")}`
+        : "Every action item has an owner.",
+  };
+}
+
+/**
+ * Separate from the check above because it is a different risk. "Nobody owns
+ * this" is a gap in the record; "we wrote a name but cannot prove who it is"
+ * is a gap in traceability — you cannot chase, notify or report on a string.
+ */
+function checkOwnersResolved(actionItems: AssuranceActionItemInput[]): AssuranceCheck {
+  const named = actionItems.filter(
+    (a) =>
+      a.owner_name &&
+      a.owner_name.trim().length > 0 &&
+      !PLACEHOLDER_OWNER_RE.test(a.owner_name.trim()),
+  );
+  if (named.length === 0) {
+    return {
+      key: "owners_resolved",
+      label: "Owners linked to known people",
+      status: "not_applicable",
+      detail: "No action items carry a recorded owner name, so there is nothing to link.",
+    };
+  }
+  const unlinked = named.filter((a) => !a.owner_entity_id);
+  return {
+    key: "owners_resolved",
+    label: "Owners linked to known people",
+    status: unlinked.length > 0 ? "warn" : "pass",
+    detail:
+      unlinked.length > 0
+        ? `${unlinked.length} owner(s) recorded as text only, not linked to a known person: ${[
+            ...new Set(unlinked.map((a) => `"${a.owner_name!.trim()}"`)),
+          ].join(", ")}`
+        : "Every recorded owner is linked to a known person.",
   };
 }
 
@@ -489,6 +535,7 @@ export function runAssurance(input: RunAssuranceInput): AssuranceResult {
   checks.push(checkResolutionsWellformed(resolutions));
   checks.push(checkUndertakingsCovered(transcriptText, actionItems));
   checks.push(checkActionsHaveOwners(actionItems));
+  checks.push(checkOwnersResolved(actionItems));
   checks.push(checkActionsHaveDates(actionItems));
 
   const previousMinutesCheck = checkPreviousMinutesConfirmed(bodyText, transcriptText);

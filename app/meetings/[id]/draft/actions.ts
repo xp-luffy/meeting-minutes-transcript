@@ -444,7 +444,7 @@ async function computeAssurance(
       .eq("meeting_id", meetingId),
     supabase
       .from("action_items")
-      .select("description, owner_name, due_date")
+      .select("description, owner_name, owner_entity_id, due_date")
       .eq("meeting_id", meetingId),
     supabase
       .from("transcripts")
@@ -472,6 +472,7 @@ async function computeAssurance(
     actionItems: (actionItems ?? []) as {
       description: string;
       owner_name: string | null;
+      owner_entity_id: string | null;
       due_date: string | null;
     }[],
     transcriptText: transcript?.raw_text ?? "",
@@ -701,7 +702,7 @@ export async function rerunAssurance(draftId: string, meetingId: string): Promis
       .eq("meeting_id", meetingId),
     supabase
       .from("action_items")
-      .select("description, owner_name, due_date")
+      .select("description, owner_name, owner_entity_id, due_date")
       .eq("meeting_id", meetingId),
     supabase
       .from("transcripts")
@@ -729,6 +730,7 @@ export async function rerunAssurance(draftId: string, meetingId: string): Promis
     actionItems: (actionItems ?? []) as {
       description: string;
       owner_name: string | null;
+      owner_entity_id: string | null;
       due_date: string | null;
     }[],
     transcriptText: transcript?.raw_text ?? "",
