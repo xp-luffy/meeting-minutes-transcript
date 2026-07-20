@@ -44,34 +44,40 @@ function SidebarContent({
         Meeting Minutes
       </Link>
 
-      <Link
-        href="/meetings/new"
-        onClick={onNavigate}
-        className={`${FOCUS_RING} tap-target flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700`}
-      >
-        New Meeting
-      </Link>
+      {/* Signed-out visitors only ever see /login and /review/[token], so the
+          app nav would be links they cannot follow. Login is just login. */}
+      {profile ? (
+        <>
+          <Link
+            href="/meetings/new"
+            onClick={onNavigate}
+            className={`${FOCUS_RING} tap-target flex w-full items-center justify-center gap-1.5 rounded-md bg-indigo-600 px-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700`}
+          >
+            New Meeting
+          </Link>
 
-      <nav aria-label="Primary" className="flex flex-col gap-0.5">
-        {links.map((link) => {
-          const active = isLinkActive(pathname, link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={`${FOCUS_RING} tap-target flex items-center rounded-md px-3 text-sm transition-colors ${
-                active
-                  ? "bg-indigo-50 font-medium text-indigo-700"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-              }`}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
-      </nav>
+          <nav aria-label="Primary" className="flex flex-col gap-0.5">
+            {links.map((link) => {
+              const active = isLinkActive(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={`${FOCUS_RING} tap-target flex items-center rounded-md px-3 text-sm transition-colors ${
+                    active
+                      ? "bg-indigo-50 font-medium text-indigo-700"
+                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </>
+      ) : null}
 
       <div className="mt-auto border-t border-neutral-200 pt-3">
         {profile ? (
