@@ -4,10 +4,6 @@ import { formatDate } from "@/lib/format";
 import type { ObligationKind, ObligationRow } from "@/lib/obligations";
 
 /**
- * NOTE: this component is intentionally NOT mounted anywhere yet — it is
- * exported here for the page orchestrator to wire into
- * app/meetings/[id]/draft/page.tsx once ready.
- *
  * Server component: loads this meeting's obligations (the downstream
  * statutory duties this meeting's decisions created) and renders a compact,
  * muted, read-only card. Status is edited from the cross-portfolio register

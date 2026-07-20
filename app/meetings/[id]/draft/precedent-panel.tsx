@@ -6,10 +6,6 @@ import { formatDate, formatConfidencePercent } from "@/lib/format";
 import { Badge, FOCUS_RING } from "@/components/ui";
 
 /**
- * NOTE: this component is intentionally NOT mounted anywhere yet — it is
- * exported here for the page orchestrator to wire into
- * app/meetings/[id]/draft/page.tsx once ready.
- *
  * Server component: loads the meeting's current resolutions, finds similar
  * resolutions from OTHER meetings (lib/precedents.ts), and renders a
  * collapsed, muted "Precedents from past minutes" card. Renders nothing

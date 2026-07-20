@@ -8,10 +8,6 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { acknowledgeAssurance, rerunAssurance } from "./actions";
 
 /**
- * NOTE: this component is intentionally NOT mounted anywhere yet — it is
- * exported here for the page orchestrator to wire into
- * app/meetings/[id]/draft/page.tsx once ready.
- *
  * Client component: renders the assurance ("nothing legally required is
  * missing") report for the current draft — a score dial, the checklist
  * grouped fail → warn → pass (pass collapsed), a re-run control, and an

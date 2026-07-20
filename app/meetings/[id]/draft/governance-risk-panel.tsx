@@ -3,10 +3,6 @@ import { detectConflicts, type ConflictFinding } from "@/lib/conflicts";
 import { checkConsistency, type ConsistencyFinding } from "@/lib/consistency";
 
 /**
- * NOTE: this component is intentionally NOT mounted anywhere yet — it is
- * exported here for the page orchestrator to wire into
- * app/meetings/[id]/draft/page.tsx once ready.
- *
  * Server component: the "wow" governance panel. It traverses the directorship
  * graph (detectConflicts) to surface related-party / undeclared-interest
  * conflicts, then runs the deterministic consistency checks (checkConsistency)
