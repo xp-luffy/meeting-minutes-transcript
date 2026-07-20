@@ -227,10 +227,19 @@ export async function detectConflicts(
       .limit(1)
       .maybeSingle();
     if (transcriptError) return null;
-    const declarationHaystack = `${stripHtml((draft?.body_html as string) ?? "")} ${
-      (transcript?.raw_text as string) ?? ""
-    }`;
-    const interestDeclared = INTEREST_DECLARATION_RE.test(declarationHaystack);
+    // The minutes and the transcript are NOT interchangeable evidence here.
+    //
+    // These used to be concatenated into one haystack, so a declaration spoken
+    // in the room but never written into the minutes downgraded the finding
+    // from `flag` to `warn`. That is backwards: the minutes are the statutory
+    // record, and a declaration that exists only in the transcript is exactly
+    // the omission this product exists to catch. It must escalate, not soften.
+    const declaredInMinutes = INTEREST_DECLARATION_RE.test(
+      stripHtml((draft?.body_html as string) ?? ""),
+    );
+    const declaredInTranscriptOnly =
+      !declaredInMinutes &&
+      INTEREST_DECLARATION_RE.test((transcript?.raw_text as string) ?? "");
 
     // --- traverse: resolution counterparty × attendee directorship ---------
     // Dedupe per (attendee, counterparty); collect the resolutions involved.
@@ -289,12 +298,15 @@ export async function detectConflicts(
       const rrptClause = f.rrpt
         ? " This resolution is a related-party transaction, so the interest is directly material."
         : "";
-      const declClause = interestDeclared
-        ? " An interest declaration was found in the record — confirm it covers this person and counterparty."
-        : " No interest declaration was found in the minutes body or transcript.";
+      const declClause = declaredInMinutes
+        ? " An interest declaration is recorded in the minutes — confirm it covers this person and counterparty."
+        : declaredInTranscriptOnly
+          ? " An interest declaration appears in the transcript but NOT in the minutes — the statutory record does not show it."
+          : " No interest declaration was found in the minutes or the transcript.";
 
       out.push({
-        severity: interestDeclared ? "warn" : "flag",
+        // Only a declaration in the MINUTES softens this to a warning.
+        severity: declaredInMinutes ? "warn" : "flag",
         title: `Possible undeclared interest: ${person} is ${f.relation} of ${f.company.name}`,
         detail: `${person} (${rel}, ${f.company.name}) is a party to ${resList}, where ${f.company.name} is the counterparty.${rrptClause}${declClause}`,
         relatedEntity: person,

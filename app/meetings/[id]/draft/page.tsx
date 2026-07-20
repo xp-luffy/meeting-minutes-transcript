@@ -285,7 +285,16 @@ export default async function DraftPage({
 
       <div>
         <h2 className="text-body font-medium text-paper-700">Action Items</h2>
-        {typedActionItems.length === 0 ? (
+        {actionItemsError ? (
+          // Same class as the resolutions claim directly above: "No action
+          // items extracted" is a statement about the record. The error was
+          // already captured here and then not used — the fix was applied to
+          // resolutions and missed on the very next block.
+          <div className="mt-3 rounded-surface border border-dashed border-paper-450 bg-paper-50 px-4 py-3 text-body text-paper-700">
+            Action items could not be loaded — this is not the same as there being none.
+            Reload before relying on this page.
+          </div>
+        ) : typedActionItems.length === 0 ? (
           <p className="mt-3 text-body text-paper-500">No action items extracted.</p>
         ) : (
           <ul className="mt-3 divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
