@@ -31,6 +31,7 @@
 - V2 deployment complete with all audit findings resolved; project cleared for production across opus and codex implementations
 - V3 graph/obligation engine implemented with entities, obligations, conflicts, and people models as foundation for audit system
 - Pending state handling for destructive actions is a key ux pattern being refined in the codebase
+- Refuse to finalise without proof: the fix for false all-clear (where a meeting could be falsely marked as fully verified) is now paired with a proof gate that prevents finalisation unless actual evidence is present.
 
 ## Gotchas
 
@@ -63,6 +64,7 @@
 - Migration 0012 consolidates orphan person entities and adds a unique index—part of data hygiene work for the database layer
 - quorum check had a bug where it was validating its own template — fix applied in recent commit
 - Assurance overhaul commit 'stop the engine marking its own homework' suggests a bug where the system was self-validating — likely an integrity fix in the minutes generation or status engine, decoupling evaluation from production.
+- Visual system applied in Sprint 4: unknown/unverified status can no longer appear verified — unknown vs verified distinction is now visually enforced at the UI level.
 
 ## Notes
 
