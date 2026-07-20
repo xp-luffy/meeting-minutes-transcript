@@ -20,6 +20,7 @@
 - Remove demo mode: login is now required, users only see their own work.
 - App navigation is hidden from signed-out visitors (auth-gating UI elements)
 - Automated 'Verifier' or finality gate added: 'final' status now requires explicit verification step, closing 4 unearned-assurance gaps where items could reach final without proper validation.
+- Owner check was split into two distinct concepts: accountability vs traceability. This likely has implications for RLS policies and authentication logic.
 
 ## Architecture
 
