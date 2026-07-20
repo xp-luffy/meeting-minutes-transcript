@@ -23,7 +23,7 @@ export async function createReviewShare(
   // governs who can actually read the share.
   const { data: draftRow } = await supabase
     .from("minutes_drafts")
-    .select("id, meeting_id")
+    .select("id, meeting_id, status")
     .eq("id", draftId)
     .maybeSingle();
 
@@ -33,6 +33,19 @@ export async function createReviewShare(
   if (meetingId && draftRow.meeting_id !== meetingId) {
     return { error: "Draft does not belong to this meeting." };
   }
+
+  // The recipient of this link signs "I confirm these minutes are accurate" —
+  // a real attestation, made by someone with no account and no way to judge
+  // whether anyone has checked the document. Sending a raw first draft asks a
+  // director to vouch for text nobody has reviewed, so circulation requires a
+  // reviewed (or final) draft.
+  if (draftRow.status !== "reviewed" && draftRow.status !== "final") {
+    return {
+      error:
+        "Mark the minutes reviewed before circulating — a confirmation link asks a director to attest they are accurate.",
+    };
+  }
+
   const verifiedMeetingId = draftRow.meeting_id;
 
   const token = randomBytes(24).toString("base64url");

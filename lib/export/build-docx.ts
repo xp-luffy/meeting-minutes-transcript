@@ -131,6 +131,24 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
 
   const children: (Paragraph | Table)[] = [];
 
+  // Draft banner. An exported file leaves the app and gets emailed, printed
+  // and filed with nothing to say whether anyone approved it — an unreviewed
+  // first pass looked identical to signed-off minutes. Anything not final
+  // says so on its face.
+  if (draft.status !== "final") {
+    const label =
+      draft.status === "reviewed"
+        ? "DRAFT — REVIEWED, NOT YET FINAL"
+        : "DRAFT — NOT REVIEWED OR APPROVED";
+    children.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 160 },
+        children: [new TextRun({ text: label, bold: true, size: 22, color: "B45309" })],
+      }),
+    );
+  }
+
   // Title
   children.push(
     new Paragraph({

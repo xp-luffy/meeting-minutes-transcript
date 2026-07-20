@@ -319,6 +319,19 @@ export async function buildMinutesPdf(data: ExportData): Promise<Uint8Array> {
 
   const writer = await PdfWriter.create();
 
+  // Same reason as the DOCX banner: an exported file carries no app context,
+  // so an unreviewed draft must not look like approved minutes once printed.
+  if (draft.status !== "final") {
+    writer.drawCentered(
+      draft.status === "reviewed"
+        ? "DRAFT — REVIEWED, NOT YET FINAL"
+        : "DRAFT — NOT REVIEWED OR APPROVED",
+      SUBTITLE_SIZE,
+      true,
+      8,
+    );
+  }
+
   writer.drawCentered(`MINUTES OF ${meeting.meeting_type.toUpperCase()}`, TITLE_SIZE, true, 6);
   writer.drawCentered(meeting.company_name, SUBTITLE_SIZE, true, 12);
 

@@ -412,6 +412,74 @@ export async function markDraftReviewed(
 }
 
 /** Moves a draft (and its parent meeting) from 'reviewed' to 'final'. Locks all editing once applied. */
+/**
+ * Runs the completeness checks against the CURRENT state of a draft.
+ *
+ * Shared by rerunAssurance (user-triggered) and markDraftFinal (the gate), so
+ * the two can never drift apart — the number shown on screen and the number
+ * that blocks sign-off come from the same code path. Returns null if the
+ * draft or meeting cannot be read, which callers must treat as "cannot
+ * verify" rather than "passed".
+ */
+async function computeAssurance(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  draftId: string,
+  meetingId: string,
+): Promise<{ checks: { key: string; status: string }[]; score: number } | null> {
+  const [{ data: meeting }, { data: draft }] = await Promise.all([
+    supabase
+      .from("meetings")
+      .select("id, meeting_type, minutes_format, chairperson, attendees, quorum_met")
+      .eq("id", meetingId)
+      .maybeSingle(),
+    supabase.from("minutes_drafts").select("id, meeting_id, body_html").eq("id", draftId).maybeSingle(),
+  ]);
+
+  if (!meeting || !draft || draft.meeting_id !== meetingId) return null;
+
+  const [{ data: resolutions }, { data: actionItems }, { data: transcript }] = await Promise.all([
+    supabase
+      .from("resolutions")
+      .select("resolution_number, resolution_text, outcome")
+      .eq("meeting_id", meetingId),
+    supabase
+      .from("action_items")
+      .select("description, owner_name, due_date")
+      .eq("meeting_id", meetingId),
+    supabase
+      .from("transcripts")
+      .select("raw_text")
+      .eq("meeting_id", meetingId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const result = runAssurance({
+    meeting: {
+      meeting_type: meeting.meeting_type,
+      minutes_format: meeting.minutes_format ?? undefined,
+      chairperson: meeting.chairperson,
+      attendees: meeting.attendees,
+      quorum_met: meeting.quorum_met,
+    },
+    bodyHtml: draft.body_html ?? "",
+    resolutions: (resolutions ?? []) as {
+      resolution_number: string | null;
+      resolution_text: string;
+      outcome: string;
+    }[],
+    actionItems: (actionItems ?? []) as {
+      description: string;
+      owner_name: string | null;
+      due_date: string | null;
+    }[],
+    transcriptText: transcript?.raw_text ?? "",
+  });
+
+  return { checks: result.checks as { key: string; status: string }[], score: result.score };
+}
+
 export async function markDraftFinal(draftId: string, meetingId: string): Promise<ActionResult> {
   const profile = await getProfile();
   if (!profile) {
@@ -437,28 +505,56 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   }
   const verifiedMeetingId = draftRow.meeting_id;
 
-  // Assurance gate: an unresolved fail-level completeness gap blocks
-  // finalising unless the risk has been explicitly acknowledged. A meeting
-  // with no assurance report at all is allowed through (the assurance engine
-  // may not have run yet), but the audit trail notes that fact.
-  let assuranceMissing = false;
-  const { data: latestReport } = await supabase
-    .from("assurance_reports")
-    .select("id, results, acknowledged_at")
-    .eq("draft_id", draftId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Assurance gate. The check RUNS HERE, against the text being finalised —
+  // it is never read from an earlier report.
+  //
+  // Two ways the old version let unverified minutes through, both silent:
+  //   1. no report existed at all (engine had never run) — waved through
+  //   2. a report existed but the body was edited afterwards; saving updates
+  //      the same draft row, so a stale PASS still counted. Worse than no
+  //      check: a green tick asserting something no longer true.
+  //
+  // "Final" has to mean "verified as of now", or the product's one promise —
+  // nothing legally required is missing, and here is the proof — is hollow.
+  const assurance = await computeAssurance(supabase, draftId, verifiedMeetingId);
+  if (!assurance) {
+    return { error: "Could not run the completeness check — minutes not finalised." };
+  }
 
-  if (!latestReport) {
-    assuranceMissing = true;
-  } else {
-    const results = (latestReport.results ?? []) as { status: string }[];
-    const hasUnresolvedFail = results.some((r) => r.status === "fail");
-    if (hasUnresolvedFail && !latestReport.acknowledged_at) {
+  // Store the run so the proof is dated to the finalisation itself.
+  await supabase.from("assurance_reports").insert({
+    draft_id: draftId,
+    meeting_id: verifiedMeetingId,
+    results: assurance.checks,
+    score: assurance.score,
+  });
+
+  const failKeys = assurance.checks.filter((c) => c.status === "fail").map((c) => c.key).sort();
+
+  if (failKeys.length > 0) {
+    // The acknowledge escape hatch still works, but only for the gaps that
+    // were actually acknowledged. New or changed gaps must be faced again.
+    const { data: acked } = await supabase
+      .from("assurance_reports")
+      .select("results, acknowledged_at")
+      .eq("draft_id", draftId)
+      .not("acknowledged_at", "is", null)
+      .order("acknowledged_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const ackedKeys = ((acked?.results ?? []) as { key: string; status: string }[])
+      .filter((r) => r.status === "fail")
+      .map((r) => r.key)
+      .sort();
+
+    const sameGaps =
+      ackedKeys.length === failKeys.length && ackedKeys.every((k, i) => k === failKeys[i]);
+
+    if (!sameGaps) {
       return {
         error:
-          "Assurance found unresolved gaps — resolve them or acknowledge the risk before finalising.",
+          "The completeness check just found unresolved gaps — resolve them or acknowledge the risk before finalising.",
       };
     }
   }
@@ -495,7 +591,14 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     entityType: "draft",
     entityId: draftId,
     action: "status_change",
-    payload: { from: "reviewed", to: "final", assurance_missing: assuranceMissing },
+    payload: {
+      from: "reviewed",
+      to: "final",
+      // Proof is now always present and dated to this moment, never absent.
+      assurance_score: assurance.score,
+      assurance_fails: failKeys,
+      assurance_verified_at: new Date().toISOString(),
+    },
   });
 
   revalidatePath(draftPath(meetingId), "page");
