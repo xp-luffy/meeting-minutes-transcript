@@ -54,6 +54,7 @@
 - PILOT_PLAYBOOK documentation covers bug patterns and detection probes—this is a reference guide for known issues and their diagnostic signatures
 - Security headers were added and type error suppression in builds was removed—indicates stricter build/type checking is now enforced
 - fix: pending state on destructive remove-invite action - addresses ui state management for destructive operations
+- Legacy NULL-owned entities were causing duplication issues; fix applied to match and handle these cases correctly
 
 ## Notes
 
