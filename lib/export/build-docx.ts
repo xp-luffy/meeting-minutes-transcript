@@ -176,10 +176,17 @@ export async function buildMinutesDocx(data: ExportData): Promise<Buffer> {
     }),
   );
 
-  // The assurance summary. Without this the proof stays trapped in the app: a
-  // draft with three failed statutory checks otherwise exports with exactly
-  // the same banner as a clean one.
-  if (isDraft) {
+  // The assurance summary, on EVERY export including final.
+  //
+  // It used to be draft-only. That is backwards: the final document is the one
+  // that leaves the app, gets filed, and is read by an auditor three years
+  // later, and it carried "FINAL — APPROVED" with no statement of what had
+  // actually been checked. A draft finalised through the acknowledge-the-risk
+  // path exported with no trace of the gaps that were accepted.
+  //
+  // "Nothing legally required is missing, and here is the proof" is not
+  // satisfied by proof that only exists inside the app.
+  {
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,

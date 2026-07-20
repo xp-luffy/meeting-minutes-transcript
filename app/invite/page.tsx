@@ -26,7 +26,12 @@ export default async function InvitePage() {
             type="text"
             readOnly
             value={signupUrl}
-            onFocus={(e) => e.currentTarget.select()}
+            // No onFocus select-all here: this is a server component, and
+            // passing an event handler to a DOM element from one throws at
+            // runtime — /invite returned a hard 500 in production (digest
+            // 1635477524) while typecheck and build stayed green. The same bug
+            // class hit app/workspaces/[id] earlier. CopyLinkButton below is a
+            // client component and already covers the copy affordance.
             className="block w-full min-w-0 rounded-surface border border-paper-450 bg-paper-50 px-3 py-2 text-base text-paper-700 shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
           <CopyLinkButton text={signupUrl} />

@@ -398,9 +398,11 @@ export async function buildMinutesPdf(data: ExportData): Promise<Uint8Array> {
     writer.drawRule(0.5, 8, false, statusColour);
   }
 
-  // The assurance summary — the export-side fix for "a draft with three failed
-  // statutory checks exports with the same banner as a clean one".
-  if (isDraft) {
+  // The assurance summary, on EVERY export including final — see build-docx.ts
+  // for why. A final document carrying "APPROVED" and no statement of what was
+  // checked is the proof living only inside the app, which is the same as no
+  // proof to the auditor holding the printout.
+  {
     writer.drawCentered(assuranceSummaryLine(data.assurance ?? null), BODY_SIZE - 1, false, 10);
   }
 

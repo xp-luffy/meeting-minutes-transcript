@@ -20,20 +20,34 @@ export interface ActionResult {
 // breaking that rule).
 // ---------------------------------------------------------------------------
 
-/** Looks up the current draft status for a meeting (latest version). */
+/**
+ * Looks up the current draft status for a meeting (latest version).
+ *
+ * Returns the sentinel "unknown" on a read error rather than null. Callers gate
+ * edits with `status === "final"`, so swallowing the error and returning null
+ * made the finality lock fail OPEN: one transient read failure and a finalised
+ * draft becomes editable again — resolutions, action items, attendance. A lock
+ * that opens when it cannot see is not a lock.
+ */
 async function getDraftStatusByMeeting(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, any, any>,
   meetingId: string,
 ): Promise<string | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("minutes_drafts")
     .select("status")
     .eq("meeting_id", meetingId)
     .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) return "unknown";
   return data?.status ?? null;
+}
+
+/** True when edits must be refused: the draft is final, or we cannot tell. */
+function editsAreLocked(status: string | null): boolean {
+  return status === "final" || status === "unknown";
 }
 
 function draftPath(meetingId: string): string {
@@ -87,7 +101,7 @@ export async function saveDraftBody(
     return { error: "Draft not found." };
   }
   if (draft.status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
   if (draft.body_html_source === "legacy_md") {
     return { error: "Legacy draft — regenerate to edit." };
@@ -95,13 +109,20 @@ export async function saveDraftBody(
 
   const clean = sanitizeMinutesHtml(html);
 
-  const { error } = await supabase
+  // 0-row guard: an RLS refusal updates nothing and resolves without an error,
+  // so the editor would show "Saved", the audit log would record an edit, and
+  // the change would be gone on reload.
+  const { data: updated, error } = await supabase
     .from("minutes_drafts")
     .update({ body_html: clean, body_html_review_status: "amended" })
-    .eq("id", draftId);
+    .eq("id", draftId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Your changes were not saved — you may not have permission to edit this draft." };
   }
 
   await logAudit(supabase, {
@@ -137,8 +158,8 @@ export async function updateResolutionField(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   if (field === "resolution_text" && value.trim().length === 0) {
@@ -182,8 +203,8 @@ export async function acceptResolutionText(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   const { data: updated, error } = await supabase
@@ -230,8 +251,8 @@ export async function updateActionItemField(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   if (field === "description" && value.trim().length === 0) {
@@ -275,8 +296,8 @@ export async function toggleActionItemStatus(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   const nextStatus = currentStatus === "open" ? "done" : "open";
@@ -318,8 +339,8 @@ export async function acceptActionItemDescription(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   const { data: updated, error } = await supabase
@@ -372,7 +393,7 @@ export async function markDraftReviewed(
     return { error: "Draft does not belong to this meeting." };
   }
   if (draftRow.status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
   if (draftRow.status !== "draft") {
     return { error: "Only a draft in 'draft' status can be marked reviewed." };
@@ -381,22 +402,44 @@ export async function markDraftReviewed(
   const verifiedMeetingId = draftRow.meeting_id;
   const nowIso = new Date().toISOString();
 
-  const { error: draftError } = await supabase
+  // Compare-and-swap, plus a 0-row guard. An RLS refusal updates zero rows and
+  // resolves WITHOUT an error, so checking `error` alone let this return
+  // success and write a "draft -> reviewed" audit entry for a transition that
+  // never happened. That is not cosmetic: createReviewShare gates on
+  // status === "reviewed", so a phantom transition would unlock circulating a
+  // draft to a director for attestation. `.eq("status","draft")` also makes a
+  // double-click idempotent instead of double-transitioning.
+  const { data: draftUpdated, error: draftError } = await supabase
     .from("minutes_drafts")
     .update({ status: "reviewed", reviewed_at: nowIso })
-    .eq("id", draftId);
+    .eq("id", draftId)
+    .eq("status", "draft")
+    .select("id");
 
   if (draftError) {
     return { error: draftError.message };
   }
+  if (!draftUpdated || draftUpdated.length === 0) {
+    return {
+      error:
+        "The draft could not be marked reviewed — it may have already changed status, or you may not have permission.",
+    };
+  }
 
-  const { error: meetingError } = await supabase
+  const { data: meetingUpdated, error: meetingError } = await supabase
     .from("meetings")
     .update({ status: "reviewed" })
-    .eq("id", verifiedMeetingId);
+    .eq("id", verifiedMeetingId)
+    .select("id");
 
   if (meetingError) {
     return { error: meetingError.message };
+  }
+  if (!meetingUpdated || meetingUpdated.length === 0) {
+    return {
+      error:
+        "The draft was marked reviewed but the meeting status could not be updated — reload before relying on this record.",
+    };
   }
 
   await logAudit(supabase, {
@@ -529,6 +572,17 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   //
   // "Final" has to mean "verified as of now", or the product's one promise —
   // nothing legally required is missing, and here is the proof — is hollow.
+  // Status checks run BEFORE the proof is written. They used to sit after it,
+  // so re-invoking on an already-final draft filed a fresh dated assurance
+  // report and then returned "already finalised" — a proof artefact in the
+  // trail for an event that did not occur.
+  if (draftRow.status === "final") {
+    return { error: "This draft is already finalised." };
+  }
+  if (draftRow.status !== "reviewed") {
+    return { error: "Only a draft in 'reviewed' status can be marked final." };
+  }
+
   const assurance = await computeAssurance(supabase, draftId, verifiedMeetingId);
   if (!assurance) {
     return { error: "Could not run the completeness check — minutes not finalised." };
@@ -583,13 +637,6 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     }
   }
 
-  if (draftRow.status === "final") {
-    return { error: "This draft is already finalised." };
-  }
-  if (draftRow.status !== "reviewed") {
-    return { error: "Only a draft in 'reviewed' status can be marked final." };
-  }
-
   const nowIso = new Date().toISOString();
 
   // `.select("id")` + a 0-row guard, not just an error check: an RLS refusal
@@ -601,6 +648,7 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
     .from("minutes_drafts")
     .update({ status: "final", finalised_at: nowIso })
     .eq("id", draftId)
+    .eq("status", "reviewed")
     .select("id");
 
   if (draftError) {
@@ -662,8 +710,8 @@ export async function saveAttendance(
   const supabase = await createClient();
 
   const status = await getDraftStatusByMeeting(supabase, meetingId);
-  if (status === "final") {
-    return { error: "This draft is finalised and can no longer be edited." };
+  if (editsAreLocked(status)) {
+    return { error: "This draft is finalised, or its status could not be confirmed — editing is locked." };
   }
 
   const cleanAttendees = attendees
@@ -673,13 +721,20 @@ export async function saveAttendance(
     }))
     .filter((attendee) => attendee.name.length > 0 || attendee.role.length > 0);
 
-  const { error } = await supabase
+  // 0-row guard. This one moves an assurance result: checkAttendanceRecorded
+  // scores pass/fail purely on meeting.attendees, so a silently-dropped save
+  // changes what the completeness report says while the UI reports success.
+  const { data: updated, error } = await supabase
     .from("meetings")
     .update({ attendees: cleanAttendees, quorum_met: quorumMet })
-    .eq("id", meetingId);
+    .eq("id", meetingId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    return { error: "Attendance was not saved — you may not have permission to edit this meeting." };
   }
 
   await logAudit(supabase, {

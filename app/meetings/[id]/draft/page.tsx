@@ -75,12 +75,19 @@ export default async function DraftPage({
     );
   }
 
+  // Errors are captured, not discarded. detectConflicts was hardened to return
+  // null on a failed read, but the SAME false all-clear reached the same panel
+  // through here: if the resolutions or transcript read failed, this file
+  // passed [] and "" into GovernanceRiskPanel, checkConsistency found no
+  // numbers and no text to disagree about, and the panel painted the green
+  // "No conflicts or contradictions detected across the record" — again from a
+  // query that never returned. Hardening one input is not hardening the panel.
   const [
-    { data: resolutions },
-    { data: actionItems },
+    { data: resolutions, error: resolutionsError },
+    { data: actionItems, error: actionItemsError },
     { data: auditLogs },
     { data: assuranceRow },
-    { data: transcriptRow },
+    { data: transcriptRow, error: transcriptError },
   ] = await Promise.all([
     supabase
       .from("resolutions")
@@ -251,7 +258,14 @@ export default async function DraftPage({
 
       <div>
         <h2 className="text-body font-medium text-paper-700">Resolutions</h2>
-        {typedResolutions.length === 0 ? (
+        {resolutionsError ? (
+          // "No resolutions extracted" is a claim about the record. If the read
+          // failed we do not know what is in it, and must not say we do.
+          <div className="mt-3 rounded-surface border border-dashed border-paper-450 bg-paper-50 px-4 py-3 text-body text-paper-700">
+            Resolutions could not be loaded — this is not the same as there being none.
+            Reload before relying on this page.
+          </div>
+        ) : typedResolutions.length === 0 ? (
           <div className="mt-3 rounded-surface border border-status-risk-200 bg-status-risk-50 px-4 py-3 text-body text-status-risk-800">
             No resolutions extracted — please review transcript.
           </div>
@@ -304,6 +318,7 @@ export default async function DraftPage({
         quorumMet={typedMeeting.quorum_met}
         attendees={typedMeeting.attendees}
         resolutions={typedResolutions}
+        inputsFailed={Boolean(resolutionsError || transcriptError)}
       />
 
       <ObligationsPanel meetingId={id} />

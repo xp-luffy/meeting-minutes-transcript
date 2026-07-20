@@ -38,11 +38,27 @@ const STATUS_VARIANT: Record<ObligationRow["status"], "indigo" | "green" | "neut
 export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
   const supabase = await createClient();
 
-  const { data } = await supabase
+  // "No downstream obligations were derived from this meeting" is a negative
+  // claim about statutory duties. A failed read must not produce it.
+  const { data, error } = await supabase
     .from("obligations")
     .select("id, meeting_id, resolution_id, kind, title, detail, due_date, status, source, created_at")
     .eq("meeting_id", meetingId)
     .order("due_date", { ascending: true, nullsFirst: false });
+
+  if (error) {
+    return (
+      <div className="rounded-surface border border-dashed border-paper-450 bg-paper-50 p-5">
+        <h2 className="text-caption font-semibold tracking-wide text-paper-500 uppercase">
+          Obligations created by this meeting
+        </h2>
+        <p className="mt-3 text-body text-paper-700">
+          Obligations could not be loaded — this is not the same as there being none. Reload
+          before relying on this page.
+        </p>
+      </div>
+    );
+  }
 
   const obligations = (data ?? []) as ObligationRow[];
 

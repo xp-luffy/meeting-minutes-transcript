@@ -19,6 +19,13 @@ interface GovernanceRiskPanelProps {
   quorumMet: boolean | null;
   attendees: { name: string; role: string }[] | null;
   resolutions: { resolution_number: string | null }[];
+  /**
+   * True when the PAGE's own reads (resolutions / transcript) failed. Those
+   * feed checkConsistency, so without this an upstream failure produced empty
+   * inputs, no findings, and a green all-clear — the same false assurance the
+   * conflict scan was hardened against, entering one layer up.
+   */
+  inputsFailed?: boolean;
 }
 
 /**
@@ -76,12 +83,13 @@ export async function GovernanceRiskPanel({
   quorumMet,
   attendees,
   resolutions,
+  inputsFailed,
 }: GovernanceRiskPanelProps) {
   const supabase = await createClient();
 
   // null means the scan could not run — NOT that the record is clean.
   const conflictResult = await detectConflicts(supabase, meetingId);
-  const scanFailed = conflictResult === null;
+  const scanFailed = conflictResult === null || inputsFailed === true;
   const conflicts = conflictResult ?? [];
   const consistency = checkConsistency({
     bodyHtml,
