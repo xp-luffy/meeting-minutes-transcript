@@ -1,30 +1,47 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getProfile } from "@/lib/auth";
+import { getProfile, getOrgContext } from "@/lib/auth";
 import { createAdminClient, adminClientAvailable } from "@/lib/supabase/admin";
 import { encryptSecret, encryptionUnavailableReason, last4 } from "@/lib/crypto";
 import { resolveCredential } from "@/lib/groundstream/credentials";
 import { sendBatch } from "@/lib/groundstream/client";
-import { workspaceForRecord } from "@/lib/groundstream/events";
 
 export interface GsSettingsResult {
   error?: string;
   success?: string;
 }
 
+interface AdminActor {
+  id: string;
+  email: string | null;
+  orgId: string;
+  workspace: string;
+}
+
 /**
- * Admin check. Enforced in the DATABASE by the gs_settings policies too — this
- * is the friendly gate, not the security boundary. If this were the only check,
- * hiding the screen would be the whole of the access control.
+ * Organisation-admin check.
+ *
+ * This used to read `profiles.role === "admin"`, which was APP-WIDE: the single
+ * admin of the deployment could read, rotate and disconnect EVERY firm's
+ * credential. A GroundStream key is a tenant-wide write credential, so that was
+ * the most valuable secret in the system guarded by the least specific check.
+ *
+ * Enforced in the DATABASE by the gs_settings policies too (`is_org_admin(org_id)`);
+ * this is the friendly gate, not the boundary.
  */
-async function requireAdmin(): Promise<{ id: string; email: string | null } | { error: string }> {
+async function requireAdmin(): Promise<AdminActor | { error: string }> {
   const profile = await getProfile();
   if (!profile) return { error: "Sign in to manage the GroundStream connection." };
-  if (profile.role !== "admin") {
-    return { error: "Only an admin can change the GroundStream connection." };
+
+  const org = await getOrgContext();
+  if (!org) {
+    return { error: "Your account is not part of an organisation, so there is nothing to connect." };
   }
-  return { id: profile.id, email: profile.email ?? null };
+  if (org.role !== "owner" && org.role !== "admin") {
+    return { error: `Only an admin of ${org.name} can change the GroundStream connection.` };
+  }
+  return { id: profile.id, email: profile.email ?? null, orgId: org.id, workspace: org.slug };
 }
 
 /**
@@ -33,17 +50,22 @@ async function requireAdmin(): Promise<{ id: string; email: string | null } | { 
  * never recorded — only who, when, and what kind of change.
  */
 async function audit(
-  workspace: string,
+  actor: AdminActor,
   action: "set" | "rotate" | "disable" | "enable" | "remove",
-  actorId: string,
   detail?: string,
 ) {
   try {
     const db = createAdminClient();
-    const { error } = await db
-      .from("gs_settings_audit")
-      .insert({ workspace, action, actor_id: actorId, detail: detail ?? null });
-    if (error) console.error("[gs] audit write FAILED", { workspace, action, error: error.message });
+    const { error } = await db.from("gs_settings_audit").insert({
+      workspace: actor.workspace,
+      org_id: actor.orgId,
+      action,
+      actor_id: actor.id,
+      detail: detail ?? null,
+    });
+    if (error) {
+      console.error("[gs] audit write FAILED", { org: actor.orgId, action, error: error.message });
+    }
   } catch (err) {
     console.error("[gs] audit write THREW", err);
   }
@@ -56,9 +78,11 @@ export async function saveGsCredential(formData: FormData): Promise<GsSettingsRe
 
   const apiKey = String(formData.get("api_key") ?? "").trim();
   const sourceName = String(formData.get("source_name") ?? "").trim();
-  const workspace = workspaceForRecord() ?? String(formData.get("workspace") ?? "").trim();
+  // The workspace comes from the ACTING ORGANISATION, never from the form. A
+  // client-supplied workspace would let an admin of one firm store a credential
+  // against another firm's tenant.
+  const workspace = admin.workspace;
 
-  if (!workspace) return { error: "No workspace configured. Set GS_WORKSPACE first." };
   if (!apiKey) return { error: "Paste the GroundStream API key." };
   if (!sourceName) {
     return {
@@ -82,14 +106,22 @@ export async function saveGsCredential(formData: FormData): Promise<GsSettingsRe
   }
 
   const db = createAdminClient();
-  const { data: existing } = await db
+  const { data: existing, error: lookupError } = await db
     .from("gs_settings")
     .select("id")
-    .eq("workspace", workspace)
+    .eq("org_id", admin.orgId)
     .maybeSingle<{ id: string }>();
+
+  // A failed lookup must NOT be treated as "nothing saved yet" — that would
+  // insert a second row for this organisation and, if the unique index did not
+  // catch it, leave which credential wins undefined.
+  if (lookupError) {
+    return { error: `Could not read the existing connection: ${lookupError.message}` };
+  }
 
   const row = {
     workspace,
+    org_id: admin.orgId,
     source_name: sourceName,
     api_key_ciphertext: encryptSecret(apiKey),
     api_key_last4: last4(apiKey),
@@ -104,7 +136,7 @@ export async function saveGsCredential(formData: FormData): Promise<GsSettingsRe
 
   if (error) return { error: `Could not save the credential: ${error.message}` };
 
-  await audit(workspace, existing ? "rotate" : "set", admin.id, `source_name=${sourceName}`);
+  await audit(admin, existing ? "rotate" : "set", `source_name=${sourceName}`);
   revalidatePath("/settings/groundstream", "page");
   return { success: existing ? "Credential rotated." : "Connected." };
 }
@@ -115,21 +147,23 @@ export async function setGsEnabled(formData: FormData): Promise<GsSettingsResult
   if ("error" in admin) return { error: admin.error };
 
   const enabled = String(formData.get("enabled") ?? "") === "true";
-  const workspace = workspaceForRecord() ?? String(formData.get("workspace") ?? "").trim();
-  if (!workspace) return { error: "No workspace configured." };
   if (!adminClientAvailable()) return { error: "SUPABASE_SERVICE_ROLE_KEY is not set." };
 
   const db = createAdminClient();
   const { data: updated, error } = await db
     .from("gs_settings")
     .update({ enabled, updated_at: new Date().toISOString() })
-    .eq("workspace", workspace)
+    .eq("org_id", admin.orgId)
     .select("id");
 
   if (error) return { error: error.message };
+  // 0 rows updated is NOT an error from postgrest — it resolves happily. Without
+  // this guard the disconnect button would report success having changed nothing,
+  // which is the worst possible lie for a control whose whole job is killing a
+  // leaked credential.
   if (!updated || updated.length === 0) return { error: "No connection to change." };
 
-  await audit(workspace, enabled ? "enable" : "disable", admin.id);
+  await audit(admin, enabled ? "enable" : "disable");
   revalidatePath("/settings/groundstream", "page");
   return { success: enabled ? "Connection re-enabled." : "Disconnected. No further events will be sent." };
 }
@@ -139,21 +173,19 @@ export async function removeGsCredential(): Promise<GsSettingsResult> {
   const admin = await requireAdmin();
   if ("error" in admin) return { error: admin.error };
 
-  const workspace = workspaceForRecord();
-  if (!workspace) return { error: "No workspace configured." };
   if (!adminClientAvailable()) return { error: "SUPABASE_SERVICE_ROLE_KEY is not set." };
 
   const db = createAdminClient();
   const { data: removed, error } = await db
     .from("gs_settings")
     .delete()
-    .eq("workspace", workspace)
+    .eq("org_id", admin.orgId)
     .select("id");
 
   if (error) return { error: error.message };
   if (!removed || removed.length === 0) return { error: "Nothing to remove." };
 
-  await audit(workspace, "remove", admin.id);
+  await audit(admin, "remove");
   revalidatePath("/settings/groundstream", "page");
   return { success: "Credential removed. Env-var fallback (if any) applies again." };
 }
@@ -173,10 +205,7 @@ export async function testGsConnection(): Promise<GsSettingsResult> {
   const admin = await requireAdmin();
   if ("error" in admin) return { error: admin.error };
 
-  const workspace = workspaceForRecord();
-  if (!workspace) return { error: "No workspace configured. Set GS_WORKSPACE first." };
-
-  const cred = await resolveCredential(workspace);
+  const cred = await resolveCredential(admin.workspace);
   if (!cred.ok) return { error: `${cred.problem}: ${cred.detail}` };
 
   const source = cred.credential.sourceName ?? process.env.GS_SOURCE;

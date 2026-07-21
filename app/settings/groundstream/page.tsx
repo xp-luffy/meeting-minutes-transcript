@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getProfile } from "@/lib/auth";
+import { getProfile, getOrgContext } from "@/lib/auth";
 import { createAdminClient, adminClientAvailable } from "@/lib/supabase/admin";
 import { encryptionUnavailableReason } from "@/lib/crypto";
-import { workspaceForRecord } from "@/lib/groundstream/events";
 import { StatusBanner } from "@/components/status";
 import { SubmitButton } from "@/components/submit-button";
 import { FOCUS_RING } from "@/components/ui";
@@ -23,20 +22,35 @@ export default async function GroundStreamSettingsPage() {
   const profile = await getProfile();
   if (!profile) redirect("/login");
 
-  // Admin-only. The database policies enforce this independently; this is the
-  // friendly gate, not the boundary.
-  if (profile.role !== "admin") {
+  const org = await getOrgContext();
+
+  if (!org) {
     return (
       <div className="mx-auto max-w-2xl">
         <h1 className="text-title font-semibold text-paper-900">GroundStream</h1>
-        <StatusBanner state="unknown" className="mt-4" title="Admin only">
-          Only an admin can view or change this connection. Ask an admin on your team.
+        <StatusBanner state="unknown" className="mt-4" title="No organisation">
+          Your account is not part of an organisation yet, so there is nothing to connect.
         </StatusBanner>
       </div>
     );
   }
 
-  const workspace = workspaceForRecord();
+  // Admin OF THIS ORGANISATION. Previously this read the app-wide
+  // `profiles.role`, which meant the admin of one firm could manage every other
+  // firm's credential. The database policies enforce the same rule
+  // independently; this is the friendly gate, not the boundary.
+  if (org.role !== "owner" && org.role !== "admin") {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-title font-semibold text-paper-900">GroundStream</h1>
+        <StatusBanner state="unknown" className="mt-4" title="Admin only">
+          Only an admin of {org.name} can view or change this connection.
+        </StatusBanner>
+      </div>
+    );
+  }
+
+  const workspace = org.slug;
   const cryptoProblem = encryptionUnavailableReason();
   const serviceRoleMissing = !adminClientAvailable();
 
@@ -49,7 +63,7 @@ export default async function GroundStreamSettingsPage() {
       const { data, error } = await db
         .from("gs_settings")
         .select("source_name, api_key_last4, enabled")
-        .eq("workspace", workspace)
+        .eq("org_id", org.id)
         .maybeSingle<{ source_name: string; api_key_last4: string; enabled: boolean }>();
       // A failed read must not render as "not connected" — that would invite an
       // admin to paste a second key over a working one.
@@ -87,13 +101,11 @@ export default async function GroundStreamSettingsPage() {
         </StatusBanner>
       ) : null}
 
-      {!workspace ? (
-        <StatusBanner state="unknown" className="mt-6" title="No workspace configured">
-          Set <code>GS_WORKSPACE</code> on the server first. It decides which GroundStream
-          workspace these events belong to, and a wrong one files your data under another
-          organisation with no undo.
-        </StatusBanner>
-      ) : null}
+      <p className="mt-4 text-caption text-paper-600">
+        Connecting <strong className="text-paper-800">{org.name}</strong>. Register the source in
+        GroundStream as <code>{org.slug}</code> — the match is case-sensitive, and events from
+        other organisations on this deployment go to their own connection, never this one.
+      </p>
 
       {loadError ? (
         <StatusBanner state="unknown" className="mt-6" title="Could not read the saved connection">

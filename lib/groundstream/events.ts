@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { emit } from "./emit";
 import { adminClientAvailable, createAdminClient } from "@/lib/supabase/admin";
+import { getOrgContext } from "@/lib/auth";
 
 /**
  * Meeting Minutes — the app's entire GroundStream contribution, declared here.
@@ -38,12 +39,32 @@ import { adminClientAvailable, createAdminClient } from "@/lib/supabase/admin";
  */
 
 /**
- * Which workspace a record belongs to. One workspace today, so this returns a
- * constant — but it stays a function because the outbox stores the value and
- * the drain groups by it. Moving to a credential per customer later changes
- * this function, not every call site.
+ * Which workspace a record belongs to — now the acting ORGANISATION's slug.
+ *
+ * This used to return the `GS_WORKSPACE` env constant, which is correct for
+ * exactly one tenant and silently wrong for two: every firm's events would be
+ * filed under whichever workspace the deployment happened to name, and there is
+ * no undo for that (/gs §5 — "the key decides, nothing else").
+ *
+ * The organisation slug is the identifier because it is stable, unique, and the
+ * same value an admin registers as their GroundStream source name — so the
+ * outbox row, the credential lookup and the operator UI all join on one string.
+ *
+ * Returns null when the caller has no organisation, and every caller must then
+ * emit NOTHING. A missing event is recoverable; an event filed against another
+ * firm's workspace is not.
  */
-export function workspaceForRecord(): string | null {
+export async function workspaceForRecord(): Promise<string | null> {
+  const org = await getOrgContext();
+  return org?.slug ?? null;
+}
+
+/**
+ * The env fallback, kept ONLY for the drain path and for deployments that have
+ * not yet connected through the settings screen. Never used to decide which
+ * tenant an event belongs to — that always comes from the record.
+ */
+export function envWorkspaceFallback(): string | null {
   const ws = process.env.GS_WORKSPACE;
   return ws && ws.length > 0 ? ws : null;
 }
@@ -92,13 +113,13 @@ export async function emitGs(
   fn: (admin: SupabaseClient, workspace: string, at: string) => Promise<void>,
   at: string = new Date().toISOString(),
 ): Promise<void> {
-  const workspace = workspaceForRecord();
+  const workspace = await workspaceForRecord();
   if (!workspace || !adminClientAvailable()) {
     if (!warnedUnconfigured) {
       warnedUnconfigured = true;
       console.warn(
-        "[gs] not configured — events are NOT being recorded. Set GS_WORKSPACE and " +
-          "SUPABASE_SERVICE_ROLE_KEY (server-side only) to enable the outbox.",
+        "[gs] not configured — events are NOT being recorded. Needs an organisation for " +
+          "the acting user and SUPABASE_SERVICE_ROLE_KEY (server-side only).",
       );
     }
     return;
