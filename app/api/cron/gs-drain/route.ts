@@ -5,15 +5,16 @@ import { sendBatch, type GsEvent, type SendResult } from "@/lib/groundstream/cli
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// `source` is bound to the API key (GS change I31). A wizard-issued key makes
-// GroundStream stamp the source itself, and sending one that DISAGREES with the
-// binding is a hard 400 — which would poison-pill every batch. So this is left
-// UNSET by default and the field omitted.
+// ALWAYS sent, and the route refuses to run without it.
 //
-// It stays supported for platform-issued and legacy keys, which are unbound and
-// do fall back to the body value. If you set it, it must match the registered
-// source exactly: it is half the dedup key on those keys, so changing it later
-// re-inserts all history as new.
+// Omitting it looks safe because a bound key stamps its own source — but on an
+// UNBOUND key it writes NULL and still returns 201, so dedup breaks SILENTLY
+// and every replay re-inserts. Sending a wrong name fails loudly with a 400
+// naming the correct one. Prefer the loud failure.
+//
+// Must match the registered name character-for-character: the comparison is
+// CASE-SENSITIVE, and on an unbound key the value is written verbatim, so a
+// stray space creates a third source that matches nothing in the operator UI.
 const SOURCE = process.env.GS_SOURCE;
 
 const MAX_ATTEMPTS = 12;
@@ -28,6 +29,18 @@ function backoffFor(attempts: number): number {
 export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // Checked here rather than at module scope: a throw at import time takes the
+  // route out with an opaque 500, and this must say WHY it refuses.
+  if (!SOURCE) {
+    return NextResponse.json(
+      {
+        error:
+          "GS_SOURCE is not set — refusing to send. Omitting source writes NULL on an unbound key and silently breaks dedup.",
+      },
+      { status: 500 },
+    );
   }
 
   const db = createAdminClient();
@@ -60,9 +73,7 @@ export async function GET(req: Request) {
     const events: GsEvent[] = batch.map((r) => ({
       aa_stage: r.aa_stage,
       event_name: r.event_name,
-      // Omitted entirely unless GS_SOURCE is set — see the note above. Spreading
-      // rather than sending `undefined` keeps it out of the JSON body.
-      ...(SOURCE ? { source: SOURCE } : {}),
+      source: SOURCE,
       actor_id: r.actor_id,
       external_event_id: r.external_event_id,
       occurred_at: new Date(r.occurred_at).toISOString(),

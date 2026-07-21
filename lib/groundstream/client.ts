@@ -4,27 +4,37 @@ export type GsEvent = {
   aa_stage: "acquired" | "engaged" | "activated" | "converted" | "retained";
   event_name: string;
   /**
-   * OPTIONAL, and normally omitted.
+   * ALWAYS sent, matching the registered name character-for-character.
    *
-   * `source` is bound to the API key (GS change I31): a key issued through the
-   * connect wizard makes GroundStream stamp the bound source itself, and
-   * sending one that DISAGREES with the binding is a hard 400 naming both. Only
-   * platform-issued and legacy keys are unbound and fall back to the body.
+   * Omitting looked safe — a bound key stamps its own source — but on an
+   * UNBOUND key it writes NULL and still returns 201, so dedup breaks
+   * SILENTLY. Sending a wrong name fails loudly with a 400 naming the correct
+   * one. Prefer the loud failure.
    *
-   * So this app sends it only when GS_SOURCE is explicitly set, which is the
-   * legacy escape hatch — not the default. The downloaded v1 spec still says to
-   * always send it; the canonical reference supersedes that.
+   * The match is CASE-SENSITIVE and not trimmed on unbound keys, so " BD OS "
+   * would become a third distinct source matching nothing.
    */
-  source?: string;
+  source: string;
   actor_id?: string | null;
   external_event_id: string;
   occurred_at: string;
   payload?: Record<string, unknown>;
 };
 
-/** Resolve the key for an entity. Returns null if this app does not serve it. */
-export function keyForEntity(entity: string): string | null {
-  const key = process.env[`GS_KEY_${entity.toUpperCase()}`];
+/**
+ * Which GroundStream workspace a row belongs to, resolved PER RECORD.
+ *
+ * This app feeds exactly one workspace, so it returns a constant today. It is
+ * still a function taking the row, because the outbox stores the workspace and
+ * the drain groups by it: moving to per-tenant credentials later changes this
+ * one function instead of every call site. Inlining the constant is what makes
+ * that migration expensive.
+ *
+ * `tenant_id` is never read from the payload — the key alone decides where an
+ * event lands, which is why there is no entity field on the wire.
+ */
+export function keyForWorkspace(_workspace: string): string | null {
+  const key = process.env.GS_API_KEY;
   return key && key.length > 0 ? key : null;
 }
 
@@ -34,8 +44,8 @@ export type SendResult =
 
 /** POST one batch (≤500) for a single entity. Never throws. */
 export async function sendBatch(entity: string, events: GsEvent[]): Promise<SendResult> {
-  const key = keyForEntity(entity);
-  if (!key) return { ok: false, retryable: false, error: `No GS key configured for ${entity}` };
+  const key = keyForWorkspace(entity);
+  if (!key) return { ok: false, retryable: false, error: `No GS_API_KEY configured (workspace ${entity})` };
 
   let res: Response;
   try {

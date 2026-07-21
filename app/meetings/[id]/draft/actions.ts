@@ -576,6 +576,16 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   }
   const verifiedMeetingId = draftRow.meeting_id;
 
+  // The GroundStream actor is the CLIENT COMPANY, so it has to be resolved
+  // here. Read-only and non-fatal: a telemetry lookup must never block a
+  // finalisation, so a failure just means no event rather than no sign-off.
+  const { data: meetingRow } = await supabase
+    .from("meetings")
+    .select("company_id")
+    .eq("id", verifiedMeetingId)
+    .maybeSingle();
+  const actorCompanyId = (meetingRow?.company_id as string | null) ?? null;
+
   // Assurance gate. The check RUNS HERE, against the text being finalised —
   // it is never read from an earlier report.
   //
@@ -648,16 +658,24 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
       // The failure event, not just the success (spec rule 4). This is the most
       // useful signal the app produces: it says where a cosec got stuck and
       // which statutory check stopped them.
-      await emitGs((admin, entity, at) =>
-        gsEvents.finalisationBlocked(
-          admin,
-          entity,
-          profile.id,
-          draftId,
-          { meeting_id: verifiedMeetingId, failed_checks: failKeys },
-          at,
-        ),
-      );
+      // One event per failing check, so "quorum blocks 40% of sign-offs" is
+      // answerable. The check key is in the external_event_id, so a repeat
+      // block for the SAME reason dedupes while a NEW reason records.
+      if (actorCompanyId) {
+        for (const failedCheck of failKeys) {
+          await emitGs((admin, ws, at) =>
+            gsEvents.finalisationBlocked(
+              admin,
+              ws,
+              actorCompanyId,
+              draftId,
+              failedCheck,
+              { meeting_id: verifiedMeetingId, failed_checks: failKeys },
+              at,
+            ),
+          );
+        }
+      }
 
       return {
         error:
@@ -712,34 +730,56 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
   // assurance gate in TypeScript and cannot be collapsed into a single
   // statement without moving that logic into SQL. Until it is, the §7b
   // reconciliation sweep is what catches a dropped one.
-  await emitGs((admin, entity, at) =>
-    gsEvents.minutesFinalised(
-      admin,
-      entity,
-      profile.id,
-      draftId,
-      {
-        meeting_id: verifiedMeetingId,
-        assurance_score: assurance.score,
-        assurance_fails: failKeys,
-      },
-      at,
-    ),
-  );
+  // ACTOR is the client company: it is that company's statutory work that
+  // progressed, not the secretary's. No company on the meeting means no actor
+  // worth measuring, so nothing is emitted rather than something wrong.
+  if (actorCompanyId) {
+    const companyId = actorCompanyId;
 
-  if (failKeys.length > 0) {
-    // Finalised WITH accepted gaps. The single most defensibility-relevant
-    // thing this product records.
-    await emitGs((admin, entity, at) =>
-      gsEvents.assuranceRiskAcknowledged(
+    await emitGs((admin, ws, at) =>
+      gsEvents.minutesFinalised(
         admin,
-        entity,
-        profile.id,
+        ws,
+        companyId,
         draftId,
-        { meeting_id: verifiedMeetingId, failed_checks: failKeys },
+        {
+          meeting_id: verifiedMeetingId,
+          assurance_score: assurance.score,
+          assurance_fails: failKeys,
+        },
         at,
       ),
     );
+
+    if (failKeys.length > 0) {
+      // Signed off WITH accepted gaps — the most defensibility-relevant thing
+      // this product records.
+      await emitGs((admin, ws, at) =>
+        gsEvents.assuranceRiskAcknowledged(
+          admin,
+          ws,
+          companyId,
+          draftId,
+          { meeting_id: verifiedMeetingId, failed_checks: failKeys },
+          at,
+        ),
+      );
+    }
+
+    // `retained` = this company came back. The ordinal is a STABLE count of
+    // finalised meetings for the company including this one, so a backfill
+    // recomputes the same id rather than minting a new one.
+    const { count: finalisedCount } = await supabase
+      .from("meetings")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
+      .eq("status", "final");
+
+    if ((finalisedCount ?? 0) > 1) {
+      await emitGs((admin, ws, at) =>
+        gsEvents.companyReturned(admin, ws, companyId, verifiedMeetingId, finalisedCount ?? 0, at),
+      );
+    }
   }
 
   await logAudit(supabase, {
