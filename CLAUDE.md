@@ -77,6 +77,7 @@
 - Fail-closed locks ensure that if lock acquisition fails, the operation does not proceed (prevents data corruption from unguarded concurrent access)
 - chore: remove ZZ-PILOT test data (migrations 0021, 0022) — test data cleanup migrations were committed, indicating housekeeping rather than feature work.
 - The type system was designed/written in a prior design pass but was never integrated into the codebase — the recent commit finally applied it.
+- Documentation sync commits (claude.md, agents.md) now dominate the commit history; no code changes or feature work has been committed in recent cycles beyond launchpad memory maintenance.
 
 ## Notes
 
