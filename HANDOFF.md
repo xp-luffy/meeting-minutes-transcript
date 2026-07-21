@@ -23,6 +23,22 @@ yet proven end to end.**
    Both are success — the second proves retries cannot duplicate.
 2. **Resolve the source-name question below.**
 
+### ⚠️ DEMO-ONLY: the saved key points at the OTHER organisation's workspace
+
+The credential saved against the **`drive-funnels`** org is understood to be a key
+for the **OnlyAIWork** GroundStream workspace. This was accepted deliberately on
+2026-07-21 **for demonstration purposes only**.
+
+Consequence, stated plainly: **Drive Funnels' events are being recorded in
+OnlyAIWork's GroundStream workspace.** Per `/gs` §5 the key alone decides where an
+event lands — nothing in the payload can override it — and **there is no undo** once
+events are filed. Any funnel or conversion figure read out of OnlyAIWork's workspace
+while this stands is mixing two businesses.
+
+**Before this is anything other than a demo:** issue a key from Drive Funnels' own
+workspace, replace it at `/settings/groundstream`, and give OnlyAIWork its own key on
+the `onlyaiwork` org. Each org needs its own key AND its own registered source name.
+
 ### ⚠️ Open question: the source name
 
 `gs_settings.source_name` is currently **`Meeting Minutes`**.
