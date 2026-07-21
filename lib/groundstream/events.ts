@@ -59,15 +59,11 @@ export async function workspaceForRecord(): Promise<string | null> {
   return org?.slug ?? null;
 }
 
-/**
- * The env fallback, kept ONLY for the drain path and for deployments that have
- * not yet connected through the settings screen. Never used to decide which
- * tenant an event belongs to — that always comes from the record.
- */
-export function envWorkspaceFallback(): string | null {
-  const ws = process.env.GS_WORKSPACE;
-  return ws && ws.length > 0 ? ws : null;
-}
+// There is deliberately NO env-var workspace fallback. GS_WORKSPACE is gone:
+// the tenant is the organisation on the record, and a deployment-wide constant
+// can only ever name one of them. Keeping a fallback would mean a missing
+// organisation silently resolves to whichever tenant the env var happened to
+// name — the exact un-undoable misfiling this function was rewritten to prevent.
 
 /**
  * Identity hint — CANNOT BE ADDED RETROACTIVELY.
