@@ -7,6 +7,7 @@ import { logAudit } from "@/lib/audit";
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { runAssurance } from "@/lib/assurance";
 import { getQuorumThreshold } from "@/lib/company-documents";
+import { emitGs, gsEvents } from "@/lib/groundstream/events";
 import { sanitizeMinutesHtml } from "@/lib/sanitize-html";
 import type { Attendee } from "@/lib/types";
 
@@ -644,6 +645,20 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
       ackedKeys.length === failKeys.length && ackedKeys.every((k, i) => k === failKeys[i]);
 
     if (!sameGaps) {
+      // The failure event, not just the success (spec rule 4). This is the most
+      // useful signal the app produces: it says where a cosec got stuck and
+      // which statutory check stopped them.
+      await emitGs((admin, entity, at) =>
+        gsEvents.finalisationBlocked(
+          admin,
+          entity,
+          profile.id,
+          draftId,
+          { meeting_id: verifiedMeetingId, failed_checks: failKeys },
+          at,
+        ),
+      );
+
       return {
         error:
           "The completeness check just found unresolved gaps — resolve them or acknowledge the risk before finalising.",
@@ -686,6 +701,45 @@ export async function markDraftFinal(draftId: string, meetingId: string): Promis
       error:
         "The draft was finalised but the meeting status could not be updated — reload before relying on this record.",
     };
+  }
+
+  // The conversion moment: a statutory record signed off.
+  //
+  // NOTE (spec §1 / §6.5): this is enqueued AFTER the business write, so a
+  // process death between the two loses the event. Per the spec this one
+  // arguably belongs on the atomic RPC path — losing it makes the conversion
+  // number wrong forever. It is not there yet because finalisation carries the
+  // assurance gate in TypeScript and cannot be collapsed into a single
+  // statement without moving that logic into SQL. Until it is, the §7b
+  // reconciliation sweep is what catches a dropped one.
+  await emitGs((admin, entity, at) =>
+    gsEvents.minutesFinalised(
+      admin,
+      entity,
+      profile.id,
+      draftId,
+      {
+        meeting_id: verifiedMeetingId,
+        assurance_score: assurance.score,
+        assurance_fails: failKeys,
+      },
+      at,
+    ),
+  );
+
+  if (failKeys.length > 0) {
+    // Finalised WITH accepted gaps. The single most defensibility-relevant
+    // thing this product records.
+    await emitGs((admin, entity, at) =>
+      gsEvents.assuranceRiskAcknowledged(
+        admin,
+        entity,
+        profile.id,
+        draftId,
+        { meeting_id: verifiedMeetingId, failed_checks: failKeys },
+        at,
+      ),
+    );
   }
 
   await logAudit(supabase, {
