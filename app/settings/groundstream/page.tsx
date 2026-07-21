@@ -101,10 +101,20 @@ export default async function GroundStreamSettingsPage() {
         </StatusBanner>
       ) : null}
 
+      {/*
+        These are two DIFFERENT identifiers and an earlier version of this copy
+        conflated them, which sent someone to register the wrong source name:
+
+          workspace   — internal. Which organisation on this deployment the
+                        event belongs to. Never sent to GroundStream.
+          source name — external. Must match what is registered in GroundStream
+                        character-for-character. Chosen there, not here.
+      */}
       <p className="mt-4 text-caption text-paper-600">
-        Connecting <strong className="text-paper-800">{org.name}</strong>. Register the source in
-        GroundStream as <code>{org.slug}</code> — the match is case-sensitive, and events from
-        other organisations on this deployment go to their own connection, never this one.
+        Connecting <strong className="text-paper-800">{org.name}</strong> (workspace{" "}
+        <code>{org.slug}</code>). Events from other organisations on this deployment go to their
+        own connection, never this one. The <em>source name</em> below is separate — it must match
+        the name you registered in GroundStream exactly.
       </p>
 
       {loadError ? (
