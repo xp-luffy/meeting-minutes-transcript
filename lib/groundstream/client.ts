@@ -22,31 +22,22 @@ export type GsEvent = {
 };
 
 /**
- * Which GroundStream workspace a row belongs to, resolved PER RECORD.
- *
- * This app feeds exactly one workspace, so it returns a constant today. It is
- * still a function taking the row, because the outbox stores the workspace and
- * the drain groups by it: moving to per-tenant credentials later changes this
- * one function instead of every call site. Inlining the constant is what makes
- * that migration expensive.
+ * Credential resolution lives in lib/groundstream/credentials.ts (database
+ * first, then GS_KEY_<WORKSPACE>, then GS_API_KEY). This module stays a thin
+ * HTTP layer and takes the resolved key as an argument, so the transport can be
+ * unit-tested without a database and the resolution order exists in exactly one
+ * place.
  *
  * `tenant_id` is never read from the payload — the key alone decides where an
  * event lands, which is why there is no entity field on the wire.
  */
-export function keyForWorkspace(_workspace: string): string | null {
-  const key = process.env.GS_API_KEY;
-  return key && key.length > 0 ? key : null;
-}
 
 export type SendResult =
   | { ok: true; accepted: number; deduped: number }
   | { ok: false; retryable: boolean; error: string };
 
-/** POST one batch (≤500) for a single entity. Never throws. */
-export async function sendBatch(entity: string, events: GsEvent[]): Promise<SendResult> {
-  const key = keyForWorkspace(entity);
-  if (!key) return { ok: false, retryable: false, error: `No GS_API_KEY configured (workspace ${entity})` };
-
+/** POST one batch (≤500) with an already-resolved key. Never throws. */
+export async function sendBatch(key: string, events: GsEvent[]): Promise<SendResult> {
   let res: Response;
   try {
     res = await fetch(ENDPOINT, {

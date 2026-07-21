@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBatch, type GsEvent, type SendResult } from "@/lib/groundstream/client";
+import { resolveCredential } from "@/lib/groundstream/credentials";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// ALWAYS sent, and the route refuses to run without it.
+// `source` is ALWAYS sent. Omitting it looks safe because a bound key stamps
+// its own source — but on an UNBOUND key it writes NULL and still returns 201,
+// so dedup breaks SILENTLY and every replay re-inserts. A wrong name fails
+// loudly with a 400 naming the correct one. Prefer the loud failure.
 //
-// Omitting it looks safe because a bound key stamps its own source — but on an
-// UNBOUND key it writes NULL and still returns 201, so dedup breaks SILENTLY
-// and every replay re-inserts. Sending a wrong name fails loudly with a 400
-// naming the correct one. Prefer the loud failure.
-//
-// Must match the registered name character-for-character: the comparison is
-// CASE-SENSITIVE, and on an unbound key the value is written verbatim, so a
-// stray space creates a third source that matches nothing in the operator UI.
-const SOURCE = process.env.GS_SOURCE;
+// It comes from the settings row when one exists (so it can be corrected
+// without a redeploy) and falls back to GS_SOURCE. Must match the registered
+// name character-for-character: the comparison is CASE-SENSITIVE, and on an
+// unbound key the value is written verbatim, so a stray space creates a third
+// source that matches nothing in the operator UI.
 
 const MAX_ATTEMPTS = 12;
 const CRON_INTERVAL_MS = 5 * 60_000;
@@ -29,18 +29,6 @@ function backoffFor(attempts: number): number {
 export async function GET(req: Request) {
   if (req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
-  // Checked here rather than at module scope: a throw at import time takes the
-  // route out with an opaque 500, and this must say WHY it refuses.
-  if (!SOURCE) {
-    return NextResponse.json(
-      {
-        error:
-          "GS_SOURCE is not set — refusing to send. Omitting source writes NULL on an unbound key and silently breaks dedup.",
-      },
-      { status: 500 },
-    );
   }
 
   const db = createAdminClient();
@@ -69,18 +57,43 @@ export async function GET(req: Request) {
   }
 
   let delivered = 0;
+  const unresolved: { workspace: string; problem: string; detail: string }[] = [];
+
   for (const [entity, batch] of byEntity) {
+    // Resolved PER WORKSPACE at delivery time, so a key rotated in Settings
+    // applies to rows already queued.
+    const cred = await resolveCredential(entity);
+    if (!cred.ok) {
+      // Rows are left untouched — NOT counted as attempts. A missing key is a
+      // configuration problem, not a delivery failure, and burning attempts on
+      // it would age events out before anyone connected the workspace.
+      unresolved.push({ workspace: entity, problem: cred.problem, detail: cred.detail });
+      continue;
+    }
+
+    const source = cred.credential.sourceName ?? process.env.GS_SOURCE;
+    if (!source) {
+      unresolved.push({
+        workspace: entity,
+        problem: "no_source",
+        detail:
+          "No source name configured. Omitting source writes NULL on an unbound key and silently breaks dedup.",
+      });
+      continue;
+    }
+
     const events: GsEvent[] = batch.map((r) => ({
       aa_stage: r.aa_stage,
       event_name: r.event_name,
-      source: SOURCE,
+      source,
       actor_id: r.actor_id,
       external_event_id: r.external_event_id,
       occurred_at: new Date(r.occurred_at).toISOString(),
       payload: r.payload ?? {},
     }));
 
-    const result = await sendBatch(entity, events);
+    const key = cred.credential.apiKey;
+    const result = await sendBatch(key, events);
 
     // POISON PILL. The API validates a batch as a UNIT: one malformed event 400s the whole
     // request and writes nothing. Applying that failure to all 500 rows meant the offender —
@@ -88,7 +101,7 @@ export async function GET(req: Request) {
     // the entire batch aged out. One bad event silently destroyed 499 good ones.
     if (!result.ok && !result.retryable && batch.length > 1) {
       for (let i = 0; i < batch.length; i++) {
-        const one = await sendBatch(entity, [events[i]]);
+        const one = await sendBatch(key, [events[i]]);
         await recordOutcome(db, [batch[i]], one);
         if (one.ok) delivered += 1;
       }
@@ -114,7 +127,16 @@ export async function GET(req: Request) {
     .is("delivered_at", null)
     .lt("attempts", MAX_ATTEMPTS);
 
-  return NextResponse.json({ drained: delivered, pending: pending ?? 0, dead: dead ?? 0 });
+  // `unresolved` is reported, never swallowed. Rows for a workspace with no
+  // usable credential are skipped without burning attempts, so without this
+  // line an unconfigured workspace and an empty queue would produce the same
+  // healthy-looking 200 while events piled up forever.
+  return NextResponse.json({
+    drained: delivered,
+    pending: pending ?? 0,
+    dead: dead ?? 0,
+    ...(unresolved.length > 0 ? { unresolved } : {}),
+  });
 }
 
 /**
