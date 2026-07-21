@@ -36,6 +36,7 @@
 - Pending state handling for destructive actions is a key ux pattern being refined in the codebase
 - Refuse to finalise without proof: the fix for false all-clear (where a meeting could be falsely marked as fully verified) is now paired with a proof gate that prevents finalisation unless actual evidence is present.
 - Constitution is now wired into the quorum check, meaning quorum validation reads from the constitution document rather than being a standalone rule
+- GroundStream integration work has been committed: outbox pattern, drain worker, and an event map were added
 
 ## Gotchas
 
