@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { runAssurance } from "@/lib/assurance";
+import { getQuorumThreshold } from "@/lib/company-documents";
 import { sanitizeMinutesHtml } from "@/lib/sanitize-html";
 import type { Attendee } from "@/lib/types";
 
@@ -472,7 +473,7 @@ async function computeAssurance(
   const [{ data: meeting }, { data: draft }] = await Promise.all([
     supabase
       .from("meetings")
-      .select("id, meeting_type, minutes_format, chairperson, attendees, quorum_met")
+      .select("id, company_id, meeting_type, minutes_format, chairperson, attendees, quorum_met")
       .eq("id", meetingId)
       .maybeSingle(),
     supabase.from("minutes_drafts").select("id, meeting_id, body_html").eq("id", draftId).maybeSingle(),
@@ -510,6 +511,12 @@ async function computeAssurance(
   // verify", never "verified clean".
   if (resolutionsError || actionItemsError || transcriptError) return null;
 
+  // This company's own quorum rule, when its constitution is on file. Null
+  // means unknown, and the check renders "not verified" rather than assuming a
+  // number — assuming one is exactly what wrote a fabricated quorum statement
+  // into a statutory document earlier.
+  const quorum = meeting.company_id ? await getQuorumThreshold(meeting.company_id) : null;
+
   const result = runAssurance({
     meeting: {
       meeting_type: meeting.meeting_type,
@@ -517,6 +524,13 @@ async function computeAssurance(
       chairperson: meeting.chairperson,
       attendees: meeting.attendees,
       quorum_met: meeting.quorum_met,
+      quorum_rule: quorum
+        ? {
+            threshold: quorum.threshold,
+            total: quorum.total,
+            citation: `${quorum.provenance.docTypeLabel} “${quorum.provenance.documentTitle}”, in force ${quorum.provenance.inForceFrom}`,
+          }
+        : null,
     },
     bodyHtml: draft.body_html ?? "",
     resolutions: (resolutions ?? []) as {

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
 import { generateMinutesRuleBased, meetingTypeGuidance } from "@/lib/minutes-engine";
 import { runAssurance } from "@/lib/assurance";
+import { getQuorumThreshold } from "@/lib/company-documents";
 import { deriveObligations } from "@/lib/obligations";
 import { resolveEntitiesForMeeting } from "@/lib/entities";
 import type { GeneratedMinutes, Meeting, Transcript } from "@/lib/types";
@@ -252,7 +253,7 @@ export async function POST(request: Request) {
     const { data: meeting, error: meetingError } = await supabase
       .from("meetings")
       .select(
-        "id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, minutes_format, created_at",
+        "id, company_id, company_name, meeting_type, meeting_date, venue, chairperson, attendees, quorum_met, status, minutes_format, created_at",
       )
       .eq("id", meetingId)
       .single();
@@ -438,6 +439,13 @@ export async function POST(request: Request) {
     // failure must never block the minutes generation the user asked for.
     let assuranceScore: number | null = null;
     try {
+      // Same company quorum rule the finalisation gate uses. Without it here,
+      // the check would report "no rule on record" at generation and then flip
+      // when re-run — the number a user sees first must not be one the app
+      // already knows is incomplete.
+      const companyId = (meeting as { company_id?: string | null }).company_id ?? null;
+      const quorum = companyId ? await getQuorumThreshold(companyId) : null;
+
       const assuranceResult = runAssurance({
         meeting: {
           meeting_type: meetingTyped.meeting_type,
@@ -445,6 +453,13 @@ export async function POST(request: Request) {
           chairperson: meetingTyped.chairperson,
           attendees: meetingTyped.attendees,
           quorum_met: meetingTyped.quorum_met,
+          quorum_rule: quorum
+            ? {
+                threshold: quorum.threshold,
+                total: quorum.total,
+                citation: `${quorum.provenance.docTypeLabel} “${quorum.provenance.documentTitle}”, in force ${quorum.provenance.inForceFrom}`,
+              }
+            : null,
         },
         bodyHtml: generated.minutes_body_html,
         resolutions: generated.resolutions.map((r) => ({

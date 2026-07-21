@@ -36,6 +36,22 @@ export interface AssuranceMeetingInput {
   chairperson: string | null;
   attendees: { name: string; role: string }[] | null;
   quorum_met: boolean | null;
+  /**
+   * This company's own quorum rule, read off its filed constitution, or null
+   * when unknown. Supplied by the caller from lib/company-documents.ts — this
+   * module stays framework-free.
+   *
+   * Null means UNKNOWN and must never be replaced with a default. Until this
+   * arrives, every quorum check in the product is generic; with it, the check
+   * is finally about THIS company. `citation` is what gets shown, so the
+   * number is never asserted without saying where it came from.
+   */
+  quorum_rule?: {
+    threshold: number;
+    total: number | null;
+    /** e.g. "Constitution, in force 12 Jun 2026" */
+    citation: string;
+  } | null;
 }
 
 export interface AssuranceResolutionInput {
@@ -197,6 +213,59 @@ function hasQuorumStatement(bodyHtml: string, bodyText: string): boolean {
 
 const DEFINITIONAL_QUORUM_RE =
   /\b(shall|must|would|is\s+to)\b[^.]{0,60}\b(form|constitute|be)\b|in\s+accordance\s+with\s+the\s+(terms\s+of\s+reference|constitution|articles)/i;
+
+/** Roles that count toward a directors' quorum. A Company Secretary attends but does not. */
+const DIRECTOR_ROLE_RE = /\b(director|chairman|chairperson|chair)\b/i;
+
+/**
+ * Does the recorded attendance actually satisfy THIS company's quorum rule?
+ *
+ * This is the first check measured against the company's own constitution
+ * rather than against companies in general. Three honest outcomes:
+ *
+ *   - rule unknown        -> not_applicable, naming the missing input. Never a
+ *                            pass: "we could not check" is not "it was fine".
+ *   - rule met            -> pass, citing the document and its in-force date.
+ *   - rule apparently not -> WARN, not fail, and the detail says why: the count
+ *                            comes from role text a human typed, not from a
+ *                            filed register of directors. Flagging on a
+ *                            heuristic is right; failing a statutory document
+ *                            on one is not. This becomes a hard fail once a
+ *                            register of directors is on file.
+ */
+function checkQuorumMeetsThreshold(
+  attendees: { name: string; role: string }[] | null,
+  rule: AssuranceMeetingInput["quorum_rule"],
+): AssuranceCheck {
+  if (!rule) {
+    return {
+      key: "quorum_meets_threshold",
+      label: "Quorum meets this company's rule",
+      status: "not_applicable",
+      detail:
+        "This company's quorum rule is not on record, so attendance cannot be checked against it. File the constitution and record its quorum threshold.",
+    };
+  }
+
+  const directors = (attendees ?? []).filter((a) => DIRECTOR_ROLE_RE.test(a.role ?? ""));
+  const outOf = rule.total ? ` of ${rule.total}` : "";
+
+  if (directors.length >= rule.threshold) {
+    return {
+      key: "quorum_meets_threshold",
+      label: "Quorum meets this company's rule",
+      status: "pass",
+      detail: `${directors.length} director(s) recorded; ${rule.threshold}${outOf} required per ${rule.citation}.`,
+    };
+  }
+
+  return {
+    key: "quorum_meets_threshold",
+    label: "Quorum meets this company's rule",
+    status: "warn",
+    detail: `${rule.threshold}${outOf} required per ${rule.citation}, but only ${directors.length} attendee(s) are recorded in a director role. This counts the roles typed on the attendance list, not a filed register of directors — confirm before finalising.`,
+  };
+}
 
 function checkQuorumStated(bodyText: string, bodyHtml: string): AssuranceCheck {
   const stated = hasQuorumStatement(bodyHtml, bodyText);
@@ -523,6 +592,7 @@ export function runAssurance(input: RunAssuranceInput): AssuranceResult {
   const checks: AssuranceCheck[] = [];
 
   checks.push(checkQuorumStated(bodyText, bodyHtml));
+  checks.push(checkQuorumMeetsThreshold(meeting.attendees, meeting.quorum_rule));
   checks.push(checkAttendanceRecorded(bodyText, meeting.attendees));
   checks.push(checkChairpersonNamed(bodyText, meeting.chairperson));
 
