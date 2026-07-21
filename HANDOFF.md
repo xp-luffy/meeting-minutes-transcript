@@ -100,6 +100,38 @@ Changed on 2026-07-21, migrations `0027`–`0038`. Three levels, easy to confuse
 **The organisation owns the data, not the user.** Someone who leaves does not take
 the firm's statutory records with them — this is a deliberate, confirmed decision.
 
+### ONE LOGIN = ONE ORGANISATION (migration `0039`)
+
+A person who works for two firms has **two logins**. Enforced by a unique index on
+`organisation_members(user_id)`, not by convention.
+
+This is load-bearing, not tidiness. `current_org_id()` resolves the caller's org as
+their earliest membership row, and it is the `DEFAULT` on `org_id` across 17 tables.
+With two memberships that default keeps stamping the *older* org onto records the
+user thinks they are creating in the newer one. Nothing leaks — the restrictive
+policy still refuses cross-tenant reads — the records just file themselves under the
+wrong firm, and you find out much later.
+
+Because of the index, `current_org_id()` is correct **by construction**, and no
+active-org switcher / cookie / explicit-org-on-insert machinery is needed. **If you
+ever relax this, all of that becomes mandatory in the same change.**
+
+Moving a person between firms = delete the membership, insert the new one. Their old
+firm's records stay with the old firm.
+
+### The two live organisations
+
+| slug | name | members | GroundStream |
+|---|---|---|---|
+| `drive-funnels` | Drive Funnels | 3 | credential saved (`…e38a`), **not yet proven** |
+| `onlyaiwork` | OnlyAIWork | 0 | none yet |
+
+`onlyaiwork` has a pending **owner invite for `xienpuo@onlyaiwork.com`**. Signing up
+with that address joins OnlyAIWork as owner instead of creating a personal org —
+`handle_new_user()` consumes the invite. Each org needs its **own** GroundStream key
+and its own registered source name; the key alone decides which workspace events land
+in, and a wrong one has no undo.
+
 ### Two different `role` columns — do not mix them up
 
 - `organisation_members.role` — `owner` / `admin` / `member`. **Answers all tenancy
