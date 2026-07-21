@@ -262,7 +262,7 @@ export function EmptyState({
       } ${className}`}
     >
       {title ? <h2 className="text-subhead font-semibold text-paper-900">{title}</h2> : null}
-      <p className={`text-body text-paper-500 ${title ? "mt-2" : ""}`}>{message}</p>
+      <p className={`text-body text-paper-600 ${title ? "mt-2" : ""}`}>{message}</p>
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );

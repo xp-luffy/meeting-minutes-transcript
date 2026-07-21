@@ -50,7 +50,7 @@ export default async function SharedReviewPage({
           <h1 className="text-page font-semibold text-balance break-words text-paper-900 [hyphens:auto]">
             {draft.company_name}
           </h1>
-          <p className="mt-1 text-body text-paper-500">
+          <p className="mt-1 text-body text-paper-600">
             {draft.meeting_type} · {formatDate(draft.meeting_date)}
             {draft.venue ? ` · ${draft.venue}` : ""}
           </p>
@@ -59,7 +59,7 @@ export default async function SharedReviewPage({
           Draft v{draft.version} · {draft.status}
         </Badge>
       </div>
-      <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
+      <div className="rounded-surface border border-paper-300 bg-white p-4 sm:p-6">
         {draft.body_html_source === "legacy_md" ? (
           <pre className="whitespace-pre-wrap font-sans text-body text-paper-800">
             {draft.body_html}
@@ -76,7 +76,7 @@ export default async function SharedReviewPage({
 
       <ConfirmDraftCard token={token} alreadyConfirmedBy={alreadyConfirmedBy} />
 
-      <p className="mt-6 text-center text-caption text-paper-500">
+      <p className="mt-6 text-center text-caption text-paper-600">
         Generated with Meeting Minutes — statutory minutes from transcripts.
       </p>
     </main>

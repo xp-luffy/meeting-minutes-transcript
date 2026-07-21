@@ -45,7 +45,7 @@ export function ConfirmDraftCard({
 
   if (confirmed) {
     return (
-      <div className="mt-6 rounded-surface border border-status-verified-200 bg-status-verified-50 p-6 text-body shadow-raised">
+      <div className="mt-6 rounded-surface border border-status-verified-200 bg-status-verified-50 p-6 text-body">
         <p className="font-medium text-status-verified-800">
           Confirmed by {confirmed.name} on {formatDate(confirmed.at)}.
         </p>
@@ -55,15 +55,15 @@ export function ConfirmDraftCard({
   }
 
   return (
-    <div className="mt-6 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
+    <div className="mt-6 rounded-surface border border-paper-300 bg-white p-4 sm:p-6">
       <h2 className="text-subhead font-semibold text-paper-900">
         {alreadyConfirmedBy.length > 0 ? "Add your confirmation" : "Confirm these minutes"}
       </h2>
-      <p className="mt-1 text-body text-paper-500">
+      <p className="mt-1 text-body text-paper-600">
         If you attended this meeting, you can confirm this record is accurate.
       </p>
       {alreadyConfirmedBy.length > 0 ? (
-        <p className="mt-2 text-caption text-paper-500">
+        <p className="mt-2 text-caption text-paper-600">
           Already confirmed: {alreadyConfirmedBy.join(", ")}
         </p>
       ) : null}
@@ -84,7 +84,7 @@ export function ConfirmDraftCard({
         </div>
         <div>
           <label htmlFor="confirm-role" className="block text-caption font-medium text-paper-700">
-            Role <span className="font-normal text-paper-500">(optional, e.g. Chairman)</span>
+            Role <span className="font-normal text-paper-600">(optional, e.g. Chairman)</span>
           </label>
           <input
             id="confirm-role"

@@ -16,7 +16,7 @@ import { uploadCompanyDocument, type UploadState } from "./documents-actions";
 const INPUT_CLASS =
   "block w-full rounded-surface border border-paper-300 bg-white px-3 py-2 text-body text-paper-900 placeholder:text-paper-500";
 
-const LABEL_CLASS = "block text-caption font-semibold tracking-wide text-paper-500 uppercase";
+const LABEL_CLASS = "block text-caption font-semibold tracking-wide text-paper-600 uppercase";
 
 /**
  * Upload / replace form for the company document cabinet.
@@ -89,13 +89,13 @@ export function UploadDocumentForm({
   return (
     <form
       action={formAction}
-      className="rounded-surface border border-paper-200 bg-white p-5 shadow-raised"
+      className="rounded-surface border border-paper-300 bg-white p-5"
       aria-labelledby={`${formId}-heading`}
     >
       <h3 id={`${formId}-heading`} className="text-body font-semibold text-paper-900">
         Upload a document
       </h3>
-      <p className="mt-1 text-caption text-paper-500">
+      <p className="mt-1 text-caption text-paper-600">
         PDF or DOCX, up to {formatFileSize(MAX_UPLOAD_BYTES)}. Nothing here is ever deleted —
         replacing a document marks the old one superseded and keeps it on file.
       </p>
@@ -123,9 +123,9 @@ export function UploadDocumentForm({
             ))}
           </select>
           {selectedSlot ? (
-            <p className="mt-1 text-caption text-paper-500">Backs: {selectedSlot.backs}</p>
+            <p className="mt-1 text-caption text-paper-600">Backs: {selectedSlot.backs}</p>
           ) : (
-            <p className="mt-1 text-caption text-paper-500">
+            <p className="mt-1 text-caption text-paper-600">
               We never guess the type from the filename — a document filed as the wrong type would
               back the wrong check.
             </p>
@@ -168,7 +168,7 @@ export function UploadDocumentForm({
             className={`mt-1 ${INPUT_CLASS} ${FOCUS_RING}`}
             aria-describedby={`${formId}-date-help`}
           />
-          <p id={`${formId}-date-help`} className="mt-1 text-caption text-paper-500">
+          <p id={`${formId}-date-help`} className="mt-1 text-caption text-paper-600">
             The date this version took effect — usually the date it was adopted, not the date you
             received it. <span className="text-status-risk-700">Leave blank if you do not know:</span> the
             document will be filed, but with no effective date it cannot be used to verify any
@@ -177,11 +177,11 @@ export function UploadDocumentForm({
         </div>
 
         {docType === "constitution" ? (
-          <fieldset className="rounded-surface border border-paper-200 p-3">
-            <legend className="px-1 text-caption font-semibold tracking-wide text-paper-500 uppercase">
+          <fieldset className="rounded-surface border border-paper-300 p-3">
+            <legend className="px-1 text-caption font-semibold tracking-wide text-paper-600 uppercase">
               Quorum, as stated in this document
             </legend>
-            <p className="text-caption text-paper-500">
+            <p className="text-caption text-paper-600">
               Optional. The app does not read the file&apos;s contents, so a quorum threshold is
               only ever known because a person read it off this document. Leave blank if you are not
               sure — an unknown threshold is reported as{" "}
@@ -232,7 +232,7 @@ export function UploadDocumentForm({
             onChange={handleFileChange}
             className={`mt-1 block w-full text-body text-paper-700 file:mr-3 file:min-h-11 file:rounded-surface file:border-0 file:bg-paper-100 file:px-3 file:text-body file:font-medium file:text-paper-700 ${FOCUS_RING}`}
           />
-          {fileNote ? <p className="mt-1 text-caption text-paper-500">{fileNote}</p> : null}
+          {fileNote ? <p className="mt-1 text-caption text-paper-600">{fileNote}</p> : null}
         </div>
       </div>
 

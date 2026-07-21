@@ -16,7 +16,7 @@ export function SaveIndicator({
   if (status === "idle") return null;
 
   if (status === "saving") {
-    return <span className="text-caption text-paper-500">Saving…</span>;
+    return <span className="text-caption text-paper-600">Saving…</span>;
   }
 
   if (status === "error") {

@@ -215,7 +215,7 @@ export default async function ObligationsPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-page font-semibold text-paper-900">Obligations Register</h1>
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             Statutory duties created by board decisions — filings, renewals, payments, and
             follow-ups tied back to the meeting that created them.
           </p>
@@ -227,20 +227,20 @@ export default async function ObligationsPage({
             <Badge variant="green">{doneCount} done</Badge>
           </div>
           {kindFilter !== "all" ? (
-            <p className="text-[11px] text-paper-500">Counts reflect the {KIND_LABEL[kindFilter]} filter</p>
+            <p className="text-[11px] text-paper-600">Counts reflect the {KIND_LABEL[kindFilter]} filter</p>
           ) : null}
         </div>
       </div>
 
       {atLimit ? (
-        <p className="text-caption text-paper-500">
+        <p className="text-caption text-paper-600">
           Showing the first {PAGE_LIMIT} obligations by due date — narrow with the filters below.
         </p>
       ) : null}
 
       <form
         method="get"
-        className="flex flex-col gap-3 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:flex-row sm:flex-wrap sm:items-end"
+        className="flex flex-col gap-3 rounded-surface border border-paper-300 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-end"
       >
         <div className="flex flex-col gap-1 sm:w-auto">
           <label htmlFor="status" className="text-caption font-medium text-paper-600">
@@ -313,10 +313,10 @@ export default async function ObligationsPage({
           message="Try widening your filters, or clear them to see everything. Obligations are created automatically when minutes are generated."
         />
       ) : (
-        <div className="overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised">
+        <div className="overflow-x-auto rounded-surface border border-paper-300 bg-white">
           <table className="w-full min-w-[760px] divide-y divide-paper-200 text-body">
             <thead>
-              <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-500">
+              <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-600">
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">Kind</th>
                 <th className="px-4 py-3">Due</th>
@@ -334,7 +334,7 @@ export default async function ObligationsPage({
                     <td className="max-w-md px-4 py-3">
                       <div className="text-paper-800">{item.title}</div>
                       {item.detail ? (
-                        <div className="mt-0.5 text-caption text-paper-500">{item.detail}</div>
+                        <div className="mt-0.5 text-caption text-paper-600">{item.detail}</div>
                       ) : null}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -352,10 +352,10 @@ export default async function ObligationsPage({
                           className={`rounded-control text-ink-600 hover:text-ink-700 ${FOCUS_RING}`}
                         >
                           {meeting.company_name}
-                          <span className="text-paper-500"> · {meeting.meeting_type}</span>
+                          <span className="text-paper-600"> · {meeting.meeting_type}</span>
                         </Link>
                       ) : (
-                        <span className="text-paper-500">—</span>
+                        <span className="text-paper-600">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">

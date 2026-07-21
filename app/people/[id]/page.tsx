@@ -40,7 +40,7 @@ export default async function EntityDetailPage({
     return (
       <div className="mx-auto max-w-3xl">
         <p className="text-body">
-          <Link href="/people" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
+          <Link href="/people" className={`rounded-control text-paper-600 hover:text-paper-700 ${FOCUS_RING}`}>
             &larr; People
           </Link>
         </p>
@@ -64,7 +64,7 @@ export default async function EntityDetailPage({
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-body">
-        <Link href="/people" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
+        <Link href="/people" className={`rounded-control text-paper-600 hover:text-paper-700 ${FOCUS_RING}`}>
           &larr; People
         </Link>
       </p>
@@ -107,7 +107,7 @@ export default async function EntityDetailPage({
         ) : (
           <div className="space-y-4">
             {owes.truncated ? (
-              <p className="text-caption text-paper-500">
+              <p className="text-caption text-paper-600">
                 Showing the first 400 linked items — this list is incomplete.
               </p>
             ) : null}
@@ -115,7 +115,7 @@ export default async function EntityDetailPage({
               <details
                 key={group.companyName}
                 open={group.overdueCount > 0}
-                className="rounded-surface border border-paper-200 bg-white shadow-raised"
+                className="rounded-surface border border-paper-300 bg-white"
               >
                 <summary
                   className={`flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 ${FOCUS_RING}`}
@@ -123,14 +123,14 @@ export default async function EntityDetailPage({
                   <span className="text-caption font-semibold uppercase tracking-wide text-paper-700">
                     {group.companyName}
                   </span>
-                  <span className="text-caption text-paper-500">
+                  <span className="text-caption text-paper-600">
                     {group.openCount} open
                     {group.overdueCount > 0 ? (
                       <span className="font-medium text-status-failed-600"> · {group.overdueCount} overdue</span>
                     ) : null}
                   </span>
                 </summary>
-                <ul className="divide-y divide-paper-200 border-t border-paper-200">
+                <ul className="divide-y divide-paper-200 border-t border-paper-300">
                   {group.items.map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                       <p className="min-w-0 flex-1 text-body text-paper-800">
@@ -139,7 +139,7 @@ export default async function EntityDetailPage({
                         {a.description}
                       </p>
                       <div className="flex shrink-0 items-center gap-3">
-                        <span className={`text-caption ${a.isOverdue ? "font-medium text-status-failed-600" : "text-paper-500"}`}>
+                        <span className={`text-caption ${a.isOverdue ? "font-medium text-status-failed-600" : "text-paper-600"}`}>
                           {a.isOverdue ? "overdue · " : ""}
                           {a.due_date ? `due ${formatDate(a.due_date)}` : "no due date"}
                         </span>
@@ -157,15 +157,15 @@ export default async function EntityDetailPage({
             ))}
 
             {owes.completed.length > 0 ? (
-              <details className="rounded-surface border border-paper-200 bg-white shadow-raised">
+              <details className="rounded-surface border border-paper-300 bg-white">
                 <summary className={`cursor-pointer px-4 py-3 text-caption text-paper-600 ${FOCUS_RING}`}>
                   Show {owes.completed.length} completed item
                   {owes.completed.length === 1 ? "" : "s"}
                 </summary>
-                <ul className="divide-y divide-paper-200 border-t border-paper-200">
+                <ul className="divide-y divide-paper-200 border-t border-paper-300">
                   {owes.completed.map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-                      <p className="min-w-0 flex-1 text-body text-paper-500 line-through">{a.description}</p>
+                      <p className="min-w-0 flex-1 text-body text-paper-600 line-through">{a.description}</p>
                       <Link
                         href={`/meetings/${a.meeting_id}/draft`}
                         className={`rounded-control text-caption text-ink-600 hover:underline ${FOCUS_RING}`}
@@ -225,7 +225,7 @@ export default async function EntityDetailPage({
         {detail.meetings.length === 0 ? (
           <EmptyState compact message="No meetings recorded for this person yet." />
         ) : (
-          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white">
             {detail.meetings.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">
@@ -234,9 +234,9 @@ export default async function EntityDetailPage({
                     className={`truncate text-body font-medium text-paper-900 hover:text-ink-600 ${FOCUS_RING}`}
                   >
                     {m.company_name}
-                    <span className="font-normal text-paper-500"> · {m.meeting_type}</span>
+                    <span className="font-normal text-paper-600"> · {m.meeting_type}</span>
                   </Link>
-                  <p className="mt-0.5 text-caption text-paper-500">{formatDate(m.meeting_date)}</p>
+                  <p className="mt-0.5 text-caption text-paper-600">{formatDate(m.meeting_date)}</p>
                 </div>
                 <Badge variant={m.relation === "chaired" ? "indigo" : "neutral"} className="capitalize">
                   {relationLabel(m.relation)}
@@ -252,7 +252,7 @@ export default async function EntityDetailPage({
         {detail.companyRoles.length === 0 ? (
           <EmptyState compact message="No company roles recorded yet." />
         ) : (
-          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white">
             {detail.companyRoles.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <Link
@@ -270,7 +270,7 @@ export default async function EntityDetailPage({
 
       <section className="mt-8">
         <h2 className="mb-1 text-subhead font-semibold text-paper-900">Ego graph</h2>
-        <p className="mb-3 text-caption text-paper-500">
+        <p className="mb-3 text-caption text-paper-600">
           Who {entity.canonical_name} is entangled with — meetings attended and company roles held.
         </p>
         {detail.egoNodes.length === 0 ? (
@@ -283,7 +283,7 @@ export default async function EntityDetailPage({
           />
         )}
         {detail.overflowCount > 0 ? (
-          <p className="mt-2 text-caption text-paper-500">
+          <p className="mt-2 text-caption text-paper-600">
             and {detail.overflowCount} more connection{detail.overflowCount === 1 ? "" : "s"} not shown
           </p>
         ) : null}

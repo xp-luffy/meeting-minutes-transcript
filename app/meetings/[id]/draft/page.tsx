@@ -222,19 +222,22 @@ export default async function DraftPage({
           />
         </div>
 
+        {/* rule-document: the double rule, once per page, over the statutory
+            record itself. It is the screen's echo of the DRAFT stamp on the
+            export, and the only thing on the page ranked above a section. */}
         <div
-          className={`mt-4 rounded-surface border bg-white p-6 shadow-raised ${
-            isLowConfidence ? "border-status-risk-300 ring-1 ring-status-risk-200" : "border-paper-200"
+          className={`rule-document mt-6 rounded-surface border bg-white p-6 ${
+            isLowConfidence ? "border-status-risk-300 ring-1 ring-status-risk-200" : "border-paper-300"
           }`}
         >
           {!typedDraft.body_html ? (
-            <p className="text-body text-paper-500">This draft has no content yet.</p>
+            <p className="text-body text-paper-600">This draft has no content yet.</p>
           ) : typedDraft.body_html_source === "legacy_md" ? (
             <>
               <pre className="whitespace-pre-wrap font-sans text-body text-paper-700">
                 {typedDraft.body_html}
               </pre>
-              <p className="mt-4 text-caption font-medium text-paper-500">
+              <p className="mt-4 text-caption font-medium text-paper-600">
                 Legacy draft — regenerate to edit.
               </p>
             </>
@@ -256,7 +259,7 @@ export default async function DraftPage({
         isFinal={isFinal}
       />
 
-      <div>
+      <div className="rule-section">
         <h2 className="text-subhead font-medium text-paper-700">Resolutions</h2>
         {resolutionsError ? (
           // "No resolutions extracted" is a claim about the record. If the read
@@ -283,7 +286,7 @@ export default async function DraftPage({
         )}
       </div>
 
-      <div>
+      <div className="rule-section">
         <h2 className="text-subhead font-medium text-paper-700">Action Items</h2>
         {actionItemsError ? (
           // Same class as the resolutions claim directly above: "No action
@@ -295,9 +298,9 @@ export default async function DraftPage({
             Reload before relying on this page.
           </div>
         ) : typedActionItems.length === 0 ? (
-          <p className="mt-3 text-body text-paper-500">No action items extracted.</p>
+          <p className="mt-3 text-body text-paper-600">No action items extracted.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
+          <ul className="mt-3 divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white">
             {typedActionItems.map((item) => (
               <ActionItemRow
                 key={item.id}

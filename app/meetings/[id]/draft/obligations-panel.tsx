@@ -49,7 +49,7 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
   if (error) {
     return (
       <div className="rounded-surface border border-dashed border-paper-450 bg-paper-50 p-5">
-        <h2 className="text-caption font-semibold tracking-wide text-paper-500 uppercase">
+        <h2 className="text-caption font-semibold tracking-wide text-paper-600 uppercase">
           Obligations created by this meeting
         </h2>
         <p className="mt-3 text-body text-paper-700">
@@ -63,13 +63,13 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
   const obligations = (data ?? []) as ObligationRow[];
 
   return (
-    <div className="rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
-      <h2 className="text-caption font-semibold tracking-wide text-paper-500 uppercase">
+    <div className="rounded-surface border border-paper-300 bg-white p-5">
+      <h2 className="text-caption font-semibold tracking-wide text-paper-600 uppercase">
         Obligations created by this meeting
       </h2>
 
       {obligations.length === 0 ? (
-        <p className="mt-3 text-body text-paper-500">
+        <p className="mt-3 text-body text-paper-600">
           No downstream obligations were derived from this meeting.
         </p>
       ) : (
@@ -83,7 +83,7 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
             return (
               <li
                 key={obligation.id}
-                className="rounded-surface border border-paper-200 px-3 py-2 text-caption text-paper-600"
+                className="rounded-surface border border-paper-300 px-3 py-2 text-caption text-paper-600"
               >
                 <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <span className="min-w-0 font-medium break-words text-paper-700">{obligation.title}</span>
@@ -95,11 +95,11 @@ export async function ObligationsPanel({ meetingId }: { meetingId: string }) {
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <span className={isOverdue ? "font-medium text-status-failed-600" : "text-paper-500"}>
+                  <span className={isOverdue ? "font-medium text-status-failed-600" : "text-paper-600"}>
                     Due {formatDate(obligation.due_date)}
                   </span>
                   {obligation.detail ? (
-                    <span className="text-paper-500">&middot; {obligation.detail}</span>
+                    <span className="text-paper-600">&middot; {obligation.detail}</span>
                   ) : null}
                 </div>
               </li>

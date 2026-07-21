@@ -126,7 +126,7 @@ function AssuranceChecklist({ checks }: { checks: AssuranceCheck[] }) {
               count of passes with the total hidden behind the disclosure. */}
           <summary className="cursor-pointer list-none text-caption font-medium text-paper-600 select-none">
             <span className="inline-flex items-center gap-2">
-              <span className="text-paper-500 transition-transform group-open:rotate-90">
+              <span className="text-paper-600 transition-transform group-open:rotate-90">
                 &rsaquo;
               </span>
               {passed.length} of {checks.length} checks verified
@@ -194,7 +194,7 @@ export function AssurancePanel({
   }
 
   return (
-    <div className="rounded-surface border border-paper-300 bg-white p-5 shadow-raised sm:p-6">
+    <div className="rounded-surface border border-paper-300 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* A panel title owns its card, so it is a subhead — not the eyebrow
             caps that made the type scale run backwards at the top end. */}

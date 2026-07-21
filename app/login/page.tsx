@@ -51,9 +51,9 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-sm flex-col justify-center px-1">
-      <div className="rounded-surface border border-paper-200 bg-white p-6 shadow-raised sm:p-8">
+      <div className="rounded-surface border border-paper-300 bg-white p-6 sm:p-8">
         <h1 className="text-page font-semibold text-paper-900">Log in</h1>
-        <p className="mt-1 text-body text-paper-500">Sign in to manage your meetings.</p>
+        <p className="mt-1 text-body text-paper-600">Sign in to manage your meetings.</p>
 
         {error ? (
           <div className="mt-5 rounded-surface border border-status-failed-200 bg-status-failed-50 px-4 py-3 text-body text-status-failed-700">
@@ -74,7 +74,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+              className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
               placeholder="you@company.com"
             />
           </div>
@@ -91,7 +91,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+              className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
               placeholder="••••••••"
             />
           </div>
@@ -115,7 +115,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-body text-paper-500">
+        <p className="mt-6 text-center text-body text-paper-600">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="focus-ring rounded font-medium text-ink-600 hover:text-ink-700">
             Sign up

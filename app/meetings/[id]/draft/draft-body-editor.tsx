@@ -49,7 +49,7 @@ function ToolbarButton({ label, onClick, isActive, disabled }: ToolbarButtonProp
 
 function EditorToolbar({ editor }: { editor: Editor }) {
   return (
-    <div className="sticky top-0 z-10 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto rounded-surface border border-paper-200 bg-paper-50 p-1">
+    <div className="sticky top-0 z-10 mb-2 flex flex-nowrap items-center gap-1 overflow-x-auto rounded-surface border border-paper-300 bg-paper-50 p-1">
       <ToolbarButton
         label="Bold"
         onClick={() => editor.chain().focus().toggleBold().run()}

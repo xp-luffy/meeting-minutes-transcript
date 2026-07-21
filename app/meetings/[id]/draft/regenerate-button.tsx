@@ -71,7 +71,7 @@ export function RegenerateButton({ meetingId }: { meetingId: string }) {
       </button>
 
       {confirming ? (
-        <div className="absolute right-0 top-full z-10 mt-2 max-h-[calc(100vh-2rem)] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-surface border border-paper-200 bg-white p-4 text-left shadow-float">
+        <div className="absolute right-0 top-full z-10 mt-2 max-h-[calc(100vh-2rem)] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto rounded-surface border border-paper-300 bg-white p-4 text-left shadow-float">
           <p className="text-caption text-paper-600">
             This will overwrite the current draft body with a fresh AI extraction and create
             version N+1. Manual body edits will be lost. Resolutions and action items will be

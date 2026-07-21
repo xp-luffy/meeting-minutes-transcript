@@ -14,12 +14,12 @@ export default async function InvitePage() {
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-page font-semibold text-paper-900">Invite a team member</h1>
-      <p className="mt-1 text-body text-paper-500">
+      <p className="mt-1 text-body text-paper-600">
         There&apos;s no email server configured in v1, so invites are sent by sharing a link
         yourself rather than an automated email.
       </p>
 
-      <div className="mt-6 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-5">
+      <div className="mt-6 rounded-surface border border-paper-300 bg-white p-4 sm:p-5">
         <label className="block text-body font-medium text-paper-700">Signup link</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input
@@ -32,7 +32,7 @@ export default async function InvitePage() {
             // 1635477524) while typecheck and build stayed green. The same bug
             // class hit app/workspaces/[id] earlier. CopyLinkButton below is a
             // client component and already covers the copy affordance.
-            className="block w-full min-w-0 rounded-surface border border-paper-450 bg-paper-50 px-3 py-2 text-base text-paper-700 shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="block w-full min-w-0 rounded-surface border border-paper-450 bg-paper-50 px-3 py-2 text-base text-paper-700 focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
           <CopyLinkButton text={signupUrl} />
         </div>
@@ -60,7 +60,7 @@ export default async function InvitePage() {
         </Link>
       </div>
 
-      <div className="mt-6 rounded-surface border border-paper-200 bg-paper-50 p-4 text-body text-paper-600 sm:p-5">
+      <div className="mt-6 rounded-surface border border-paper-300 bg-paper-50 p-4 text-body text-paper-600 sm:p-5">
         <p className="font-medium text-paper-700">Roles</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
           <li>
@@ -75,7 +75,7 @@ export default async function InvitePage() {
             <span className="font-medium text-paper-700">admin</span> — full access.
           </li>
         </ul>
-        <p className="mt-3 text-caption text-paper-500">
+        <p className="mt-3 text-caption text-paper-600">
           Role changes are an admin operation and aren&apos;t self-service in v1.
         </p>
       </div>

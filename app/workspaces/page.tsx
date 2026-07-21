@@ -35,7 +35,7 @@ export default async function WorkspacesPage({
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="text-page font-semibold text-paper-900">Workspaces</h1>
-      <p className="mt-1 max-w-2xl text-body text-paper-500">
+      <p className="mt-1 max-w-2xl text-body text-paper-600">
         Share meetings with a team. Anyone in a workspace can see and edit its meetings.
       </p>
 
@@ -50,11 +50,11 @@ export default async function WorkspacesPage({
           {details.map(({ ws, members, meetingCount }) => (
             <li
               key={ws.id}
-              className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450"
+              className="rounded-surface border border-paper-300 bg-white p-4 transition-shadow hover:border-paper-450"
             >
               <Link href={`/workspaces/${ws.id}`} className={`block h-full rounded-control ${FOCUS_RING}`}>
                 <h2 className="truncate text-base font-medium text-paper-900">{ws.name}</h2>
-                <p className="mt-1 text-body text-paper-500">
+                <p className="mt-1 text-body text-paper-600">
                   {members.memberCount} {members.memberCount === 1 ? "member" : "members"}
                   {" · "}
                   {meetingCount} {meetingCount === 1 ? "meeting" : "meetings"}
@@ -65,7 +65,7 @@ export default async function WorkspacesPage({
         </ul>
       )}
 
-      <div className="mt-8 max-w-2xl rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
+      <div className="mt-8 max-w-2xl rounded-surface border border-paper-300 bg-white p-5">
         <h2 className="text-subhead font-semibold text-paper-900">New workspace</h2>
         {wsError ? (
           <div className="mt-3 rounded-surface border border-status-failed-200 bg-status-failed-50 px-3 py-2 text-body text-status-failed-700">
@@ -79,7 +79,7 @@ export default async function WorkspacesPage({
             required
             defaultValue={wsName}
             placeholder="e.g. Arca Holdings — Company Secretaries"
-            className="block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
           <SubmitButton
             pendingLabel="Creating…"
@@ -90,9 +90,9 @@ export default async function WorkspacesPage({
         </form>
       </div>
 
-      <div className="mt-6 max-w-2xl rounded-surface border border-paper-200 bg-paper-50 p-5">
+      <div className="mt-6 max-w-2xl rounded-surface border border-paper-300 bg-paper-50 p-5">
         <h2 className="text-subhead font-semibold text-paper-700">Have an invite?</h2>
-        <p className="mt-1 text-caption text-paper-500">
+        <p className="mt-1 text-caption text-paper-600">
           If someone invited your email address, you&apos;ll join that workspace automatically the
           next time you sign up. If your account already existed when the invite was sent, that
           automatic step doesn&apos;t apply — ask the workspace owner for the workspace ID instead
@@ -110,7 +110,7 @@ export default async function WorkspacesPage({
             required
             defaultValue={joinId}
             placeholder="Workspace ID"
-            className="block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
           <SubmitButton
             pendingLabel="Joining…"
@@ -119,7 +119,7 @@ export default async function WorkspacesPage({
             Join
           </SubmitButton>
         </form>
-        <p className="mt-2 text-[11px] text-paper-500">
+        <p className="mt-2 text-[11px] text-paper-600">
           v1 note: the workspace ID acts as a join token — anyone signed in who has it can join.
           Only share it with people you want in the workspace.
         </p>

@@ -42,7 +42,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={sourceSerif.variable}>
-      <body className="antialiased min-h-screen bg-paper-50 text-paper-900">
+      {/* paper-100, not paper-50: card-to-page separation goes 1.03 -> ~1.07:1,
+          so a card reads as a plate on a toned page rather than dissolving into
+          it. Ships together with retiring text-paper-500 (138 sites -> 600) —
+          paper-500 falls below the AA floor on this ground, and separating the
+          two changes would put the app out of compliance. */}
+      <body className="antialiased min-h-screen bg-paper-100 text-paper-900">
         <SiteHeader profile={profile} />
         <main className="md:pl-60">
           <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</div>

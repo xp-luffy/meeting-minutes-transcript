@@ -137,7 +137,7 @@ export function ActionItemRow({
           rows={1}
           className="block w-full resize-none rounded-surface border-0 p-0 text-base leading-relaxed text-paper-800 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:bg-transparent disabled:text-paper-800 sm:text-body"
         />
-        <div className="mt-2 flex flex-col gap-2 text-caption text-paper-500 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="mt-2 flex flex-col gap-2 text-caption text-paper-600 sm:mt-1 sm:flex-row sm:flex-wrap sm:items-center">
           {/* Two distinct things, deliberately side by side: the RECORDED text
               (what the minutes say — a document field) and the LINK to a real
               person (an overlay on the record, never a rewrite of it). */}

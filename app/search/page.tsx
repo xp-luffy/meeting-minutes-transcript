@@ -105,9 +105,9 @@ export default async function SearchPage({
               <section key={group.kind}>
                 {/* An eyebrow-cap label above a list — the one place the
                     system permits caps smaller than body text. */}
-                <h2 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
+                <h2 className="text-caption font-semibold tracking-[0.06em] text-paper-600 uppercase">
                   {group.label}
-                  <span className="ml-2 font-normal tracking-normal text-paper-500 normal-case">
+                  <span className="ml-2 font-normal tracking-normal text-paper-600 normal-case">
                     {group.results.length}
                   </span>
                 </h2>
@@ -116,7 +116,7 @@ export default async function SearchPage({
                     <li key={`${result.kind}:${result.id}`} className="min-w-0">
                       <Link
                         href={result.href}
-                        className={`block rounded-surface border border-paper-300 bg-white p-4 shadow-raised hover:border-paper-450 hover:bg-paper-50 sm:p-5 ${FOCUS_RING}`}
+                        className={`block rounded-surface border border-paper-300 bg-white p-4 hover:border-paper-450 hover:bg-paper-50 sm:p-5 ${FOCUS_RING}`}
                       >
                         {/* Long Malaysian company names WRAP. They are legally
                             exact and must never lose a character to truncation
@@ -126,7 +126,7 @@ export default async function SearchPage({
                         </h3>
                         <Snippet segments={result.snippet} />
                         {result.companyName || result.date ? (
-                          <p className="mt-2 text-meta text-paper-500">
+                          <p className="mt-2 text-meta text-paper-600">
                             {result.companyName}
                             {result.companyName && result.date ? " · " : ""}
                             {result.date ? formatDate(result.date) : ""}
@@ -147,7 +147,7 @@ export default async function SearchPage({
         constitution was full-text searched and got no hits will conclude the
         clause does not exist — the exact failure this product prevents.
       */}
-      <p className="mt-10 border-t border-paper-200 pt-4 text-meta text-paper-600">
+      <p className="mt-10 border-t border-paper-300 pt-4 text-meta text-paper-600">
         Search covers record fields — titles, names, resolution text, descriptions and minutes body
         text.{" "}
         <strong className="font-semibold">

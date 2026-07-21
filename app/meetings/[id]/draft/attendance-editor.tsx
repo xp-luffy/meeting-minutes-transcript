@@ -68,18 +68,18 @@ export function AttendanceEditor({
   }
 
   return (
-    <div className="rounded-surface border border-paper-200 bg-white shadow-raised">
+    <div className="rounded-surface border border-paper-300 bg-white">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={`flex w-full items-center justify-between rounded-t-lg px-6 py-4 text-left ${FOCUS_RING}`}
       >
         <h2 className="text-subhead font-medium text-paper-700">Attendance &amp; Quorum</h2>
-        <span className="text-caption text-paper-500">{open ? "Hide" : "Show"}</span>
+        <span className="text-caption text-paper-600">{open ? "Hide" : "Show"}</span>
       </button>
 
       {open ? (
-        <div className="border-t border-paper-200 px-6 py-4">
+        <div className="border-t border-paper-300 px-6 py-4">
           <ul className="space-y-3 sm:space-y-2">
             {attendees.map((attendee, index) => (
               <li key={index} className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export function AttendanceEditor({
                     type="button"
                     onClick={() => removeAttendee(index)}
                     aria-label="Remove attendee"
-                    className={`inline-flex min-h-11 min-w-11 flex-none items-center justify-center rounded-surface text-body font-medium text-paper-500 hover:bg-status-failed-50 hover:text-status-failed-600 ${FOCUS_RING}`}
+                    className={`inline-flex min-h-11 min-w-11 flex-none items-center justify-center rounded-surface text-body font-medium text-paper-600 hover:bg-status-failed-50 hover:text-status-failed-600 ${FOCUS_RING}`}
                   >
                     ×
                   </button>

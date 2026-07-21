@@ -71,7 +71,7 @@ export function StatusWorkflow({
 
   if (status === "final") {
     return (
-      <div className="rounded-surface border border-paper-200 bg-paper-50 px-3 py-1.5 text-caption font-medium text-paper-600">
+      <div className="rounded-surface border border-paper-300 bg-paper-50 px-3 py-1.5 text-caption font-medium text-paper-600">
         Finalised on {formatDate(finalisedAt)} — editing locked
       </div>
     );

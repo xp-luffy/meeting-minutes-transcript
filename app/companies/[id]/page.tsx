@@ -24,7 +24,7 @@ function DefaultsChips({ company }: { company: NonNullable<Awaited<ReturnType<ty
 
   if (chips.length === 0) {
     return (
-      <p className="mt-2 text-caption text-paper-500">
+      <p className="mt-2 text-caption text-paper-600">
         No usual defaults yet — they fill in automatically after your first meeting for this
         company.
       </p>
@@ -62,7 +62,7 @@ export default async function CompanyDetailPage({
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-body">
-        <Link href="/companies" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
+        <Link href="/companies" className={`rounded-control text-paper-600 hover:text-paper-700 ${FOCUS_RING}`}>
           &larr; Companies
         </Link>
       </p>
@@ -71,7 +71,7 @@ export default async function CompanyDetailPage({
         <div className="min-w-0">
           <h1 className="text-page font-semibold text-balance break-words text-paper-900 [hyphens:auto]">{company.name}</h1>
           {company.reg_no ? (
-            <p className="mt-0.5 text-body text-paper-500">{company.reg_no}</p>
+            <p className="mt-0.5 text-body text-paper-600">{company.reg_no}</p>
           ) : null}
           <DefaultsChips company={company} />
         </div>
@@ -93,7 +93,7 @@ export default async function CompanyDetailPage({
               <li key={meeting.id}>
                 <Link
                   href={`/meetings/${meeting.id}`}
-                  className={`block h-full rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
+                  className={`block h-full rounded-surface border border-paper-300 bg-white p-4 transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="truncate text-body font-medium text-paper-900">
@@ -101,7 +101,7 @@ export default async function CompanyDetailPage({
                     </h3>
                     <StatusBadge status={meeting.status} />
                   </div>
-                  <p className="mt-1 text-caption text-paper-500">
+                  <p className="mt-1 text-caption text-paper-600">
                     {formatDate(meeting.meeting_date)}
                     {meeting.venue ? <> &middot; {meeting.venue}</> : null}
                     {meeting.latestDraft ? (
@@ -126,7 +126,7 @@ export default async function CompanyDetailPage({
                 <li key={person.id}>
                   <Link
                     href={`/people/${person.id}`}
-                    className={`flex items-center justify-between gap-2 rounded-surface border border-paper-200 bg-white p-3 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
+                    className={`flex items-center justify-between gap-2 rounded-surface border border-paper-300 bg-white p-3 transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
                   >
                     <span className="min-w-0 truncate text-body font-medium text-paper-900">{person.name}</span>
                     <Badge variant="indigo">{relationLabel(person.relation)}</Badge>
@@ -149,17 +149,17 @@ export default async function CompanyDetailPage({
 
       <section className="mt-8">
         <h2 className="mb-3 text-subhead font-semibold text-paper-900">Resolutions register</h2>
-        <p className="mb-3 text-caption text-paper-500">
+        <p className="mb-3 text-caption text-paper-600">
           The firm&apos;s institutional memory for this company — every resolution passed, and how
           it was resolved.
         </p>
         {resolutions.length === 0 ? (
           <EmptyState compact message="No resolutions recorded yet." />
         ) : (
-          <div className="overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised">
+          <div className="overflow-x-auto rounded-surface border border-paper-300 bg-white">
             <table className="w-full min-w-[560px] text-left text-body">
               <thead>
-                <tr className="border-b border-paper-200 text-caption font-semibold tracking-wide text-paper-500 uppercase">
+                <tr className="border-b border-paper-300 text-caption font-semibold tracking-wide text-paper-600 uppercase">
                   <th className="px-4 py-2">Number</th>
                   <th className="px-4 py-2">Date</th>
                   <th className="px-4 py-2">Resolution</th>
@@ -172,7 +172,7 @@ export default async function CompanyDetailPage({
                     <td className="px-4 py-2 whitespace-nowrap text-paper-700">
                       {resolution.resolution_number ?? "—"}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-paper-500">
+                    <td className="px-4 py-2 whitespace-nowrap text-paper-600">
                       {formatDate(resolution.meeting_date)}
                     </td>
                     <td className="px-4 py-2 text-paper-700">
@@ -194,12 +194,12 @@ export default async function CompanyDetailPage({
         {openActions.length === 0 ? (
           <EmptyState compact message="No open action items for this company." />
         ) : (
-          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-200 bg-white shadow-raised">
+          <ul className="divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white">
             {openActions.map((item) => (
               <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-body text-paper-800">{item.description}</p>
-                  <p className="mt-0.5 text-caption text-paper-500">
+                  <p className="mt-0.5 text-caption text-paper-600">
                     {item.owner_name ?? "Unassigned"}
                     {item.due_date ? <> &middot; due {formatDate(item.due_date)}</> : null}
                     {" · "}

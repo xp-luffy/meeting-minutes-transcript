@@ -22,7 +22,7 @@ export default async function NewMeetingPage({
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="text-page font-semibold text-paper-900">New Meeting</h1>
-      <p className="mt-1 text-body text-paper-500">
+      <p className="mt-1 text-body text-paper-600">
         Create a meeting record, then add a transcript to generate statutory minutes.
       </p>
 
@@ -48,7 +48,7 @@ export default async function NewMeetingPage({
             name="meeting_type"
             required
             defaultValue={getParam("meeting_type")}
-            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="" disabled>
               Select a meeting type
@@ -69,7 +69,7 @@ export default async function NewMeetingPage({
             id="workspace_id"
             name="workspace_id"
             defaultValue={selectedWorkspace}
-            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="">Personal (no workspace)</option>
             {workspaces.map((ws) => (
@@ -78,7 +78,7 @@ export default async function NewMeetingPage({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             Workspace meetings are visible and editable by every member. Personal meetings stay
             visible to only you.
           </p>
@@ -92,12 +92,12 @@ export default async function NewMeetingPage({
             id="minutes_format"
             name="minutes_format"
             defaultValue={getParam("minutes_format") || "standard"}
-            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 bg-white px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           >
             <option value="standard">Standard statutory</option>
             <option value="maisca">Maisca committee style</option>
           </select>
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             Maisca style: header &amp; attendance tables, quorum per Terms of Reference,
             Chairman&rsquo;s confidentiality address, numbered agenda-item table. Format defaults
             to this company&rsquo;s usual style if you leave this as Standard.
@@ -114,7 +114,7 @@ export default async function NewMeetingPage({
             type="date"
             required
             defaultValue={getParam("meeting_date")}
-            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
         </div>
 
@@ -127,10 +127,10 @@ export default async function NewMeetingPage({
             name="venue"
             type="text"
             defaultValue={getParam("venue")}
-            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder="e.g. Level 12, Menara Arca, Kuala Lumpur"
           />
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             Leave blank to use this company&rsquo;s usual venue, if it has one on record.
           </p>
         </div>
@@ -144,10 +144,10 @@ export default async function NewMeetingPage({
             name="chairperson"
             type="text"
             defaultValue={getParam("chairperson")}
-            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder="e.g. Dato' Ahmad Fauzi bin Ismail"
           />
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             Leave blank to use this company&rsquo;s usual chairperson, if it has one on record.
           </p>
         </div>
@@ -161,10 +161,10 @@ export default async function NewMeetingPage({
             name="attendees"
             rows={5}
             defaultValue={getParam("attendees")}
-            className="mt-1 block min-h-[120px] w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="mt-1 block min-h-[120px] w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
             placeholder={"One per line as Name — Role\ne.g. Ms Sarah Tan — Company Secretary"}
           />
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             One per line, as &ldquo;Name — Role&rdquo; (a comma also works as the separator).
             Leave blank to use this company&rsquo;s usual attendee list, if it has one on record.
           </p>

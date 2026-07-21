@@ -47,13 +47,13 @@ export default async function WorkspaceDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <p className="text-body">
-        <Link href="/workspaces" className={`rounded-control text-paper-500 hover:text-paper-700 ${FOCUS_RING}`}>
+        <Link href="/workspaces" className={`rounded-control text-paper-600 hover:text-paper-700 ${FOCUS_RING}`}>
           &larr; Workspaces
         </Link>
       </p>
       <h1 className="mt-2 text-page font-semibold text-paper-900">{workspace.name}</h1>
 
-      <section className="mt-6 rounded-surface border border-paper-200 bg-white p-5 shadow-raised">
+      <section className="mt-6 rounded-surface border border-paper-300 bg-white p-5">
         <h2 className="text-subhead font-semibold text-paper-900">Members</h2>
         <p className="mt-1 text-body text-paper-600">
           {members.memberCount} {members.memberCount === 1 ? "member" : "members"}
@@ -63,7 +63,7 @@ export default async function WorkspaceDetailPage({
             <> &middot; you created this workspace</>
           ) : null}
         </p>
-        <p className="mt-2 text-caption text-paper-500">
+        <p className="mt-2 text-caption text-paper-600">
           Only your own email is ever shown here — other members&apos; emails aren&apos;t
           resolvable under the app&apos;s row-level security, so they&apos;re counted but not
           listed by name.
@@ -84,7 +84,7 @@ export default async function WorkspaceDetailPage({
                     <input type="hidden" name="invite_id" value={invite.id} />
                     <SubmitButton
                       pendingLabel="Removing…"
-                      className={`ml-3 shrink-0 rounded-control text-caption text-paper-500 hover:text-status-failed-600 disabled:opacity-50 ${FOCUS_RING}`}
+                      className={`ml-3 shrink-0 rounded-control text-caption text-paper-600 hover:text-status-failed-600 disabled:opacity-50 ${FOCUS_RING}`}
                     >
                       Remove
                     </SubmitButton>
@@ -114,7 +114,7 @@ export default async function WorkspaceDetailPage({
             type="email"
             required
             placeholder="colleague@company.com"
-            className="block w-full rounded-surface border border-paper-450 px-3 py-2 text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
+            className="block w-full rounded-surface border border-paper-450 px-3 py-2 text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:text-body"
           />
           <SubmitButton
             pendingLabel="Inviting…"
@@ -124,11 +124,11 @@ export default async function WorkspaceDetailPage({
           </SubmitButton>
         </form>
 
-        <div className="mt-4 rounded-surface border border-paper-200 bg-paper-50 p-3">
+        <div className="mt-4 rounded-surface border border-paper-300 bg-paper-50 p-3">
           <p className="text-caption font-medium text-paper-700">
             Existing account, no email server yet?
           </p>
-          <p className="mt-1 text-caption text-paper-500">
+          <p className="mt-1 text-caption text-paper-600">
             New invites auto-apply the next time that email signs up. For someone who already has
             an account, share this workspace ID instead — they can join it from the{" "}
             <Link href="/workspaces" className={`rounded-control text-ink-600 hover:underline ${FOCUS_RING}`}>
@@ -141,7 +141,7 @@ export default async function WorkspaceDetailPage({
               type="text"
               readOnly
               value={workspace.id}
-              className="block w-full min-w-0 rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption text-paper-700 shadow-raised"
+              className="block w-full min-w-0 rounded-surface border border-paper-450 bg-white px-3 py-1.5 text-caption text-paper-700"
             />
             <CopyIdButton text={workspace.id} />
           </div>
@@ -167,7 +167,7 @@ export default async function WorkspaceDetailPage({
               <li key={meeting.id}>
                 <Link
                   href={`/meetings/${meeting.id}`}
-                  className={`block h-full rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
+                  className={`block h-full rounded-surface border border-paper-300 bg-white p-4 transition-shadow hover:border-paper-450 ${FOCUS_RING}`}
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="min-w-0 truncate text-body font-medium text-paper-900">
@@ -175,7 +175,7 @@ export default async function WorkspaceDetailPage({
                     </h3>
                     <StatusBadge status={meeting.status} />
                   </div>
-                  <p className="mt-1 text-caption text-paper-500">
+                  <p className="mt-1 text-caption text-paper-600">
                     {meeting.meeting_type} &middot; {formatDate(meeting.meeting_date)}
                   </p>
                 </Link>

@@ -53,11 +53,11 @@ export function SendForReview({
       </button>
       {error && <p className="mt-1 text-caption text-status-failed-600">{error}</p>}
       {url && (
-        <div className="absolute right-0 z-10 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-surface border border-paper-200 bg-white p-3 shadow-float">
+        <div className="absolute right-0 z-10 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-surface border border-paper-300 bg-white p-3 shadow-float">
           <p className="text-caption font-medium text-paper-800">
             Confirmation &amp; review link
           </p>
-          <p className="mt-1 text-[11px] text-paper-500">
+          <p className="mt-1 text-[11px] text-paper-600">
             Recipients can read AND formally confirm the minutes from this link.
           </p>
           <p className="mt-2 break-all rounded bg-paper-50 p-2 text-[11px] text-paper-600">
@@ -79,7 +79,7 @@ export function SendForReview({
             </a>
           </div>
           {expiresAt && (
-            <p className="mt-2 text-[11px] text-paper-500">
+            <p className="mt-2 text-[11px] text-paper-600">
               Expires {formatDate(expiresAt)} · anyone
               with the link can view this version
             </p>
@@ -87,7 +87,7 @@ export function SendForReview({
           <button
             type="button"
             onClick={() => setUrl(null)}
-            className={`mt-2 rounded-control text-[11px] text-paper-500 hover:text-paper-600 ${FOCUS_RING}`}
+            className={`mt-2 rounded-control text-[11px] text-paper-600 hover:text-paper-600 ${FOCUS_RING}`}
           >
             Close
           </button>

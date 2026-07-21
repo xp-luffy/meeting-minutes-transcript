@@ -44,12 +44,12 @@ export async function PrecedentPanel({ meetingId }: { meetingId: string }) {
   });
 
   return (
-    <details className="group rounded-surface border border-dashed border-paper-200 bg-paper-50/60 px-4 py-3 open:pb-4">
-      <summary className="cursor-pointer list-none text-body font-medium text-paper-500 select-none">
+    <details className="group rounded-surface border border-dashed border-paper-300 bg-paper-50/60 px-4 py-3 open:pb-4">
+      <summary className="cursor-pointer list-none text-body font-medium text-paper-600 select-none">
         <span className="inline-flex items-center gap-2">
-          <span className="text-paper-500 transition-transform group-open:rotate-90">›</span>
+          <span className="text-paper-600 transition-transform group-open:rotate-90">›</span>
           Precedents from past minutes
-          <span className="text-caption font-normal text-paper-500">({sortedMatches.length})</span>
+          <span className="text-caption font-normal text-paper-600">({sortedMatches.length})</span>
         </span>
       </summary>
 
@@ -70,7 +70,7 @@ function excerpt(text: string, maxLength = 160): string {
 
 function PrecedentMatchRow({ match }: { match: PrecedentMatch }) {
   return (
-    <li className="rounded-surface border border-paper-200 bg-white px-3 py-2 text-caption text-paper-500">
+    <li className="rounded-surface border border-paper-300 bg-white px-3 py-2 text-caption text-paper-600">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-paper-600">
           {match.company_name}
@@ -88,7 +88,7 @@ function PrecedentMatchRow({ match }: { match: PrecedentMatch }) {
           <Badge variant="neutral">{formatConfidencePercent(match.similarity)} similar</Badge>
         </span>
       </div>
-      <p className="mt-1 text-paper-500">{excerpt(match.resolution_text)}</p>
+      <p className="mt-1 text-paper-600">{excerpt(match.resolution_text)}</p>
       <Link
         href={`/meetings/${match.meeting_id}/draft`}
         className={`mt-1 inline-block rounded-control text-ink-500 hover:text-ink-600 ${FOCUS_RING}`}

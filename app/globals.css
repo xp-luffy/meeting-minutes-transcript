@@ -118,6 +118,18 @@
   --text-subhead--line-height: 1.5rem;
   --text-title: 1.125rem; /* 18px */
   --text-title--line-height: 1.625rem;
+
+  /* One added step: the record's identity on a detail route, used once per
+     page. The scale was declared in seven steps and used in two, which is why
+     32 headings rendered at the same 14px as the text beneath them. */
+  --text-display: 1.75rem; /* 28px */
+  --text-display--line-height: 2.125rem;
+  --text-display--letter-spacing: -0.011em;
+
+  /* Optical size-compensation, not styling: at default tracking, 22px+ reads
+     loose against 14px body. */
+  --text-page--letter-spacing: -0.008em;
+  --text-title--letter-spacing: -0.004em;
   --text-page: 1.375rem; /* 22px */
   --text-page--line-height: 1.875rem;
 
@@ -148,6 +160,34 @@
      characters per line inside a max-w-5xl card, roughly double the comfortable
      measure. That was fatigue, not flatness — and it is the thing a cosec
      actually spends an hour inside. */
+  /* Ranked rules carry the hierarchy, in ink-black, instead of elevation.
+   *
+   * This is not a new visual language: VISUAL_SYSTEM_V4 §5.9 already decided
+   * "rule weight, not colour, is the primary signal" — for the EXPORTS. It was
+   * never applied to the screen, so the screen had no depth at all while
+   * shadow-raised sat on 66 elements doing nothing at 5% alpha over a 1.03:1
+   * ground. The screen now uses the device the artifact already uses, so the
+   * two finally rhyme.
+   *
+   *   double 2px+1px  the document          (once per page)
+   *   1px paper-900   a major section
+   *   1px paper-300   a sub-block
+   *   nothing         rows, list items, chips
+   */
+  .rule-document {
+    border-top: 2px solid var(--color-paper-900);
+    box-shadow: 0 3px 0 -2px var(--color-paper-900);
+    padding-top: 1rem;
+  }
+  .rule-section {
+    border-top: 1px solid var(--color-paper-900);
+    padding-top: 0.75rem;
+  }
+  .rule-subblock {
+    border-top: 1px solid var(--color-paper-300);
+    padding-top: 0.5rem;
+  }
+
   .minutes-body {
     font-family: var(--font-serif);
     max-width: 68ch;

@@ -104,7 +104,7 @@ function SidebarContent({
         </>
       ) : null}
 
-      <div className="mt-auto border-t border-paper-200 pt-3">
+      <div className="mt-auto border-t border-paper-300 pt-3">
         {profile ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ function SidebarContent({
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
-                className={`${FOCUS_RING} tap-target text-body text-paper-500 hover:text-paper-900`}
+                className={`${FOCUS_RING} tap-target text-body text-paper-600 hover:text-paper-900`}
               >
                 Sign out
               </button>
@@ -131,7 +131,7 @@ function SidebarContent({
           <Link
             href="/login"
             onClick={onNavigate}
-            className={`${FOCUS_RING} tap-target flex items-center text-body text-paper-500 hover:text-paper-900`}
+            className={`${FOCUS_RING} tap-target flex items-center text-body text-paper-600 hover:text-paper-900`}
           >
             Log in
           </Link>
@@ -188,12 +188,12 @@ export function SiteHeader({ profile }: { profile: Profile | null }) {
   return (
     <>
       {/* Desktop: fixed left sidebar */}
-      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-20 md:flex md:w-60 md:flex-col md:overflow-y-auto md:border-r md:border-paper-200 md:bg-white">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-20 md:flex md:w-60 md:flex-col md:overflow-y-auto md:border-r md:border-paper-300 md:bg-white">
         <SidebarContent profile={profile} links={links} pathname={pathname} />
       </aside>
 
       {/* Mobile: sticky top bar */}
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-paper-200 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:hidden">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-paper-300 bg-white/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-white/80 md:hidden">
         <div className="flex min-w-0 items-center gap-1">
           <button
             type="button"

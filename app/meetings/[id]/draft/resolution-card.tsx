@@ -104,8 +104,8 @@ export function ResolutionCard({
 
   return (
     <li
-      className={`rounded-surface border bg-white p-4 shadow-raised ${
-        showAmber ? "border-paper-200 border-l-4 border-l-status-risk-400" : "border-paper-200"
+      className={`rounded-surface border bg-white p-4 ${
+        showAmber ? "border-paper-300 border-l-4 border-l-status-risk-400" : "border-paper-300"
       }`}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

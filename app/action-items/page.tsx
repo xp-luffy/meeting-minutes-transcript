@@ -262,7 +262,7 @@ export default async function ActionItemsPage({
         <h1 className="text-page font-semibold text-paper-900">Action Items</h1>
         <div className="flex flex-wrap items-center gap-2 text-caption">
           {countsError ? (
-            <span className="text-paper-500">Counts unavailable</span>
+            <span className="text-paper-600">Counts unavailable</span>
           ) : (
             <>
               <Badge variant="indigo">{openCount} open</Badge>
@@ -275,14 +275,14 @@ export default async function ActionItemsPage({
       </div>
 
       {atLimit ? (
-        <p className="text-caption text-paper-500">
+        <p className="text-caption text-paper-600">
           Showing the first {PAGE_LIMIT} items by due date — narrow with the filters below.
         </p>
       ) : null}
 
       <form
         method="get"
-        className="flex flex-col gap-3 rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:flex-row sm:flex-wrap sm:items-end"
+        className="flex flex-col gap-3 rounded-surface border border-paper-300 bg-white p-4 sm:flex-row sm:flex-wrap sm:items-end"
       >
         <div className="flex flex-col gap-1 sm:w-auto">
           <label htmlFor="owner_state" className="text-caption font-medium text-paper-600">
@@ -365,7 +365,7 @@ export default async function ActionItemsPage({
           {OWNER_FILTER_LABELS[ownerFilter]} — {rows.length}
           {atLimit ? "+" : ""} item{rows.length === 1 ? "" : "s"} shown.
           {ownerFilter === "needs" ? (
-            <span className="text-paper-500">
+            <span className="text-paper-600">
               {" "}
               Includes items with no owner at all and items whose owner is recorded only as text.
             </span>
@@ -388,10 +388,10 @@ export default async function ActionItemsPage({
               const isOverdue =
                 item.item_status === "open" && item.due_date !== null && item.due_date < today;
               return (
-                <li key={item.id} className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised">
+                <li key={item.id} className="rounded-surface border border-paper-300 bg-white p-4">
                   <p className="text-body text-paper-800">{item.description}</p>
                   <ConfidenceTag confidence={item.description_confidence} label="Low confidence" />
-                  <p className="mt-1 text-caption text-paper-500">
+                  <p className="mt-1 text-caption text-paper-600">
                     {meeting ? `${meeting.company_name} · ${meeting.meeting_type}` : "Meeting unavailable"}
                     {item.due_date ? (
                       <>
@@ -418,10 +418,10 @@ export default async function ActionItemsPage({
             })}
           </ul>
 
-          <div className="hidden overflow-x-auto rounded-surface border border-paper-200 bg-white shadow-raised sm:block">
+          <div className="hidden overflow-x-auto rounded-surface border border-paper-300 bg-white sm:block">
             <table className="w-full min-w-[820px] divide-y divide-paper-200 text-body">
               <thead>
-                <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-500">
+                <tr className="text-left text-caption font-medium uppercase tracking-wide text-paper-600">
                   <th className="px-4 py-3">Description</th>
                   <th className="px-4 py-3">Owner</th>
                   <th className="px-4 py-3">Due</th>
@@ -464,10 +464,10 @@ export default async function ActionItemsPage({
                             className={`rounded-control text-ink-600 hover:text-ink-700 ${FOCUS_RING}`}
                           >
                             {meeting.company_name}
-                            <span className="text-paper-500"> · {meeting.meeting_type}</span>
+                            <span className="text-paper-600"> · {meeting.meeting_type}</span>
                           </Link>
                         ) : (
-                          <span className="text-paper-500">—</span>
+                          <span className="text-paper-600">—</span>
                         )}
                       </td>
                     </tr>

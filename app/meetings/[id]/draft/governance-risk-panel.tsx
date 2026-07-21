@@ -54,7 +54,7 @@ function ConflictRow({ finding }: { finding: ConflictFinding }) {
       detail={finding.detail}
       footer={
         finding.relatedEntity || finding.relatedCompany ? (
-          <p className="text-caption font-medium tracking-[0.06em] break-words text-paper-500 uppercase">
+          <p className="text-caption font-medium tracking-[0.06em] break-words text-paper-600 uppercase">
             {finding.relatedEntity}
             {finding.relatedEntity && finding.relatedCompany ? " ↔ " : ""}
             {finding.relatedCompany}
@@ -103,13 +103,13 @@ export async function GovernanceRiskPanel({
   const allClear = !scanFailed && conflicts.length === 0 && consistency.length === 0;
 
 return (
-    <div className="rounded-surface border border-paper-300 bg-white p-5 shadow-raised sm:p-6">
+    <div className="rounded-surface border border-paper-300 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-subhead font-semibold text-paper-700">
           Governance risk — connections &amp; contradictions
         </h2>
         {!allClear ? (
-          <span className="text-meta text-paper-500">
+          <span className="text-meta text-paper-600">
             {conflicts.length + consistency.length} finding
             {conflicts.length + consistency.length === 1 ? "" : "s"}
           </span>
@@ -146,7 +146,7 @@ return (
         <div className="mt-4 space-y-5">
           {conflicts.length > 0 ? (
             <section>
-              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
+              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-600 uppercase">
                 Related-party &amp; interest conflicts
               </h3>
               <ul className="mt-2 space-y-2">
@@ -159,7 +159,7 @@ return (
 
           {consistency.length > 0 ? (
             <section>
-              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
+              <h3 className="text-caption font-semibold tracking-[0.06em] text-paper-600 uppercase">
                 Consistency &amp; contradictions
               </h3>
               <ul className="mt-2 space-y-2">

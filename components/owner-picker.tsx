@@ -156,7 +156,7 @@ function OwnerDisplay({
 
   return (
     <span className="flex flex-wrap items-center gap-2">
-      {hideRecordedText ? null : <span className="text-paper-500">&mdash;</span>}
+      {hideRecordedText ? null : <span className="text-paper-600">&mdash;</span>}
       <StatusChip state="failed">No owner</StatusChip>
     </span>
   );
@@ -309,7 +309,7 @@ function OwnerPicker({
                 </button>
               </div>
             ) : ordered.length === 0 ? (
-              <p className="text-caption text-paper-500">
+              <p className="text-caption text-paper-600">
                 No one matching &ldquo;{query}&rdquo; at this company or in your workspace.
               </p>
             ) : (
@@ -335,13 +335,13 @@ function OwnerPicker({
               </>
             )}
             {isSearching ? (
-              <p className="text-caption text-paper-500" aria-live="polite">
+              <p className="text-caption text-paper-600" aria-live="polite">
                 Searching…
               </p>
             ) : null}
           </div>
 
-          <div className="space-y-1 border-t border-paper-200 pt-2">
+          <div className="space-y-1 border-t border-paper-300 pt-2">
             <ChoiceRow
               active={choice === KEEP_TEXT_ONLY}
               onClick={() => setChoice(KEEP_TEXT_ONLY)}
@@ -371,7 +371,7 @@ function OwnerPicker({
               />
               <span>
                 Also update the recorded name to &ldquo;{selected.canonical_name}&rdquo;
-                <span className="block text-paper-500">
+                <span className="block text-paper-600">
                   Editing what the minutes say is a document edit — off by default.
                 </span>
               </span>
@@ -400,7 +400,7 @@ function OwnerPicker({
             primary action was not clickable until you scrolled inside the
             popover. Nothing indicated there was more to scroll to.
           */}
-          <div className="sticky bottom-0 -mx-4 -mb-4 flex items-center gap-2 border-t border-paper-200 bg-white px-4 py-3">
+          <div className="sticky bottom-0 -mx-4 -mb-4 flex items-center gap-2 border-t border-paper-300 bg-white px-4 py-3">
             <SubmitButton
               pendingLabel="Saving…"
               className={`${FOCUS_RING} inline-flex min-h-11 flex-1 items-center justify-center rounded-control bg-ink-600 px-3.5 text-body font-medium text-white hover:bg-ink-700 active:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-60`}
@@ -440,7 +440,7 @@ function CandidateGroup({
   const headingId = `${panelId}-grp-${label.replace(/\W+/g, "-")}`;
   return (
     <div role="group" aria-labelledby={headingId}>
-      <p id={headingId} className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-paper-500">
+      <p id={headingId} className="px-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-paper-600">
         {label}
       </p>
       {/* presentation roles keep the listbox → group → option chain intact;
@@ -463,7 +463,7 @@ function CandidateGroup({
                 <span className="text-body text-paper-900">{c.canonical_name}</span>
                 {c.exact_match ? <Badge variant="ink">suggested — exact name match</Badge> : null}
               </span>
-              <span className="text-[11px] text-paper-500">
+              <span className="text-[11px] text-paper-600">
                 {candidateEvidence(c)}
                 {c.aliases.length > 0 ? ` · also: ${c.aliases.join(", ")}` : ""}
               </span>

@@ -96,7 +96,7 @@ function MeetingCard({
     !!draft && draft.status !== "final" && confirmationCount === 0 && daysSinceMeeting > 7;
 
   return (
-    <li className="relative rounded-surface border border-paper-200 bg-white p-4 shadow-raised transition-shadow hover:border-paper-450 sm:p-5">
+    <li className="relative rounded-surface border border-paper-300 bg-white p-4 transition-shadow hover:border-paper-450 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -111,7 +111,7 @@ function MeetingCard({
               <Badge variant="amber">Unconfirmed · {daysSinceMeeting}d</Badge>
             ) : null}
           </div>
-          <p className="mt-1 text-body text-paper-500">
+          <p className="mt-1 text-body text-paper-600">
             {meeting.meeting_type} &middot; {formatDate(meeting.meeting_date)}
             {meeting.venue ? <> &middot; {meeting.venue}</> : null}
           </p>
@@ -153,11 +153,11 @@ function MeetingGroup({
 }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 truncate text-caption font-semibold tracking-wide text-paper-500 uppercase">
+      <h2 className="mb-3 truncate text-caption font-semibold tracking-wide text-paper-600 uppercase">
         {title}
       </h2>
       {meetings.length === 0 && emptyHint ? (
-        <div className="rounded-surface border border-dashed border-paper-300 bg-white p-4 text-body text-paper-500">
+        <div className="rounded-surface border border-dashed border-paper-300 bg-white p-4 text-body text-paper-600">
           {emptyHint}
         </div>
       ) : (
@@ -193,7 +193,7 @@ export default async function Home() {
     return (
       <div className="rounded-surface border border-dashed border-paper-300 bg-white p-8 text-center sm:p-10">
         <h1 className="text-page font-semibold text-paper-900">No meetings yet</h1>
-        <p className="mt-2 text-body text-paper-500">
+        <p className="mt-2 text-body text-paper-600">
           Create your first meeting to start drafting statutory minutes.
         </p>
         <Link
@@ -213,7 +213,7 @@ export default async function Home() {
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-page font-semibold text-paper-900">
             Meetings{" "}
-            <span className="font-normal text-paper-500">({meetings.length})</span>
+            <span className="font-normal text-paper-600">({meetings.length})</span>
           </h1>
         </div>
         <ul className="space-y-3">
@@ -246,7 +246,7 @@ export default async function Home() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-page font-semibold text-paper-900">
-          Meetings <span className="font-normal text-paper-500">({meetings.length})</span>
+          Meetings <span className="font-normal text-paper-600">({meetings.length})</span>
         </h1>
       </div>
 

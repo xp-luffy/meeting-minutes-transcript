@@ -55,7 +55,7 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
           <p className="text-body font-medium break-words text-paper-900">{doc.title}</p>
           <DocumentStateBadge doc={doc} />
         </div>
-        <p className="mt-0.5 text-caption text-paper-500">
+        <p className="mt-0.5 text-caption text-paper-600">
           {DOC_TYPE_LABEL[doc.doc_type]} · {formatFileSize(doc.file_size)} · filed{" "}
           {formatDate(doc.created_at)}
         </p>
@@ -77,7 +77,7 @@ function SingleSlot({ slot, companyId }: { slot: CabinetSlot; companyId: string 
   const { current, history, undated } = slot;
 
   return (
-    <section className="border-b border-paper-200 px-4 py-4 last:border-b-0 sm:px-5">
+    <section className="border-b border-paper-300 px-4 py-4 last:border-b-0 sm:px-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         {/*
           The badge must state the TRUE state of the slot. "Not on file" when
@@ -104,10 +104,10 @@ function SingleSlot({ slot, companyId }: { slot: CabinetSlot; companyId: string 
       {current ? (
         <>
           <p className="mt-1 text-body break-words text-paper-800">{current.title}</p>
-          <p className="mt-0.5 text-caption text-paper-500">
+          <p className="mt-0.5 text-caption text-paper-600">
             {formatFileSize(current.file_size)} · filed {formatDate(current.created_at)}
           </p>
-          <p className="mt-1 text-caption text-paper-500">Backs: {slot.slot.backs}</p>
+          <p className="mt-1 text-caption text-paper-600">Backs: {slot.slot.backs}</p>
           <div className="mt-2">
             <DownloadDocumentButton
               documentId={current.id}
@@ -153,13 +153,13 @@ function SingleSlot({ slot, companyId }: { slot: CabinetSlot; companyId: string 
 function CollectionSlot({ slot, companyId }: { slot: CabinetSlot; companyId: string }) {
   return (
     <section className="mt-6">
-      <h3 className="mb-2 text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
+      <h3 className="mb-2 text-caption font-semibold tracking-[0.06em] text-paper-600 uppercase">
         {slot.slot.label} ({slot.items.length})
       </h3>
       {slot.items.length === 0 ? (
         <EmptyState compact message={`No ${slot.slot.label.toLowerCase()} on file.`} />
       ) : (
-        <ul className="divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white shadow-raised">
+        <ul className="divide-y divide-paper-200 rounded-surface border border-paper-300 bg-white">
           {slot.items.map((doc) => (
             <DocumentRow key={doc.id} doc={doc} companyId={companyId} />
           ))}
@@ -278,8 +278,8 @@ export async function CompanyDocumentsSection({ companyId }: { companyId: string
       ) : (
         <>
           {/* What these documents unlock */}
-          <div className="rounded-surface border border-paper-300 bg-white shadow-raised">
-            <h3 className="border-b border-paper-200 px-4 py-3 text-subhead font-semibold text-paper-700">
+          <div className="rounded-surface border border-paper-300 bg-white">
+            <h3 className="border-b border-paper-300 px-4 py-3 text-subhead font-semibold text-paper-700">
               What these documents unlock
             </h3>
             {unlocks.failed ? (
@@ -309,10 +309,10 @@ export async function CompanyDocumentsSection({ companyId }: { companyId: string
           ) : null}
 
           {/* Core (single-in-force) slots */}
-          <h3 className="mt-8 mb-2 text-caption font-semibold tracking-[0.06em] text-paper-500 uppercase">
+          <h3 className="mt-8 mb-2 text-caption font-semibold tracking-[0.06em] text-paper-600 uppercase">
             Core documents
           </h3>
-          <div className="rounded-surface border border-paper-300 bg-white shadow-raised">
+          <div className="rounded-surface border border-paper-300 bg-white">
             {singleSlots.map((slot) => (
               <SingleSlot key={slot.slot.type} slot={slot} companyId={companyId} />
             ))}

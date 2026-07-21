@@ -166,7 +166,7 @@ export function TranscriptEditor({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-5">
+      <div className="rounded-surface border border-paper-300 bg-white p-4 sm:p-5">
         {!transcriptId ? (
           <p className="mb-3 text-body text-paper-600">
             Paste the meeting transcript below to get started.
@@ -181,16 +181,16 @@ export function TranscriptEditor({
           }}
           rows={14}
           placeholder="Paste the raw meeting transcript here…"
-          className="block min-h-[220px] w-full rounded-surface border border-paper-450 px-3 py-2 font-mono text-base shadow-raised focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:min-h-[320px] sm:text-body"
+          className="block min-h-[220px] w-full rounded-surface border border-paper-450 px-3 py-2 font-mono text-base focus:border-ink-500 focus:outline-none focus:ring-1 focus:ring-ink-500 sm:min-h-[320px] sm:text-body"
         />
 
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-caption text-paper-500">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-caption text-paper-600">
           <span>{wordCount} words</span>
           <label
             className={
               "inline-flex min-h-11 items-center rounded px-1 -mx-1 sm:min-h-0 " +
               (isParsingDocx
-                ? "cursor-wait text-paper-500"
+                ? "cursor-wait text-paper-600"
                 : "cursor-pointer text-ink-600 hover:text-ink-700 peer-focus-visible:ring-2 peer-focus-visible:ring-ink-500 peer-focus-visible:ring-offset-2")
             }
           >
@@ -269,7 +269,7 @@ export function TranscriptEditor({
       </div>
 
       {transcriptId ? (
-        <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-5">
+        <div className="rounded-surface border border-paper-300 bg-white p-4 sm:p-5">
           <button
             type="button"
             onClick={handleGenerate}

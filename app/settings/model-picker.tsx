@@ -44,9 +44,9 @@ export function ModelPicker({
   const effective = saved || envDefault;
 
   return (
-    <div className="rounded-surface border border-paper-200 bg-white p-4 shadow-raised sm:p-6">
+    <div className="rounded-surface border border-paper-300 bg-white p-4 sm:p-6">
       <h2 className="text-subhead font-semibold text-paper-900">AI model for minutes generation</h2>
-      <p className="mt-1 text-caption text-paper-500">
+      <p className="mt-1 text-caption text-paper-600">
         Pick the model used when you click Generate. Change it anytime — it applies to your next
         generation, no redeploy.{" "}
         {live ? "Live list from your provider." : "Provider list unavailable — showing common models; you can also type any slug."}{" "}
@@ -112,7 +112,7 @@ export function ModelPicker({
                 setCustom("");
                 save("");
               }}
-              className={`inline-flex min-h-11 items-center text-caption text-paper-500 hover:text-paper-700 sm:min-h-0 ${FOCUS_RING}`}
+              className={`inline-flex min-h-11 items-center text-caption text-paper-600 hover:text-paper-700 sm:min-h-0 ${FOCUS_RING}`}
             >
               Reset to default
             </button>
@@ -120,7 +120,7 @@ export function ModelPicker({
         </div>
 
         {error ? <p className="text-caption font-medium text-status-failed-600">{error}</p> : null}
-        <p className="text-caption text-paper-500">
+        <p className="text-caption text-paper-600">
           Currently generating with: <span className="font-medium text-paper-800">{effective}</span>
           {!saved ? " (workspace default)" : ""}
         </p>
