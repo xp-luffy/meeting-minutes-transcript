@@ -143,3 +143,4 @@
 - Performance optimization applied: company stats aggregation moved from wire-level to Postgres queries for improved efficiency
 - Sprints 2 + 3 introduced owners as real people in the data model and added the company document cabinet feature.
 - GroundStream settings screen, anonymous-path enqueue functionality, and identity hints have been implemented in recent commit.
+- Missing GroundStream environment variables were documented/added as part of the handoff commit.
