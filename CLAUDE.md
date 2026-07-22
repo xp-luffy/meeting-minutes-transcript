@@ -81,6 +81,7 @@
 - Settings page previously conflated "workspace" with "source name" — recently fixed to separate these concepts
 - Cross-tenant membership data leak was discovered and closed, with probes added to detect future occurrences — security-sensitive bugfix shipped
 - Hotfix 0040: workspace org_id is now derived at runtime instead of requiring it as input — improves API ergonomics and prevents misconfiguration
+- close_recorded, interest_declarations, and a dead invite path were fixed in a foundation fixes commit, indicating these were lingering bugs in core meeting/invite workflows.
 
 ## Notes
 
