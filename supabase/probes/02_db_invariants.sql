@@ -65,7 +65,7 @@ inv3 as (
   from information_schema.columns c
   where c.table_schema='public' and c.column_name='org_id'
     and c.table_name in (select tablename from domain_tables)
-    and c.table_name not in ('organisation_members','organisation_invites','gs_settings','gs_settings_audit')
+    and c.table_name not in ('organisation_members','organisation_invites')
     and not exists (
       select 1 from pg_policies p
       where p.schemaname='public' and p.tablename=c.table_name
