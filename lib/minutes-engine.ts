@@ -948,6 +948,20 @@ export function generateMinutesRuleBased(
     .map((p) => `<p>${escapeHtml(p)}</p>`)
     .join("");
 
+  // Close of meeting — emitted ONLY when the transcript actually records one.
+  // The close sentence is stripped from the narrative as procedural filler
+  // (correct: it is not deliberation), but nothing re-recorded it, so
+  // `close_recorded` could never pass on this template. Conditional emission
+  // restores the fact without making the check unfalsifiable: no close in the
+  // transcript still means no close in the body, and the check still warns.
+  const close = detectMeetingClose(transcriptText);
+  const closeSectionIndex = actionItemsSectionIndex + 1;
+  const closeHtml = close.closed
+    ? `<h3>${closeSectionIndex}. Close of Meeting</h3><p>There being no other business, the meeting was closed${
+        close.time ? ` at ${escapeHtml(close.time)}` : ""
+      }.</p>`
+    : "";
+
   const minutesBodyHtml = `${renderHeadingHtml(meeting, profile)}
 <p><strong>Company:</strong> ${escapeHtml(meeting.company_name)} &mdash; <strong>Date:</strong> ${escapeHtml(
     meeting.meeting_date,
@@ -959,7 +973,8 @@ ${renderAttendanceSection(meeting, profile)}
 ${narrativeParagraphs}
 ${resolutionSections}
 <h3>${actionItemsSectionIndex}. Action Items</h3>
-${actionItemsListHtml}`;
+${actionItemsListHtml}
+${closeHtml}`;
 
   let bodyConfidence = 0.8;
   if (resolutions.length >= 1 && actionItems.length >= 1) {
@@ -1046,6 +1061,33 @@ const PREVIOUS_MINUTES_RE =
 function detectTranscriptTime(transcriptText: string, re: RegExp): string | null {
   const match = transcriptText.match(re);
   return match ? match[1] : null;
+}
+
+/**
+ * Did the TRANSCRIPT record the meeting closing?
+ *
+ * Exists because the generator classifies close statements as procedural filler
+ * (PROCEDURAL_FILLER_RE) and drops them from the narrative — correct, they are
+ * not deliberation — but the standard template then emitted no close anywhere,
+ * so `close_recorded` in lib/assurance.ts could NEVER pass. The generator
+ * deleted the fact and the checker reported it missing. 9 of 12 stored
+ * assurance reports warn on exactly this.
+ *
+ * READS THE TRANSCRIPT, NEVER THE BODY. That is what keeps this honest: the
+ * body is what the checker examines, so deriving the body from the body would
+ * make the check unfalsifiable — which is precisely the defect `quorum_stated`
+ * still has (the template asserts a quorum sentence unconditionally, so the
+ * check passes 12/12 and measures nothing).
+ *
+ * A meeting whose transcript records no close produces minutes with no close
+ * line, and the check warns. That is a real finding, and it stays reachable.
+ */
+export function detectMeetingClose(transcriptText: string): { closed: boolean; time: string | null } {
+  const NEGATED = /\b(?:not|never|no)\b[^.]{0,30}\b(?:clos(?:ed|ure)|adjourn(?:ed|ment)?)\b/i;
+  const AFFIRMED =
+    /\b(?:meeting|proceedings)\b[^.]{0,60}\b(?:was|were|is|stood)?\s*(?:clos(?:ed)?|adjourn(?:ed)?|terminated)\b|there being no (?:other|further) business/i;
+  const closed = AFFIRMED.test(transcriptText) && !NEGATED.test(transcriptText);
+  return { closed, time: closed ? detectTranscriptTime(transcriptText, CLOSE_MEETING_TIME_RE) : null };
 }
 
 /** "2.30pm" / "2:30 PM" / "2 pm" -> "02:30 p.m." style. Passes through anything it can't parse. */
@@ -1289,12 +1331,22 @@ export function generateMinutesMaisca(meeting: Meeting, transcriptText: string):
     itemCounter += 1;
   }
 
-  const closeSuffix = closeTimeRaw ? ` at ${normalizeMaiscaTime(closeTimeRaw)}` : "";
-  agendaRows.push(
-    `<tr><td>${itemCounter}.0</td><td><p><strong>CLOSE OF MEETING</strong></p><p>There being no other business, the meeting was closed${escapeHtml(
-      closeSuffix,
-    )}.</p></td><td></td></tr>`,
-  );
+  // Conditional, for the same reason as the standard template — but this one
+  // had the OPPOSITE defect. It asserted "There being no other business, the
+  // meeting was closed" on EVERY maisca draft regardless of what was said, so
+  // `close_recorded` could never fail here while it could never pass on the
+  // standard template. One check, two templates, unreachable in both
+  // directions. A minute that states a meeting closed when the transcript
+  // never said so is a fabricated statutory fact, which is worse than a gap.
+  const maiscaClose = detectMeetingClose(transcriptText);
+  if (maiscaClose.closed) {
+    const closeSuffix = closeTimeRaw ? ` at ${normalizeMaiscaTime(closeTimeRaw)}` : "";
+    agendaRows.push(
+      `<tr><td>${itemCounter}.0</td><td><p><strong>CLOSE OF MEETING</strong></p><p>There being no other business, the meeting was closed${escapeHtml(
+        closeSuffix,
+      )}.</p></td><td></td></tr>`,
+    );
+  }
 
   const agendaTableHtml = `<table><thead><tr><th>Item</th><th>Agenda &amp; Discussions</th><th>Dept.</th></tr></thead><tbody>${agendaRows.join(
     "",

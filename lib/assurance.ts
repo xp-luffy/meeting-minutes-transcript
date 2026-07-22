@@ -319,6 +319,20 @@ function checkChairpersonNamed(bodyText: string, chairperson: string | null): As
 }
 
 const INTEREST_DECLARATION_RE = /declar\w+ .{0,40}interest|interest.{0,40}declar/i;
+
+/**
+ * What makes a declaration of interest NECESSARY.
+ *
+ * Deliberately broad: a false trigger costs one warning a human dismisses, a
+ * missed trigger costs the omission an auditor finds three years later. Erring
+ * toward the warning is the right asymmetry for a statutory record.
+ *
+ * Matched against the TRANSCRIPT, never the body — the body is what the checker
+ * examines, and deriving the trigger from the body would make the check
+ * unfalsifiable.
+ */
+const INTEREST_TRIGGER_RE =
+  /\b(?:related[- ]part(?:y|ies)|conflict\s+of\s+interest|interested\s+part(?:y|ies)|beneficial\s+owner|connected\s+person|award(?:ed|ing)?\s+(?:the\s+)?(?:contract|tender)|tender|procurement|appoint\w*\s+(?:a|the)?\s*(?:supplier|vendor|contractor|consultant)|remuneration|director'?s?\s+fees|shareholding|acquisition|disposal\s+of\s+(?:asset|share)|loan\s+to\s+(?:a\s+)?director|his\s+own\s+company|her\s+own\s+company|their\s+own\s+company|family\s+member|spouse)\b/i;
 /** "refused to declare his interest" must not read as a declaration. */
 const DECLARATION_REFUSED_RE = /\b(refus\w+|declin\w+|fail\w+)\b[^.]{0,40}\bdeclar/i;
 
@@ -332,18 +346,53 @@ function checkInterestDeclarations(
   // company scored 95 with this check absent from the list entirely. It now
   // runs for every category.
   void category;
-  void transcriptText;
+
   // The statement must be in the BODY: the minutes are the statutory record.
   // A declaration discussed in the room but never minuted is precisely the
   // omission an auditor finds three years later.
-  const ok = INTEREST_DECLARATION_RE.test(bodyText) && !DECLARATION_REFUSED_RE.test(bodyText);
+  const declared = INTEREST_DECLARATION_RE.test(bodyText) && !DECLARATION_REFUSED_RE.test(bodyText);
+  if (declared) {
+    return {
+      key: "interest_declarations",
+      label: "Interest declarations",
+      status: "pass",
+      detail: "A declaration-of-interest statement is recorded in the minutes.",
+    };
+  }
+
+  // NOTHING TO DECLARE IS NOT A FINDING.
+  //
+  // This check warned on 12 of 12 drafts — 100%. A check that fires on every
+  // draft is not a check; it is wallpaper, and it teaches users to scroll past
+  // the whole panel, including the findings that matter.
+  //
+  // The fix is NOT to have the generator emit "no interests were declared" so
+  // this passes. That is the quorum_stated defect: the template asserts a
+  // sentence, the checker greps for it, and the check measures nothing forever.
+  // It would trade 12 honest warnings for 12 fabricated passes.
+  //
+  // Instead, use the transcript — which this function has always received and
+  // discarded (`void transcriptText`). Warn only where a declaration was
+  // actually CALLED FOR: a related-party matter was discussed and the minutes
+  // record no declaration. Where nothing triggers the duty, report
+  // not_applicable, which is rendered as UNKNOWN and never as a pass.
+  const triggered = INTEREST_TRIGGER_RE.test(transcriptText);
+  if (!triggered) {
+    return {
+      key: "interest_declarations",
+      label: "Interest declarations",
+      status: "not_applicable",
+      detail:
+        "No related-party matter, contract or personal interest was raised in the transcript, so no declaration was called for.",
+    };
+  }
+
   return {
     key: "interest_declarations",
     label: "Interest declarations",
-    status: ok ? "pass" : "warn",
-    detail: ok
-      ? "A declaration-of-interest statement is recorded in the minutes."
-      : "No declaration-of-interest statement is recorded in the minutes body.",
+    status: "warn",
+    detail:
+      "The transcript raises a related-party or contractual matter, but the minutes body records no declaration of interest.",
   };
 }
 
