@@ -79,6 +79,8 @@
 - The type system was designed/written in a prior design pass but was never integrated into the codebase — the recent commit finally applied it.
 - Documentation sync commits (claude.md, agents.md) now dominate the commit history; no code changes or feature work has been committed in recent cycles beyond launchpad memory maintenance.
 - Settings page previously conflated "workspace" with "source name" — recently fixed to separate these concepts
+- Cross-tenant membership data leak was discovered and closed, with probes added to detect future occurrences — security-sensitive bugfix shipped
+- Hotfix 0040: workspace org_id is now derived at runtime instead of requiring it as input — improves API ergonomics and prevents misconfiguration
 
 ## Notes
 
@@ -145,3 +147,4 @@
 - GroundStream settings screen, anonymous-path enqueue functionality, and identity hints have been implemented in recent commit.
 - Missing GroundStream environment variables were documented/added as part of the handoff commit.
 - A demo-only GroundStream workspace crossover was recorded as a commit — not a feature commit, indicates a throwaway or demonstration entry.
+- Two code-level fixes shipped (security bugfix + hotfix), breaking from recent streak of documentation-only commits
