@@ -1,9 +1,47 @@
 # HANDOFF — device takeover
 
-Last updated: **2026-07-21**, after the multi-tenant (organisations) change shipped.
+Last updated: **2026-07-23**, after a security fix, three engine fixes, and the
+module foundation.
 
 This file is for picking the work up on a different machine. It carries the state
 that is *not* recoverable from the code or the commit log.
+
+## Latest session (2026-07-22/23) — read this first
+
+**A cross-tenant leak was found and closed (0040/0041/0042).** `workspace_members`
+and `workspace_invites` had no `org_id` and no restrictive policy — migrations
+0029/0030 enumerated tables by hand and missed them. A user could self-join any
+workspace and read its member list. Statutory records never leaked (the restrictive
+`org_isolation` on companies/meetings held), but the membership graph did.
+
+The fix chain, and the lesson in each:
+- `0040` added `org_id` + restrictive policy — but with `NOT NULL` and **no default**,
+  and updated none of the four writers. That broke signup for anyone with a pending
+  workspace invite (the not-null violation rolls back `auth.users`). This is the exact
+  scar in §7 below, committed by the same hand that wrote it down. Two independent
+  reviews (Codex + Pilot) caught it; the author did not.
+- `0041` replaced the demand with a **BEFORE trigger** that derives `org_id` from the
+  workspace — fixes all four writers without editing them, and avoids a `pg_restore`
+  hazard (a CHECK querying another table fails during alphabetical restore).
+- `0042` — found by *running* the signup path, not reading it — a workspace invite
+  granted nothing, because the invitee got a personal org and the membership row landed
+  in an org they don't belong to. Now a workspace invite places them in the inviting org.
+
+**Three engine fixes (all proven by probe):**
+- `close_recorded` was unreachable in opposite directions on the two templates (standard
+  never passed, maisca never failed). Both now emit a close line only when the transcript
+  records one. `scripts/probes/pipeline-reachability.ts` confirms `pass,warn`.
+- `interest_declarations` warned on 100% of drafts; now uses the transcript to warn only
+  when a declaration was called for, else `not_applicable`. `scripts/probes/interest-declarations.ts`.
+- Both fixes deliberately read the TRANSCRIPT, never the body — deriving the check input
+  from the generator's own output is the `quorum_stated` circularity, still unfixed.
+
+**Module foundation (0043 + `lib/modules/`).** Schema + a framework-free module registry,
+proven no-op. Nothing consumes it yet. See §9.
+
+**Still gated on the AI path (unchanged):** `AI_API_KEY` has never been set, so every
+draft is `rule_based_v1`. GroundStream still unproven. These two remain the blockers on
+everything downstream — see §1.
 
 **No secrets are in this repo, ever.** Every key lives in Vercel env vars or in the
 `gs_settings` table encrypted. `.env*` is gitignored. If you need a value, get it
@@ -319,3 +357,47 @@ self-joins and credential reads **refused**, including when attempted by an org 
   code) and GroundStream findings to `~/.claude/gs-harvest/meeting-minutes.md`.
 - `CLAUDE.md` and `AGENTS.md` are bot-managed. Vercel skips builds for commits that
   touch only those two files.
+
+---
+
+## 9. The module system (started 2026-07-23)
+
+The app is becoming a **module system**: company secretarial is one vertical,
+professional services the next, and vertical #3 should be a config file not a fork.
+A module is five concerns — vocabulary, meeting types, completeness checks, output
+template, extraction. This session built the first two plus the registry; the rest
+is staged.
+
+**Done and proven no-op:**
+- `0043` — `modules` + `meeting_types` catalogue tables (deployment-level, the one
+  deliberate exception to org_id-on-every-table; read-only, migration-seeded).
+  `organisations.default_module_id`, `meetings.module_id`, `meetings.meeting_type_id`,
+  all backfilled to cosec with the exact `meetingTypeCategory()` precedence, guarded
+  by a composite FK.
+- `lib/modules/{types,registry}.ts` + `cosec/` + `consulting/` — framework-free,
+  unit-testable, **nothing imports it yet** (zero blast radius).
+- `scripts/probes/module-registry.ts` — guards the code↔DB seam. Its meeting-type ids
+  must match the 0043 seed or the composite FK silently rejects new meetings. If you
+  edit either the migration seed or a module's `meetingTypes`, update both and re-run.
+
+**NOT done, deliberately — the gated next steps (architecture plan Steps 2–6):**
+1. **Extract the cosec assurance predicates into the module**, proven byte-identical to
+   the current engine. GATED: this session changed the rule-based engine
+   (`close_recorded`, `interest_declarations`), so stored `assurance_reports` no longer
+   reflect current code and can't serve as the byte-identical reference. Regenerate a
+   fresh baseline (needs meetings run through the current engine) before starting.
+2. Switch dispatch from `meetingTypeCategory()` substring matching to `meeting_type_id`.
+   Blocker: a consulting meeting named "Board of Advisors kickoff" matches `%board%` today.
+3. Build the consulting module's checks + the narrow LLM extraction call (~$0.016/record,
+   marks inferred commitments unconfirmed). This is the step that proves the abstraction —
+   if it needs to touch `lib/assurance.ts`, the abstraction failed.
+4. Feature migrations 0044+ (recap email, tags, scope-change, commitment direction, SOW,
+   client timeline, voice). See the full architecture plan.
+
+**Known blockers the architecture review surfaced (verified against real code):**
+- `createReviewShare` (`app/meetings/[id]/draft/share-actions.ts:42`) gates on
+  reviewed/final. The one-click recap needs `share_kind='acknowledgement'` to bypass that
+  gate WITHOUT weakening the cosec attestation gate. `ShareKind` is already in the module types.
+- `current_org_id()` returns NULL for the service-role client — webhook import, the recap
+  drain, and background tagging must resolve org from the API key, GroundStream-style.
+- No email provider in `package.json` — recap can't send until one is added + an outbox.
