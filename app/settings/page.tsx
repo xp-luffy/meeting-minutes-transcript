@@ -1,10 +1,16 @@
-import { requireUser, getProfile } from "@/lib/auth";
+import { requireUser, getProfile, getOrgContext } from "@/lib/auth";
+import { resolveModule } from "@/lib/modules/registry";
 import { listModels } from "./actions";
 import { ModelPicker } from "./model-picker";
 
 export default async function SettingsPage() {
   await requireUser();
-  const [profile, { models, live }] = await Promise.all([getProfile(), listModels()]);
+  const [profile, { models, live }, org] = await Promise.all([
+    getProfile(),
+    listModels(),
+    getOrgContext(),
+  ]);
+  const moduleDef = org ? resolveModule(org.moduleId) : null;
 
   const envDefault = process.env.AI_MODEL || "gpt-4o";
   const aiConfigured = Boolean(process.env.AI_API_KEY || process.env.OPENAI_API_KEY);
@@ -33,6 +39,39 @@ export default async function SettingsPage() {
         current={profile?.ai_model ?? null}
         envDefault={envDefault}
       />
+
+      {moduleDef ? (
+        <section className="rule-section pt-4">
+          <h2 className="text-subhead font-medium text-paper-900">Module</h2>
+          <p className="mt-1 text-body text-paper-700">
+            {org?.name} uses the <strong>{moduleDef.vocabulary.moduleLabel}</strong> module.
+          </p>
+          <dl className="mt-3 space-y-1 text-caption text-paper-600">
+            <Row label="The record is called" value={cap(moduleDef.vocabulary.recordNoun.singular)} />
+            <Row label="A decision is called" value={cap(moduleDef.vocabulary.decisionNoun.singular)} />
+            <Row label="A follow-up is called" value={cap(moduleDef.vocabulary.commitmentNoun.singular)} />
+            <Row label="The other side is called" value={cap(moduleDef.vocabulary.counterpartyNoun)} />
+            <Row label="Confirmed by" value={cap(moduleDef.vocabulary.confirmerNoun)} />
+          </dl>
+          <p className="mt-3 text-caption text-paper-600">
+            Your module is fixed for your organisation. Changing it would rewrite the vocabulary on
+            every record you have already filed, so it is set once. Contact support if it is wrong.
+          </p>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <dt>{label}</dt>
+      <dd className="text-paper-800">{value}</dd>
     </div>
   );
 }

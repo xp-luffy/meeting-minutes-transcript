@@ -33,6 +33,8 @@ export interface OrgContext {
   slug: string;
   name: string;
   role: OrgRole;
+  /** Which vertical this org uses. Legacy rows are 'cosec' (0043 backfill). */
+  moduleId: string;
 }
 
 /**
@@ -85,13 +87,13 @@ export async function getOrgContext(): Promise<OrgContext | null> {
 
   const { data, error } = await supabase
     .from("organisation_members")
-    .select("role, organisations!inner(id, slug, name)")
+    .select("role, organisations!inner(id, slug, name, default_module_id)")
     .eq("user_id", userData.user.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle<{
       role: OrgRole;
-      organisations: { id: string; slug: string; name: string };
+      organisations: { id: string; slug: string; name: string; default_module_id: string | null };
     }>();
 
   // supabase-js RESOLVES with { error } rather than throwing, so this must be
@@ -109,6 +111,10 @@ export async function getOrgContext(): Promise<OrgContext | null> {
     slug: data.organisations.slug,
     name: data.organisations.name,
     role: data.role,
+    // Fail-safe toward cosec, the stricter vertical — a null here (legacy row
+    // the 0043 backfill somehow missed) must degrade to the original behaviour,
+    // never to the looser consulting share gate.
+    moduleId: data.organisations.default_module_id ?? "cosec",
   };
 }
 
