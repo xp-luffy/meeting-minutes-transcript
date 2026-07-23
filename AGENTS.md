@@ -39,6 +39,7 @@
 - GroundStream integration work has been committed: outbox pattern, drain worker, and an event map were added
 - GroundStream layer involves actor, source rule, and stage map components that were corrected in a recent commit.
 - Vercel build skipping is now implemented for claude.md/agents.md-only commits to prevent runaway launchpad sync loop cycles.
+- Client timeline: the compound pillar is implemented as both a view and a page, suggesting a unified timeline component with dedicated route and embedded view variants
 
 ## Gotchas
 
