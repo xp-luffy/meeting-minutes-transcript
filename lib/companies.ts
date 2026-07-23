@@ -265,3 +265,62 @@ export async function upsertCompanyDefaultsFromMeeting(meetingId: string): Promi
 
   await supabase.from("companies").update({ defaults }).eq("id", meetingRow.company_id);
 }
+
+/**
+ * One record on the client timeline — a projection of the client_timeline view
+ * (migration 0044). The view is security_invoker, so the rows returned here are
+ * already scoped to the caller's organisation by the base tables' RLS; there is
+ * no ownership logic to re-derive in application code.
+ */
+export interface TimelineEvent {
+  kind: "meeting" | "decision" | "commitment" | "confirmation";
+  record_id: string;
+  at: string;
+  title: string;
+  detail: string | null;
+  status: string | null;
+}
+
+export interface ClientTimeline {
+  events: TimelineEvent[];
+  /** true only when the read FAILED — distinct from "no history yet" (empty). */
+  loadError: boolean;
+  counts: { decisions: number; confirmations: number; commitments: number; unconfirmed: number };
+}
+
+const EMPTY_TIMELINE: ClientTimeline = {
+  events: [],
+  loadError: false,
+  counts: { decisions: 0, confirmations: 0, commitments: 0, unconfirmed: 0 },
+};
+
+/**
+ * The ordered history for one company: decisions, commitments and confirmations
+ * newest-first. A failed read is reported as loadError, NEVER as an empty
+ * timeline — "could not load" is not "nothing happened", and conflating them is
+ * the false-all-clear this codebase keeps fixing.
+ */
+export async function getClientTimeline(companyId: string): Promise<ClientTimeline> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("client_timeline")
+    .select("kind, record_id, at, title, detail, status")
+    .eq("company_id", companyId)
+    .order("at", { ascending: false })
+    .limit(200);
+
+  // Destructure and check: postgrest RESOLVES { error }, it does not throw.
+  if (error) return { ...EMPTY_TIMELINE, loadError: true };
+  const events = (data ?? []) as TimelineEvent[];
+
+  return {
+    events,
+    loadError: false,
+    counts: {
+      decisions: events.filter((e) => e.kind === "decision").length,
+      confirmations: events.filter((e) => e.kind === "confirmation").length,
+      commitments: events.filter((e) => e.kind === "commitment").length,
+      unconfirmed: events.filter((e) => e.kind === "commitment" && e.status !== "confirmed").length,
+    },
+  };
+}

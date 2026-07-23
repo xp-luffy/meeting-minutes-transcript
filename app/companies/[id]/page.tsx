@@ -74,6 +74,14 @@ export default async function CompanyDetailPage({
             <p className="mt-0.5 text-body text-paper-600">{company.reg_no}</p>
           ) : null}
           <DefaultsChips company={company} />
+          <p className="mt-2 text-body">
+            <Link
+              href={`/companies/${company.id}/timeline`}
+              className={`rounded-control font-medium text-ink-600 hover:text-ink-700 ${FOCUS_RING}`}
+            >
+              View history &rarr;
+            </Link>
+          </p>
         </div>
         <Link
           href={`/meetings/new?company=${company.id}`}
