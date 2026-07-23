@@ -153,3 +153,4 @@
 - Two code-level fixes shipped (security bugfix + hotfix), breaking from recent streak of documentation-only commits
 - Recent commit cycle is exclusively documentation maintenance (claude.md sync); no feature development, code changes, or roadmap progress detected.
 - Handoff.md records the security saga, engine fixes, and module foundation — adding institutional knowledge transfer documentation beyond launchpad sync.
+- The project has no active objective set, making it unclear whether 'Surface the org's module on the settings page' is a feature task or a documentation change.
