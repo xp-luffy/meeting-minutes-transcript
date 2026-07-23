@@ -38,6 +38,7 @@
 - Constitution is now wired into the quorum check, meaning quorum validation reads from the constitution document rather than being a standalone rule
 - GroundStream integration work has been committed: outbox pattern, drain worker, and an event map were added
 - GroundStream layer involves actor, source rule, and stage map components that were corrected in a recent commit.
+- Vercel build skipping is now implemented for claude.md/agents.md-only commits to prevent runaway launchpad sync loop cycles.
 
 ## Gotchas
 
@@ -149,3 +150,4 @@
 - Missing GroundStream environment variables were documented/added as part of the handoff commit.
 - A demo-only GroundStream workspace crossover was recorded as a commit — not a feature commit, indicates a throwaway or demonstration entry.
 - Two code-level fixes shipped (security bugfix + hotfix), breaking from recent streak of documentation-only commits
+- Recent commit cycle is exclusively documentation maintenance (claude.md sync); no feature development, code changes, or roadmap progress detected.
