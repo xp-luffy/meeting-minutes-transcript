@@ -151,3 +151,4 @@
 - A demo-only GroundStream workspace crossover was recorded as a commit — not a feature commit, indicates a throwaway or demonstration entry.
 - Two code-level fixes shipped (security bugfix + hotfix), breaking from recent streak of documentation-only commits
 - Recent commit cycle is exclusively documentation maintenance (claude.md sync); no feature development, code changes, or roadmap progress detected.
+- Handoff.md records the security saga, engine fixes, and module foundation — adding institutional knowledge transfer documentation beyond launchpad sync.
